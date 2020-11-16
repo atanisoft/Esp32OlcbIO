@@ -1,7 +1,7 @@
 [submodule "firmware/components/HttpServer"]
 	path = firmware/components/HttpServer
 	url = https://github.com/atanisoft/HttpServer.git
-[submodule "firmware/components/OpenMRNIDF"]
+[submodule "firmware/components/OpenMRNLite"]
 	path = firmware/components/OpenMRNLite
 	url = https://github.com/atanisoft/OpenMRNIDF.git
 [submodule "firmware/components/esp_littlefs"]
