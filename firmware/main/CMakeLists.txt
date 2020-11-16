@@ -6,7 +6,7 @@ set(deps
     app_update
     esp_littlefs
     HttpServer
-    OpenMRNIDF
+    OpenMRNLite
     json
 )
 
