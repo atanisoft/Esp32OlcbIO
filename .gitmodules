@@ -1,0 +1,9 @@
+[submodule "firmware/components/HttpServer"]
+	path = firmware/components/HttpServer
+	url = https://github.com/atanisoft/HttpServer.git
+[submodule "firmware/components/OpenMRNIDF"]
+	path = firmware/components/OpenMRNLite
+	url = https://github.com/atanisoft/OpenMRNIDF.git
+[submodule "firmware/components/esp_littlefs"]
+	path = firmware/components/esp_littlefs
+	url = https://github.com/joltwallet/esp_littlefs.git

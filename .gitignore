@@ -1,0 +1,5 @@
+firmware/build
+firmware/sdkconfig
+sdkconfigfirmware/.old
+firmware/web/*.gz
+pcb/*.*-bak

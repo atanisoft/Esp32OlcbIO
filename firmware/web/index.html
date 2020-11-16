@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP32 OpenLCB Hub Configuration Portal</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%20%20width%3D%2214px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2014%2014%22%20style%3D%22enable-background%3Anew%200%200%2014%2014%3B%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpath%20d%3D%22M13.621%2C5.904l-1.036-0.259c-0.168-0.042-0.303-0.168-0.355-0.332c-0.092-0.284-0.205-0.559-0.339-0.82%20c-0.079-0.153-0.073-0.337%2C0.017-0.486l0.549-0.915c0.118-0.196%2C0.088-0.448-0.075-0.61l-0.862-0.863%20c-0.162-0.163-0.414-0.193-0.611-0.075l-0.916%2C0.55C9.844%2C2.182%2C9.659%2C2.188%2C9.506%2C2.109C9.244%2C1.975%2C8.97%2C1.861%2C8.686%2C1.77%20c-0.165-0.052-0.29-0.187-0.332-0.354L8.095%2C0.379C8.039%2C0.156%2C7.839%2C0%2C7.609%2C0H6.391c-0.229%2C0-0.43%2C0.156-0.485%2C0.379L5.646%2C1.415%20C5.604%2C1.582%2C5.479%2C1.718%2C5.313%2C1.77c-0.284%2C0.092-0.559%2C0.206-0.82%2C0.34C4.339%2C2.188%2C4.155%2C2.182%2C4.007%2C2.093L3.092%2C1.544%20c-0.196-0.118-0.448-0.087-0.61%2C0.075L1.619%2C2.481C1.457%2C2.644%2C1.426%2C2.896%2C1.544%2C3.093l0.549%2C0.914%20c0.089%2C0.148%2C0.095%2C0.332%2C0.017%2C0.486C1.975%2C4.755%2C1.861%2C5.029%2C1.77%2C5.314c-0.053%2C0.164-0.188%2C0.29-0.354%2C0.332L0.379%2C5.905%20C0.156%2C5.961%2C0%2C6.161%2C0%2C6.391v1.219c0%2C0.229%2C0.156%2C0.43%2C0.379%2C0.485l1.036%2C0.26C1.582%2C8.396%2C1.717%2C8.521%2C1.77%2C8.687%20c0.092%2C0.284%2C0.205%2C0.559%2C0.34%2C0.82C2.188%2C9.66%2C2.182%2C9.844%2C2.093%2C9.993l-0.549%2C0.915c-0.118%2C0.195-0.087%2C0.448%2C0.075%2C0.61%20l0.862%2C0.862c0.162%2C0.163%2C0.414%2C0.193%2C0.61%2C0.075l0.915-0.549c0.148-0.089%2C0.332-0.095%2C0.486-0.017%20c0.262%2C0.135%2C0.536%2C0.248%2C0.82%2C0.34c0.165%2C0.053%2C0.291%2C0.187%2C0.332%2C0.354l0.259%2C1.036C5.96%2C13.844%2C6.16%2C14%2C6.39%2C14h1.22%20c0.229%2C0%2C0.43-0.156%2C0.485-0.379l0.259-1.036c0.042-0.167%2C0.168-0.302%2C0.333-0.354c0.284-0.092%2C0.559-0.205%2C0.82-0.34%20c0.154-0.078%2C0.338-0.072%2C0.486%2C0.017l0.914%2C0.549c0.197%2C0.118%2C0.449%2C0.088%2C0.611-0.074l0.862-0.863%20c0.163-0.162%2C0.193-0.415%2C0.075-0.611l-0.549-0.915c-0.089-0.148-0.096-0.332-0.017-0.485c0.134-0.263%2C0.248-0.536%2C0.339-0.82%20c0.053-0.165%2C0.188-0.291%2C0.355-0.333l1.036-0.259C13.844%2C8.039%2C14%2C7.839%2C14%2C7.609V6.39C14%2C6.16%2C13.844%2C5.96%2C13.621%2C5.904z%20M7%2C10%20c-1.657%2C0-3-1.343-3-3s1.343-3%2C3-3s3%2C1.343%2C3%2C3S8.657%2C10%2C7%2C10z%22%2F%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3C%2Fsvg%3E"
+        sizes="any">
+    <!--https://cdnjs.cloudflare.com/ajax/libs/cash/8.1.0/cash.min.js-->
+    <script src="/cash.min.js"></script>
+    <!--https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css-->
+    <link rel="stylesheet" href="/normalize.min.css">
+    <!--https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css-->
+    <link rel="stylesheet" href="/milligram.min.css">
+    <style>
+        .navbar {
+            margin-bottom: 10px;
+        }
+
+        .navbar ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #606c76;
+        }
+
+        .navbar li {
+            float: left;
+            margin-bottom: 0;
+        }
+
+        .navbar li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        .navbar li a:hover {
+            background-color: #606c76;
+        }
+
+        .navbar li .active {
+            text-emphasis: bold;
+            background-color: #9b4dca;
+        }
+
+        .navbar li .inactive {
+            text-emphasis: bold;
+            background-color: #606c76;
+        }
+
+        .well {
+            background: #f4f5f6;
+            padding: 1.5rem 2.5rem;
+        }
+
+        .tabs>.button {
+            margin: 0;
+            float: left;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .tabs .well {
+            clear: both;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px 0;
+            border-radius: 6px;
+
+            position: absolute;
+            z-index: 1;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 5rem;
+            height: 5rem;
+            position: relative;
+        }
+
+        .spinner:after {
+            content: " ";
+            display: block;
+            width: 10rem;
+            height: 10rem;
+            margin: 1rem;
+            border-radius: 50%;
+            border: 1rem solid #9b4dca;
+            border-color: #9b4dca transparent #9b4dca transparent;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        .small-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            position: relative;
+        }
+
+        .small-spinner:after {
+            content: " ";
+            display: block;
+            width: 1.5rem;
+            height: 1.5rem;
+            margin: .25rem;
+            border-radius: 50%;
+            border: .25rem solid #9b4dca;
+            border-color: #9b4dca transparent #9b4dca transparent;
+            animation: spinner 1.5s linear infinite;
+        }
+
+        @keyframes spinner {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .button-small {
+            font-size: 1rem;
+            height: 2.8rem;
+            line-height: 2.8rem;
+            padding: 0 1.5rem
+        }
+
+        fieldset {
+            border-style: solid;
+            border-width: 0.1rem;
+            border-color: #606c76;
+            border-radius: 0.5rem;
+        }
+
+        .wifi-none {
+            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.717c-4.502 0-8.251 1.227-10.95 2.51s-4.399 2.661-4.654 2.855l-0.395 0.303 15.747 19.614h0.504l0.147-0.183 15.602-19.431-0.399-0.305c-0.253-0.193-1.953-1.57-4.652-2.854s-6.449-2.51-10.95-2.51zM16 7.694c4.324 0 7.932 1.178 10.532 2.415 2.351 1.118 3.534 2.087 4.047 2.485l-14.579 18.158-14.579-18.158c0.512-0.397 1.696-1.368 4.047-2.485 2.6-1.236 6.208-2.415 10.532-2.415z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+        }
+        .wifi-quarter {
+            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.457c-4.502 0-8.251 1.226-10.948 2.509s-4.402 2.663-4.645 2.847l-0.406 0.306 15.96 19.881 0.422-0.422 0.015-0.019 15.603-19.44-0.406-0.306c-0.244-0.184-1.948-1.565-4.645-2.847s-6.446-2.508-10.948-2.508zM16 7.443c4.323 0 7.927 1.178 10.525 2.412 2.345 1.115 3.52 2.076 4.041 2.478l-7.649 9.53c-0.364-0.269-0.93-0.662-1.838-1.095-1.26-0.601-2.998-1.169-5.079-1.169s-3.817 0.567-5.077 1.169c-0.907 0.433-1.474 0.826-1.838 1.095l-7.651-9.53c0.521-0.401 1.696-1.363 4.041-2.478 2.598-1.235 6.202-2.412 10.525-2.412z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+        }
+        .wifi-half {
+            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.305c-4.502 0-8.251 1.226-10.948 2.508s-4.402 2.663-4.645 2.847l-0.406 0.306 5.835 7.269c-0.010 0.008-0.021 0.015-0.031 0.023 1.197 1.437 2.368 2.897 3.544 4.353l6.611 8.236c0.041 0.051 0.081 0.102 0.121 0.152l0.329-0.61 15.59-19.423-0.406-0.306c-0.244-0.184-1.948-1.565-4.645-2.847s-6.446-2.508-10.948-2.508zM16 7.291c4.323 0 7.927 1.178 10.525 2.412 2.345 1.115 3.52 2.076 4.041 2.478l-5.177 6.451c-0.446-0.338-1.258-0.926-2.595-1.563-1.686-0.804-4.009-1.563-6.792-1.563s-5.108 0.759-6.794 1.563c-0.929 0.417-1.762 0.988-2.576 1.586l-5.198-6.474c0.521-0.401 1.696-1.363 4.041-2.478 2.598-1.235 6.202-2.412 10.525-2.412z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+        }
+        .wifi-full {
+            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath fill='%23000' d='M16 6.57c-9.23 0-15.381 5.030-16 5.497l16 19.933 0.014-0.014 15.986-19.918c-0.619-0.467-6.77-5.497-16-5.497z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <section class="container">
+            <h3>ESP32 IO Board Configuration</h3>
+            <div class='navbar'>
+                <ul>
+                    <li><a id="navtab-node_info">Node Information</a></li>
+                    <li><a id="navtab-firmware_upload">Firmware Update</a></li>
+                    <li><a id="navtab-wifi_info">WiFi Configuration</a></li>
+                    <li><a id="navtab-config">Node Configuration</a></li>
+                </ul>
+            </div>
+        </section>
+    </header>
+    <section class="container">
+        <section class="container" id="loading">
+            <h1 id="h1-loading">Loading...</h1>
+            <h1 id="h1-reboot" style="display:none;">Node rebooting...</h1>
+            <h1 id="h1-factoryreset" style="display:none;">Factory Reset in progress...</h1>
+            <div class="spinner"></div>
+        </section>
+        <section class="container" style="display:none;" id="node_info">
+            <div class="row">
+                <div class="column"><b>Node ID:</b></div>
+                <div class="column column-50"><input type="text" id="node_id" value="PENDING"
+                        readonly></input></div>
+            </div>
+            <div class="row" style="height: 3.8rem;">
+                <div class="column"><b>Software Version:</b></div>
+                <div class="column column-75" id="sw_version">PENDING</div>
+            </div>
+            <div id="node_info_dynamic"></div>
+            <div class="row">&nbsp;</div>
+            <div class="row">
+                <div class="column"><button href="#" onclick="factory_reset()">Factory Reset</button></div>
+            </div>
+        </section>
+        <section class="container" style="display:none;" id="firmware_upload">
+            <div class="row">
+                <div class="column column-25"><label for="firmware_file">Firmware:</label></div>
+                <div class="column column-75"><input type="file" id="firmware_file" accept=".bin" /></div>
+            </div>
+            <div class="row">&nbsp;<div id="spinner-firmware" class="spinner" style="display:none;"></div><span
+                    id="firmware_upload_results"></span></div>
+            <div class="row">
+                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button>
+                </div>
+            </div>
+        </section>
+        <section class="container" style="display:none;" id="wifi_info">
+            <div class="row">
+                <div class="column column-25"><label for="wifi-mode">WiFi Mode:</label></div>
+                <div class="column column-75"><select id="wifi-mode" oninput="wifi_mode_change()">
+                        <option value="0">Disabled</option>
+                        <option value="1">Station Only</option>
+                        <option value="2">SoftAP Only</option>
+                        <option value="3">Station and SoftAP</option>
+                    </select>
+                </div>
+            </div>
+            <div id="wifi-sta">
+                <div class="row">
+                    <div class="column column-25"><label for="wifi-sta-ssid">Station SSID:</label></div>
+                    <div class="column column-75"><input type="text" id="wifi-sta-ssid"></div>
+                </div>
+                <div class="row">
+                    <div class="column column-25"><label for="wifi-sta-password">Station Password:</label></div>
+                    <div class="column column-75"><input type="password" id="wifi-sta-password"></div>
+                </div>
+                <div id="wifi-sta-ip" style="display:none;">
+                    <div class="row">
+                        <div class="column column-25"><label for="wifi-sta-ip-mode">Station IP Assignment:</label></div>
+                        <div class="column column-75"><select id="wifi-sta-ip-mode"
+                                onchange="wifi_sta_ip_mode_change()">
+                                <option value="dhcp">DHCP</option>
+                                <option value="static">Static IP</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="wifi-sta-static-ip" style="display:none;">
+                    <div class="row">
+                        <div class="column column-25"><label for="wifi-sta-ip">IP:</label></div>
+                        <div class="column column-75"><input type="text" id="wifi-sta-ip"></div>
+                    </div>
+                    <div class="row">
+                        <div class="column column-25"><label for="wifi-sta-gateway">Gateway IP:</label></div>
+                        <div class="column column-75"><input type="text" id="wifi-sta-gateway"></div>
+                    </div>
+                    <div class="row">
+                        <div class="column column-25"><label for="wifi-sta-netmask">Subnet Mask:</label></div>
+                        <div class="column column-75"><input type="text" id="wifi-sta-netmask" value="255.255.255.0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="column column-25"><label for="wifi-dns">DNS:</label></div>
+                        <div class="column column-75"><input id="wifi-dns" type="text" value="8.8.8.8"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="spinner-wifi" class="spinner" style="display:none;"></div>
+            <div class="container" id="wifi-sta-scan-results" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SSID</th>
+                            <th>Signal Strength</th>
+                            <th>Encryption</th>
+                            <th>Select</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scan-results">
+                    </tbody>
+                </table>
+            </div>
+            <div class="row">&nbsp;</div>
+            <div class="row" id="wifi-buttons">
+                <div class="column column-25"><button id="btn-wifi-save" href="#" onclick="wifi_save()">Save</button>
+                </div>
+                <div class="column column-25"><button id="btn-sta-scan" href="#" onclick="wifi_scan()">WiFi
+                        Scan</button></div>
+            </div>
+        </section>
+        <section class="container" id="config" style="display:none;">
+            <div class="row tabs">
+                <a href="#" class="button" id="configtab-config_wifi">WiFi</a>
+            </div>
+            <div class="well" id="config_wifi">
+            </div>
+        </section>
+    </section>
+    <script>
+        var cdi_segment_loader = [];
+        var ws_pending_send = [];
+        var webSocket;
+        function ws_send(text) {
+            // if the socket is not in an open state, defer the send until we have connected
+            if (webSocket.readyState != WebSocket.OPEN) {
+                ws_pending_send.push(text);
+                // if we are not already trying to connect try and connect now
+                if (webSocket.readyState != WebSocket.CONNECTING) {
+                    connectWebSocket();
+                }
+                return;
+            }
+            webSocket.send(text);
+        }
+        function connectWebSocket() {
+            var socketUrl = String.format('ws://{0}:{1}/ws', window.location.host, window.location.port);
+            webSocket = new WebSocket(socketUrl);
+            webSocket.addEventListener('open', (event) => {
+                while (ws_pending_send.length) {
+                    webSocket.send(ws_pending_send.pop());
+                }
+            });
+            webSocket.addEventListener('error', (event) => {
+                console.error('WS:', event);
+            });
+            webSocket.addEventListener('close', (event) => {
+                console.warn('WS:', event);
+            });
+            webSocket.addEventListener('message', (incoming_messages) => {
+                var messages = incoming_messages.data.split(/[\r\n]+/);
+                messages.forEach(msg => {
+                    if (msg.length > 0) {
+                        var json = JSON.parse(msg);
+                        if (!json.hasOwnProperty('resp_type')) {
+                            console.error('Invalid JSON payload (missing resp_type):', msg);
+                        } else if (json.resp_type === 'error') {
+                            console.error('ERROR:', json.error);
+                        } else if (json.resp_type === 'info') {
+                            $('#node_id').val(pad_hex(json.node_id, 12));
+                            $('#sw_version').text(json.snip_sw);
+                            $('[id^=navtab-]').each(function (i, e) {
+                                $(e).attr('href', '#');
+                            });
+                        } else if (json.resp_type === 'wifi') {
+                            $('#wifi-mode').val(json.mode);
+                            $('#wifi-sta-ssid').val(json.sta_ssid);
+                            // TODO: add SoftAP SSID printing
+                        } else if (json.resp_type === 'field-saved') {
+                            hide_spinner(json.target);
+                        } else if (json.resp_type === 'field-value') {
+                            $('#' + json.target).val(json.value);
+                            hide_spinner(json.target);
+                        } else if (json.resp_type === 'nodeid') {
+                            if (json.reboot) {
+                                setTimeout(function () { location.reload(); }, 5000);
+                                $('#node_info').hide();
+                                $('#h1-loading').hide();
+                                $('#h1-reboot').show();
+                                $('#loading').show();
+                            } else {
+                                alert('The node rejected the updated node ID.');
+                            }
+                            hide_spinner('nodeid');
+                        } else if (json.resp_type === 'factory-reset') {
+                            $('#node_info').hide();
+                            $('#h1-loading').hide();
+                            $('#h1-reboot').hide();
+                            $('#h1-factoryreset').show();
+                            $('#loading').show();
+                            setTimeout(function () { location.reload(); }, 5000);
+                            hide_spinner('nodeid');
+                        } else if (json.resp_type === 'wifi-scan') {
+                            hide_spinner('wifi');
+                            $('[id^=wifi-select-]').each(function (i, e) {
+                                $(e).on('click', function () {
+                                    $('#wifi-sta-ssid').val($(e).attr('id').replace('wifi-select-', ''));
+                                });
+                            });
+                            $('#wifi-sta-scan-results').show();
+                            $('#wifi-buttons').show();
+                        } else if (json.resp_type === 'wifi-entry') {
+                            // filter out entries that have a blank ssid (hidden) or have an RSSI that is lower than -85
+                            if (json.rssi > -85 && json.ssid.length > 0) {
+                                var auth_values = ['None', 'WEP', 'WPA', 'WPA2', 'WPA/WPA2', 'WPA2 Enterprise'];
+                                var rssi_class = 'wifi-none';
+                                if (json.rssi < -80) {
+                                    rssi_class = 'wifi-none';
+                                } else if (json.rssi < -70) {
+                                    rssi_class = 'wifi-quarter';
+                                } else if (json.rssi < -60) {
+                                    rssi_class = 'wifi-half';
+                                } else {
+                                    rssi_class = 'wifi-full';
+                                }
+                                $('#scan-results').append(String.format('<tr><td>{0}</td>' +
+                                    '<td class="{1}" title="{2}"/></td>' +
+                                    '<td>{3}</td>' +
+                                    '<td><button class="button-small" id="wifi-select-{0}">Select</button></td>' +
+                                    '</tr>', decodeURI(json.ssid), rssi_class, json.rssi, auth_values[json.auth]));
+                            }
+                        }
+                        
+                    }
+                });
+            });
+        }
+        function hide_spinner(target) {
+            $('#spinner-' + target).hide();
+        }
+        function show_spinner(target) {
+            $('#spinner-' + target).show();
+        }
+        function pad_hex(str, length) {
+            var hex = new Array(length + 1).join('0') + str;
+            return hex.substr(-length).match(/.{1,2}/g).join('.');
+        }
+        function enable_button(field) {
+            $('#btn-' + field).removeAttr('disabled');
+        }
+        function disable_button(field) {
+            $('#btn-' + field).attr('disabled', true);
+        }
+        function factory_reset() {
+            if (confirm('Are you sure you want to perform a Factory Reset?')) {
+                ws_send(JSON.stringify({req_type:'factory-reset'}));
+            }
+        }
+        function wifi_scan() {
+            $('#wifi-sta-scan-results').hide();
+            $('#scan-results').children().remove();
+            $('#wifi-buttons').hide();
+            show_spinner('wifi');
+            ws_send(JSON.stringify({req_type:'wifi-scan'}));
+        }
+        function upload_ota() {
+            var xhr = new XMLHttpRequest();
+            var file = $('#firmware_file')[0].files[0];
+            if (file.size > 1024 * 1024) {
+                $('#firmware_upload_results').append("<p>Firmware is too large for upload, aborting!</p>");
+                return;
+            }
+            var data = new FormData();
+            data.append('firmware', file);
+            $('#btn-firmware_upload').hide();
+            show_spinner('firmware');
+            $('#firmware_upload_results').empty();
+            fetch('/ota', { method: 'POST', body: data })
+                .then(response => response.text())
+                .then(text => {
+                    hide_spinner('firmware');
+                    $('#firmware_upload_results').append("<p>Firmware upload complete, node will restart and this window will refresh.</p>");
+                    setTimeout(function () { location.reload(); }, 15000);
+                    $('#btn-firmware_upload').show();
+                })
+                .catch((error) => {
+                    console.error(error);
+                    $('#firmware_upload_results').append("<p>Firmware upload failed.</p>");
+                    hide_spinner('firmware');
+                    $('#btn-firmware_upload').show();
+                });
+        }
+        function add_tab_events(tab_key) {
+            $(String.format('[id^={0}-]', tab_key)).each(function (i, tab) {
+                $(tab).on('click', function () {
+                    $(String.format('[id^={0}-]', tab_key)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
+                        var tab_content = $(other_tab).attr('id').replace(String.format('{0}-', tab_key), '#');
+                        $(tab_content).hide();
+                        $(other_tab).removeClass('active');
+                        $(other_tab).addClass('inactive');
+                        return true;
+                    });
+                    var tab_content = $(tab).attr('id').replace(String.format('{0}-', tab_key), '#');
+                    $(tab_content).show();
+                    $(tab).addClass('active');
+                    $(tab).removeClass('inactive');
+                })
+            });
+        }
+        $(function () {
+            registerStringFormat();
+            connectWebSocket();
+            console.log('Downloading cdi.xml to generate config dialogs');
+            fetch('/fs?path=/fs/cdi.xml&remove_nulls=true')
+                .then(res => res.text())
+                .then(cdi => build_cdi_dom(cdi));
+            add_tab_events('navtab');
+            add_tab_events('configtab');
+        });
+        function wifi_sta_ip_mode_change() {
+            if ($('#wifi-sta-ip-mode').val() !== 'dhcp') {
+                $('#wifi-sta-static-ip').show();
+            }
+            else {
+                $('#wifi-sta-static-ip').hide();
+            }
+        }
+        function wifi_mode_change() {
+            var mode = parseInt($('#wifi-mode').val());
+            if (mode === 0) {
+                // disabled
+                $('#wifi-sta').hide();
+                $('#wifi-sta-ip').hide();
+                $('#btn-sta-scan').hide();
+            } else if (mode !== 2) {
+                // station or station + softap
+                $('#wifi-sta').show();
+                $('#wifi-sta-ip').show();
+                $('#btn-sta-scan').show();
+            } else {
+                // softap only
+                $('#wifi-sta').hide();
+                $('#wifi-sta-ip').hide();
+            }
+        }
+        function wifi_save() {
+            var mode = $('#wifi-mode').val();
+            var url = String.format('/wifi?mode={0}', mode);
+            if (mode === '1' || mode === '3') {
+                url += String.format('&ssid={0}&pass={1}', $('#wifi-sta-ssid').val(), $('#wifi-sta-password').val());
+            }
+            fetch(url, { method: 'POST', body: ' ', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+                .then(res => { alert('WiFi configuration persisted, node rebooting'); setTimeout(function () { location.reload(); }, 15000); })
+                .catch(alert('WiFi configuration persistence failed'));
+        }
+        function process_group(group) {
+            var groupsize = 0;
+            if (group.nodeName == 'int' || group.nodeName == 'string') {
+                groupsize += parseInt($(group).attr('size'));
+            } else if (group.nodeName == 'eventid') {
+                groupsize += 8;
+            } else if (group.nodeName == 'group') {
+                if ($.isNumeric($(group).attr('offset'))) {
+                    groupsize += parseInt($(group).attr('offset'));
+                }
+                $(group).children().each(function (i, c) {
+                    groupsize += process_group(c);
+                });
+            }
+            return groupsize;
+        }
+        function calculate_offsets(cdi, space) {
+            var offsets = {};
+            var segment = $(cdi).find('segment').filter(
+                function (i, e) {
+                    return parseInt($(e).attr('space')) === space && parseInt($(e).attr('origin')) > 0;
+                });
+            var offs = parseInt($(segment).attr('origin'));
+            $(segment).children().each(function (i, e) {
+                var group_name = 'unknown';
+                if (space === 251) {
+                    group_name = 'node_info';
+                } else {
+                    $(e.children).each(function (i, e) {
+                        if (e.nodeName === 'name') {
+                            group_name = $(e).text();
+                        }
+                    });
+                }
+                var replica_count = 1;
+                if ($(e).attr('replication')) {
+                    replica_count = parseInt($(e).attr('replication'));
+                }
+                var groupsize = 0;
+                $(e.children).each(function (i, c) {
+                    groupsize += process_group(c);
+                });
+                offsets[group_name] = { size: groupsize, replicas: replica_count, offset: offs };
+                offs += (groupsize * replica_count);
+            });
+            return offsets;
+        }
+        function generate_cdi_dynamic_content(space, group, offset) {
+            var size = 0;
+            // these nodes can be safely dropped from rendering
+            if (group.nodeName === 'name' || group.nodeName === 'description' || group.nodeName === 'repname') {
+                return ['', 0];
+            }
+            var content = '';
+            var node_data_type = group.nodeName;
+            var node_name = '';
+            var is_mapped = false;
+            var mapped = undefined;
+            var node_description = '';
+            var node_alias = String.format('cdi_{0}', Math.random()).replace(/\./g, '_');
+            for (child = 0; child < group.children.length; child++) {
+                if (group.children[child].nodeName === 'name') {
+                    node_name = $(group.children[child]).text();
+                } else if (group.children[child].nodeName === 'map') {
+                    is_mapped = true;
+                    mapped = group.children[child];
+                } else if (group.children[child].nodeName === 'description') {
+                    node_description = $(group.children[child]).text().replace(/\n/g, '<br/>');
+                }
+            };
+            if (is_mapped) {
+                size = parseInt($(group).attr('size'));
+                console.groupCollapsed('Mapped:', node_name, 'offset:', offset, 'size:', size, 'description:', node_description);
+                content += '<div class="row">';
+                content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
+                content += String.format('<div class="column column-50"><select id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')">', node_alias, offset, node_data_type, size);
+                $(mapped.children).each(function (i, e) {
+                    console.log($(e).find('value').text(), '=>', $(e).find('property').text());
+                    content += String.format('<option value="{0}">{1}</option>', $(e).find('property').text(), $(e).find('value').text());
+                });
+                content += '</select></div>';
+                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
+                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
+                content += '</div>';
+                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
+                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                console.groupEnd();
+            } else if (node_data_type === 'group') {
+                if ($.isNumeric(parseInt($(group).attr('offset'))) && node_name === '') {
+                    size = parseInt($(group).attr('offset'));
+                    node_name = 'hidden'
+                }
+                if (group.children.length > 0) {
+                    if (node_name !== '') {
+                        content += String.format('<fieldset><legend>{0}:</legend>', node_name);
+                        console.groupCollapsed(node_name);
+                    } else {
+                        console.groupCollapsed('unnamed group');
+                    }
+                    content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
+                    $(group.children).each(function (i, e) {
+                        var res = generate_cdi_dynamic_content(space, e, offset + size);
+                        content += res[0];
+                        size += res[1];
+                    });
+                    console.groupEnd();
+                    if (node_name !== '') {
+                        content += '</fieldset>';
+                    }
+                }
+            } else if (node_name !== '') {
+                if (node_data_type === 'eventid') {
+                    size = 8; // events are always 8 bytes
+                } else {
+                    size = parseInt($(group).attr('size'));
+                }
+                console.log('Entry:', node_name, 'offset:', offset, 'size:', size, 'datatype:', node_data_type, 'description:', node_description);
+                content += '<div class="row">';
+                content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
+                content += String.format('<div class="column column-50"><input type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
+                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
+                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
+                content += '</div>';
+                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description)
+                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+            }
+            return [content, size];
+        }
+        function cdi_dynamic_group(cdi, space, group, target_selector, offsets, xpath = String.format("//segment[@space='{0}']/group[name[text()='{1}']]", space, group)) {
+            var nodes = cdi.evaluate(xpath, cdi);
+            var node = nodes.iterateNext();
+            var offs = offsets[group].offset;
+            var group_name = 'unnamed';
+            $(node.children).each(function (i, e) {
+                if (e.nodeName === 'name') {
+                    group_name = $(e).text();
+                }
+            });
+            console.groupCollapsed(group_name, 'segment:', space);
+            if (offsets[group].replicas === 1) {
+                $(node.children).each(function (i, e) {
+                    var rendered = generate_cdi_dynamic_content(space, e, offs);
+                    $(target_selector).append(rendered[0]);
+                    offs += rendered[1];
+                });
+            } else {
+                var group_tabs = '<div class="row tabs">';
+                var group_content = '';
+                var alias = $(node).find('repname').text();
+                var group_id = group.replace(/ /g, '_');
+                for (replica = 1; replica <= offsets[group].replicas; replica++) {
+                    console.groupCollapsed(alias, replica);
+                    group_tabs += String.format('<a href="#" class="button" id="{0}-{1}">{2} {1}</a>', group_id, replica, alias);
+                    group_content += String.format('<div class="well" id="rep-{0}-{1}" style="display: {3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
+                    $(node).children().each(function (i, e) {
+                        var rendered = generate_cdi_dynamic_content(space, e, offs);
+                        group_content += rendered[0];
+                        offs += rendered[1];
+                    });
+                    group_content += '</fieldset></div>';
+                    console.groupEnd();
+                }
+                $(target_selector).append(group_tabs);
+                $(target_selector).append(group_content);
+                $(String.format('[id^={0}-]', group_id)).each(function (i, tab) {
+                    $(tab).on('click', function (e) {
+                        var selected_tab = $(tab).attr('id');
+                        var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
+                        $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
+                            $('#' + $(other_tab).attr('id')).hide();
+                            $(other_tab).removeClass('active');
+                            $(other_tab).addClass('inactive');
+                            return true;
+                        });
+                        var tab_content = String.format('#rep-{0}', selected_tab);
+                        $(tab_content).show();
+                        $(tab).addClass('active');
+                        $(tab).removeClass('inactive');
+                    })
+                });
+            }
+            console.groupEnd();
+        }
+        function build_cdi_dom(cdi) {
+            var parser = new window.DOMParser();
+            var doc = parser.parseFromString(cdi, "text/xml");
+            var offsets_251 = calculate_offsets(doc, 251);
+            var offsets_253 = calculate_offsets(doc, 253);
+            cdi_dynamic_group(doc, 251, 'node_info', '#node_info_dynamic', offsets_251, '//segment[@space="251"]');
+            cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
+            cdi_segment_loader.push('{"req_type":"info"}');
+            cdi_segment_loader.push('{"req_type":"wifi"}');
+            cdi_segment_loader.forEach(elem => ws_send(elem));
+            cdi_segment_loader.splice(0, cdi_segment_loader.length);
+            $('#node_info').show();
+            $('#loading').hide();
+            $('[id^=btn-save-]').each(function (i, e) {
+                $(e).on('click', function () {
+                    var cdi_field = $(e).attr('id').replace('btn-save-', '');
+                    show_spinner(cdi_field);
+                    var offset = parseInt($('#' + cdi_field).attr('data-offset'));
+                    var size = parseInt($('#' + cdi_field).attr('data-size'));
+                    var type = $('#' + cdi_field).attr('data-type');
+                    var value = $('#' + cdi_field).val();
+                    ws_send(JSON.stringify({req_type:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
+                    disable_button('save-' + cdi_field);
+                });
+            });
+            $('[id^=btn-refresh-]').each(function (i, e) {
+                $(e).on('click', function () {
+                    var cdi_field = $(e).attr('id').replace('btn-refresh-', '');
+                    var offset = parseInt($('#' + cdi_field).attr('data-offset'));
+                    var size = parseInt($('#' + cdi_field).attr('data-size'));
+                    var type = $('#' + cdi_field).attr('data-type');
+                    show_spinner(cdi_field);
+                    ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:cdi_field}));
+                    disable_button('save-' + cdi_field);
+                });
+            });
+        }
+        function registerStringFormat() {
+            if (!String.format) {
+                String.format = function (format) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    return format.replace(/{(\d+)}/g, function (match, number) {
+                        return typeof args[number] != 'undefined'
+                            ? args[number]
+                            : match
+                            ;
+                    });
+                };
+            }
+        }
+        // these should really be inside cash.js but are not exposed
+        function isHidden(ele) {
+            return computeStyle(ele, 'display') === 'none';
+        }
+        function computeStyle(ele, prop, isVariable) {
+            if (!isElement(ele)) return;
+            var style = win.getComputedStyle(ele, null);
+            return isVariable ? style.getPropertyValue(prop) || undefined : style[prop] || ele.style[prop];
+        }
+        function isElement(x) {
+            return !!x && x.nodeType === 1;
+        }
+    </script>
+</body>
