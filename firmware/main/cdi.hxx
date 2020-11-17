@@ -56,8 +56,10 @@ CDI_GROUP(IoBoard, Segment(openlcb::MemoryConfigDefs::SPACE_CONFIG),
 CDI_GROUP_ENTRY(internal_config, openlcb::InternalConfigData);
 CDI_GROUP_ENTRY(wifi, openmrn_arduino::WiFiConfiguration,
                 Name("WiFi Configuration"));
-CDI_GROUP_ENTRY(gpi, INPUT_ONLY_PINS, Name("Input Only Pins"));
-CDI_GROUP_ENTRY(gpio, CONFIGURABLE_GPIO_PINS, Name("Input/Output Pins"));
+CDI_GROUP_ENTRY(gpi, INPUT_ONLY_PINS, Name("Input Only Pins"),
+                RepName("Input"));
+CDI_GROUP_ENTRY(gpio, CONFIGURABLE_GPIO_PINS, Name("Input/Output Pins"),
+                RepName("IO"));
 CDI_GROUP_END();
 
 /// This segment is only needed temporarily until there is program code to set

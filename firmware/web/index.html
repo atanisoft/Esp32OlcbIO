@@ -198,7 +198,7 @@
         <section class="container" style="display:none;" id="node_info">
             <div class="row">
                 <div class="column"><b>Node ID:</b></div>
-                <div class="column column-50"><input type="text" id="node_id" value="PENDING"
+                <div class="column column-75"><input type="text" id="node_id" value="PENDING"
                         readonly></input></div>
             </div>
             <div class="row" style="height: 3.8rem;">
@@ -300,8 +300,14 @@
         <section class="container" id="config" style="display:none;">
             <div class="row tabs">
                 <a href="#" class="button" id="configtab-config_wifi">WiFi</a>
+                <a href="#" class="button" id="configtab-config_gpi">Inputs</a>
+                <a href="#" class="button" id="configtab-config_gpio">Input/Outputs</a>
             </div>
             <div class="well" id="config_wifi">
+            </div>
+            <div class="well" id="config_gpi">
+            </div>
+            <div class="well" id="config_gpio">
             </div>
         </section>
     </section>
@@ -721,6 +727,8 @@
             var offsets_253 = calculate_offsets(doc, 253);
             cdi_dynamic_group(doc, 251, 'node_info', '#node_info_dynamic', offsets_251, '//segment[@space="251"]');
             cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
+            cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
+            cdi_dynamic_group(doc, 253, 'Input/Output Pins', '#config_gpio', offsets_253);
             cdi_segment_loader.push('{"req_type":"info"}');
             cdi_segment_loader.push('{"req_type":"wifi"}');
             cdi_segment_loader.forEach(elem => ws_send(elem));

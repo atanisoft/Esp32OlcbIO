@@ -55,13 +55,13 @@ GPIO_PIN(IO3, GpioOutputSafeHigh, GPIO_NUM_16);
 GPIO_PIN(IO4, GpioOutputSafeHigh, GPIO_NUM_0);
 
 /// Configurable IO Pin 5.
-GPIO_PIN(IO5, GpioOutputSafeHigh, GPIO_NUM_2);
+GPIO_PIN(IO5, GpioOutputSafeLow, GPIO_NUM_2);
 
 /// Configurable IO Pin 6.
 GPIO_PIN(IO6, GpioOutputSafeHigh, GPIO_NUM_15);
 
 /// Configurable IO Pin 7.
-GPIO_PIN(IO7, GpioOutputSafeHigh, GPIO_NUM_12);
+GPIO_PIN(IO7, GpioOutputSafeLow, GPIO_NUM_12);
 
 /// Configurable IO Pin 8.
 GPIO_PIN(IO8, GpioOutputSafeHigh, GPIO_NUM_13);

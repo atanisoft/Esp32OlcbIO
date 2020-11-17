@@ -42,7 +42,7 @@ using std::string;
 #include <utils/logging.h>
 
 /// NVS Persistence namespace.
-static constexpr char NVS_NAMESPACE[] = "nodecfg";
+static constexpr char NVS_NAMESPACE[] = "iocfg";
 
 /// NVS Persistence key.
 static constexpr char NVS_CFG_KEY[] = "cfg";
@@ -144,6 +144,7 @@ esp_err_t default_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Initializing default configuration");
     bzero(config, sizeof(node_config_t));
+    config->node_id = CONFIG_OLCB_NODE_ID;
     config->wifi_mode = (wifi_mode_t)CONFIG_WIFI_MODE;
     strcpy(config->sta_ssid, CONFIG_WIFI_STATION_SSID);
     strcpy(config->sta_pass, CONFIG_WIFI_STATION_PASSWORD);
@@ -196,6 +197,8 @@ void dump_config(node_config_t *config)
             LOG(INFO, "[NVS] WiFi mode: %d (SoftAP)", config->wifi_mode);
             LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
             LOG(INFO, "[NVS] SoftAP SSID: %s", config->ap_ssid);
+            //LOG(INFO, "[NVS] SoftAP PW: %s", config->ap_pass);
+            LOG(INFO, "[NVS] SoftAP Auth: %d", config->ap_auth);
             break;
         case WIFI_MODE_APSTA:
             bzero(&mac, 6);
@@ -209,7 +212,7 @@ void dump_config(node_config_t *config)
                 esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
             LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
             LOG(INFO, "[NVS] SoftAP SSID: esp32s2io_%s"
-              , uint64_to_string_hex(CONFIG_OLCB_NODE_ID).c_str());
+              , uint64_to_string_hex(config->node_id).c_str());
             break;
         case WIFI_MODE_NULL:
         case WIFI_MODE_MAX:

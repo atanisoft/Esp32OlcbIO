@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.5)
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 set(SUPPORTED_TARGETS esp32)
-project(ESP32OlcbHub)
+project(ESP32IO)
 
 ###############################################################################
 # Switch from GNU++11 to GNU++14

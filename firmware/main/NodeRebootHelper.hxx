@@ -50,10 +50,10 @@ class NodeRebootHelper : public Singleton<NodeRebootHelper>
 public:
     /// Constructor.
     ///
-    /// @param stack is the @ref SimpleCanStack to shutdown.
+    /// @param stack is the @ref SimpleStackBase to shutdown.
     /// @param fd is the file handle for the configuration file.
     /// @param sync is the background synchronization task to stop.
-    NodeRebootHelper(openlcb::SimpleCanStack *stack, int fd
+    NodeRebootHelper(openlcb::SimpleStackBase *stack, int fd
                    , AutoSyncFileFlow *sync)
                    : stack_(stack), fd_(fd), sync_(sync)
     {
@@ -83,7 +83,7 @@ public:
     }
 private:
     /// @ref SimpleCanStack to be shutdown.
-    openlcb::SimpleCanStack *stack_;
+    openlcb::SimpleStackBase *stack_;
 
     /// Configuration file descriptor to be closed prior to shutdown.
     int fd_;

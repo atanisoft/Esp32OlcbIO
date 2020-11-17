@@ -47,6 +47,7 @@ static constexpr size_t HOSTNAME_PREFIX_LEN = 21;
 typedef struct
 {
     bool force_reset;
+    uint64_t node_id;
     wifi_mode_t wifi_mode;
     char hostname_prefix[HOSTNAME_PREFIX_LEN];
     char sta_ssid[AP_SSID_PASS_LEN];
