@@ -86,6 +86,17 @@ require adjustments to usage patterns.
 The default behavior of the User button is to emit the well-known event
 `01.00.00.00.00.00.FE.00` (Node Identity).
 
+## Base IO PCB
+
+The ESP32 IO Board PCB can be found under the pcb directory and is provided
+as both KiCad files and generated Gerber files.
+
+### Mouser BOM
+
+The ESP32 IO Board components have been entered on Mouser for easy ordering
+via this shared [project](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=61cf6bcac3).
+
 ## Extending the base board
 
-A template daughter board will be provided in the near future.
+The ESP32 IO Board can be extended by using the pcb-ext daughter board files
+as a basis for creating a compatible extension PCB.
