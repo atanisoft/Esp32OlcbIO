@@ -728,7 +728,7 @@
             cdi_dynamic_group(doc, 251, 'node_info', '#node_info_dynamic', offsets_251, '//segment[@space="251"]');
             cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
-            cdi_dynamic_group(doc, 253, 'Input/Output Pins', '#config_gpio', offsets_253);
+            cdi_dynamic_group(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
             cdi_segment_loader.push('{"req_type":"info"}');
             cdi_segment_loader.push('{"req_type":"wifi"}');
             cdi_segment_loader.forEach(elem => ws_send(elem));
