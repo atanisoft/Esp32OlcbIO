@@ -89,13 +89,6 @@ OVERRIDE_CONST(gridconnect_bridge_max_outgoing_packets, 10);
 OVERRIDE_CONST(socket_listener_backlog, 2);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Increase the websocket max frame size to allow space for WiFi scan results
-// to be sent in a single frame.
-// TODO: move WS processing out of the callback so this is not needed.
-///////////////////////////////////////////////////////////////////////////////
-OVERRIDE_CONST(httpd_websocket_max_frame_size, 1024);
-
-///////////////////////////////////////////////////////////////////////////////
 // Increase the CAN RX frame buffer size to reduce overruns when the hub has
 // high load (ie: large datagram transport).
 ///////////////////////////////////////////////////////////////////////////////
