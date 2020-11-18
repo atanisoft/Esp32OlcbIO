@@ -94,7 +94,7 @@ as both KiCad files and generated Gerber files.
 ### Mouser BOM
 
 The ESP32 IO Board components have been entered on Mouser for easy ordering
-via this shared [project](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=61cf6bcac3).
+via this shared [project](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=f3c392b9f2).
 
 ## Extending the base board
 
