@@ -89,8 +89,8 @@ OVERRIDE_CONST(gridconnect_bridge_max_outgoing_packets, 10);
 OVERRIDE_CONST(socket_listener_backlog, 2);
 
 ///////////////////////////////////////////////////////////////////////////////
-// Increase the CAN RX frame buffer size to reduce overruns when the hub has
-// high load (ie: large datagram transport).
+// Increase the CAN RX frame buffer size to reduce overruns when there is high
+// traffic load (ie: large datagram transport).
 ///////////////////////////////////////////////////////////////////////////////
 OVERRIDE_CONST(can_rx_buffer_size, 64);
 
