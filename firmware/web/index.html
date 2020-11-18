@@ -60,7 +60,7 @@
         }
 
         .tabs>.button {
-            margin: 0;
+            margin: 0.1rem;
             float: left;
             border-bottom-left-radius: 0;
             border-bottom-right-radius: 0;
@@ -208,7 +208,8 @@
             <div id="node_info_dynamic"></div>
             <div class="row">&nbsp;</div>
             <div class="row">
-                <div class="column"><button href="#" onclick="factory_reset()">Factory Reset</button></div>
+                <div class="column column-25"><button href="#" onclick="factory_reset()">Factory Reset</button></div>
+                <div class="column column-25"><button href="#" onclick="reset_events()">Reset Event IDs</button></div>
             </div>
         </section>
         <section class="container" style="display:none;" id="firmware_upload">
@@ -219,8 +220,7 @@
             <div class="row">&nbsp;<div id="spinner-firmware" class="spinner" style="display:none;"></div><span
                     id="firmware_upload_results"></span></div>
             <div class="row">
-                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button>
-                </div>
+                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button></div>
             </div>
         </section>
         <section class="container" style="display:none;" id="wifi_info">
@@ -305,9 +305,13 @@
             </div>
             <div class="well" id="config_wifi">
             </div>
-            <div class="well" id="config_gpi">
+            <div class="well" id="config_gpi" style="display:none;">
             </div>
-            <div class="well" id="config_gpio">
+            <div class="well" id="config_gpio" style="display:none;">
+            </div>
+            <div class="row">
+                <div class="column column-25"><button href="#" onclick="refresh_all_fields()">Refresh All</button></div>
+                <div class="column column-25"><button href="#" onclick="update_complete()">Update Complete</button></div>
             </div>
         </section>
     </section>
@@ -363,19 +367,12 @@
                         } else if (json.resp_type === 'field-saved') {
                             hide_spinner(json.target);
                         } else if (json.resp_type === 'field-value') {
-                            $('#' + json.target).val(json.value);
-                            hide_spinner(json.target);
-                        } else if (json.resp_type === 'nodeid') {
-                            if (json.reboot) {
-                                setTimeout(function () { location.reload(); }, 5000);
-                                $('#node_info').hide();
-                                $('#h1-loading').hide();
-                                $('#h1-reboot').show();
-                                $('#loading').show();
+                            if (json.type === 'eventid') {
+                                $('#' + json.target).val(pad_hex(json.value, 16));
                             } else {
-                                alert('The node rejected the updated node ID.');
+                                $('#' + json.target).val(json.value);
                             }
-                            hide_spinner('nodeid');
+                            hide_spinner(json.target);
                         } else if (json.resp_type === 'factory-reset') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
@@ -383,7 +380,8 @@
                             $('#h1-factoryreset').show();
                             $('#loading').show();
                             setTimeout(function () { location.reload(); }, 5000);
-                            hide_spinner('nodeid');
+                        } else if (json.resp_type === 'reset-events') {
+                            refresh_all_fields();
                         } else if (json.resp_type === 'wifi-scan') {
                             hide_spinner('wifi');
                             $('[id^=wifi-select-]').each(function (i, e) {
@@ -419,6 +417,22 @@
                 });
             });
         }
+        function refresh_all_fields() {
+            $('[id^=cdi_]').each(function (i, e) {
+                refresh_field($(e).attr('id'));
+            });
+        }
+        function update_complete() {
+            ws_send(JSON.stringify({req_type:'update-complete'}));
+        }
+        function refresh_field(field) {
+            var offset = parseInt($('#' + field).attr('data-offset'));
+            var size = parseInt($('#' + field).attr('data-size'));
+            var type = $('#' + field).attr('data-type');
+            show_spinner(field);
+            ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:field}));
+            disable_button('save-' + field);
+        }
         function hide_spinner(target) {
             $('#spinner-' + target).hide();
         }
@@ -438,6 +452,11 @@
         function factory_reset() {
             if (confirm('Are you sure you want to perform a Factory Reset?')) {
                 ws_send(JSON.stringify({req_type:'factory-reset'}));
+            }
+        }
+        function reset_events() {
+            if (confirm('Are you sure you want to reset all event IDs?')) {
+                ws_send(JSON.stringify({req_type:'reset-events'}));
             }
         }
         function wifi_scan() {
@@ -478,11 +497,10 @@
             $(String.format('[id^={0}-]', tab_key)).each(function (i, tab) {
                 $(tab).on('click', function () {
                     $(String.format('[id^={0}-]', tab_key)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
-                        var tab_content = $(other_tab).attr('id').replace(String.format('{0}-', tab_key), '#');
-                        $(tab_content).hide();
+                        var other_tab_content = $(other_tab).attr('id').replace(String.format('{0}-', tab_key), '#');
+                        $(other_tab_content).hide();
                         $(other_tab).removeClass('active');
                         $(other_tab).addClass('inactive');
-                        return true;
                     });
                     var tab_content = $(tab).attr('id').replace(String.format('{0}-', tab_key), '#');
                     $(tab_content).show();
@@ -690,6 +708,11 @@
                 for (replica = 1; replica <= offsets[group].replicas; replica++) {
                     console.groupCollapsed(alias, replica);
                     group_tabs += String.format('<a href="#" class="button" id="{0}-{1}">{2} {1}</a>', group_id, replica, alias);
+                    if (replica == 8 && replica < offsets[group].replicas) {
+                        // after eight tabs we run out of room for one row, add a break
+                        // to shift the content down one row
+                        group_tabs += '</div><div class="row tabs">';
+                    }
                     group_content += String.format('<div class="well" id="rep-{0}-{1}" style="display: {3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
                     $(node).children().each(function (i, e) {
                         var rendered = generate_cdi_dynamic_content(space, e, offs);
@@ -749,13 +772,7 @@
             });
             $('[id^=btn-refresh-]').each(function (i, e) {
                 $(e).on('click', function () {
-                    var cdi_field = $(e).attr('id').replace('btn-refresh-', '');
-                    var offset = parseInt($('#' + cdi_field).attr('data-offset'));
-                    var size = parseInt($('#' + cdi_field).attr('data-size'));
-                    var type = $('#' + cdi_field).attr('data-type');
-                    show_spinner(cdi_field);
-                    ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:cdi_field}));
-                    disable_button('save-' + cdi_field);
+                    refresh_field($(e).attr('id').replace('btn-refresh-', ''));
                 });
             });
         }

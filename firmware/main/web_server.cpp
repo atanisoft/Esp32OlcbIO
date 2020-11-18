@@ -178,13 +178,13 @@ public:
     }
 
 private:
-    uint8_t attempts_{5};
+    uint8_t attempts_{3};
     http::WebSocketFlow *socket_;
     size_t offs_;
     size_t size_;
     string target_;
     string type_;
-    string value_{""};
+    string value_;
     NodeHandle nodeHandle_;
 
     Action send_request()
@@ -237,7 +237,7 @@ private:
             {
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s"})!^!"
+                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"string"})!^!"
                       , target_.c_str(), b->data()->payload.c_str());
             }
             else if (type_ == "int")
@@ -257,16 +257,18 @@ private:
                 }
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%d"})!^!"
+                        R"!^!({"resp_type":"field-value","target":"%s","value":"%d","type":"int"})!^!"
                     , target_.c_str(), data);
             }
             else if (type_ == "eventid")
             {
+                uint64_t event_id = 0;
+                memcpy(&event_id, b->data()->payload.data(), sizeof(uint64_t));
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s"})!^!"
+                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"eventid"})!^!"
                     , target_.c_str()
-                    , uint64_to_string_hex(be64toh(*(b->data()->payload.data()))).c_str());
+                    , uint64_to_string_hex(be64toh(event_id)).c_str());
             }
         }
         else
@@ -278,20 +280,16 @@ private:
         response += "\n";
         socket_->send_text(response);
 
-        if (!value_.empty())
-        {
-            return invoke_subflow_and_wait(memory_client.get(), STATE(cleanup)
-                                         , MemoryConfigClientRequest::UPDATE_COMPLETE
-                                         , nodeHandle_);
-        }
-
-        return yield_and_call(STATE(cleanup));
+        return yield_and_call(STATE(cleanup_request));
     }
-    Action cleanup()
+
+    Action cleanup_request()
     {
         return delete_this();
     }
 };
+
+void factory_reset_events();
 
 void init_webserver(node_config_t *config, int fd, openlcb::SimpleStackBase *stack)
 {
@@ -366,7 +364,17 @@ void init_webserver(node_config_t *config, int fd, openlcb::SimpleStackBase *sta
                                       , cJSON_GetObjectItem(root, "size")->valueint
                                       , cJSON_GetObjectItem(root, "target")->valuestring
                                       , cJSON_GetObjectItem(root, "type")->valuestring);
+                cJSON_Delete(root);
                 return;
+            }
+            else if (!strcmp(req_type->valuestring, "update-complete"))
+            {
+                auto b = invoke_flow(memory_client.get()
+                                   , MemoryConfigClientRequest::UPDATE_COMPLETE
+                                   , openlcb::NodeHandle(openlcb::NodeID(CONFIG_OLCB_NODE_ID)));
+                response =
+                    StringPrintf(R"!^!({"resp_type":"update-complete","code":%d})!^!"
+                               , b->data()->resultCode);
             }
             else if (!strcmp(req_type->valuestring, "cdi-set"))
             {
@@ -424,6 +432,7 @@ void init_webserver(node_config_t *config, int fd, openlcb::SimpleStackBase *sta
                     value.push_back(data & 0xFF);
                     new CDIRequestProcessor(socket, offs, size, target, param_type, value);
                 }
+                cJSON_Delete(root);
                 return;
             }
             else if (!strcmp(req_type->valuestring, "factory-reset"))
@@ -431,8 +440,13 @@ void init_webserver(node_config_t *config, int fd, openlcb::SimpleStackBase *sta
                 if (force_factory_reset())
                 {
                     Singleton<esp32io::DelayRebootHelper>::instance()->start();
-                    response = R"!^!({"resp_type":"factory-reset","reboot":true})!^!";
+                    response = R"!^!({"resp_type":"factory-reset"})!^!";
                 }
+            }
+            else if (!strcmp(req_type->valuestring, "reset-events"))
+            {
+                factory_reset_events();
+                response = R"!^!({"resp_type":"reset-events"})!^!";
             }
             else if (!strcmp(req_type->valuestring, "wifi-scan"))
             {

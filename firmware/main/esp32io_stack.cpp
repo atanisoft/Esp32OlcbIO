@@ -113,6 +113,7 @@ constexpr const Gpio *const CONFIGURABLE_GPIO_PIN_INSTANCES[] =
 // TODO: shift to SimpleStackBase to allow shift to TCP/IP native stack rather
 // than GridConnect TCP/IP stack.
 openlcb::SimpleCanStack stack(CONFIG_OLCB_NODE_ID);
+static int config_fd;
 FactoryResetHelper factory_reset_helper(cfg);
 esp32io::DelayRebootHelper delayed_reboot(stack.service());
 esp32io::HealthMonitor health_mon(stack.service());
@@ -169,6 +170,13 @@ static void sntp_received(struct timeval *tv)
 }
 #endif // CONFIG_SNTP
 
+void factory_reset_events()
+{
+    LOG(WARNING, "[CDI] Resetting event IDs");
+    stack.factory_reset_all_events(cfg.seg().internal_config()
+                                    , CONFIG_OLCB_NODE_ID, config_fd);
+    fsync(config_fd);
+}
 
 openlcb::SimpleCanStack *prepare_openlcb_stack(node_config_t *config, bool reset_events)
 {
@@ -248,17 +256,14 @@ openlcb::SimpleCanStack *prepare_openlcb_stack(node_config_t *config, bool reset
 
     // Create config file and initiate factory reset if it doesn't exist or is
     // otherwise corrupted.
-    int config_fd =
+    config_fd =
         stack.create_config_file_if_needed(cfg.seg().internal_config()
                                          , CDI_VERSION
                                          , openlcb::CONFIG_FILE_SIZE);
 
     if (reset_events)
     {
-        LOG(WARNING, "[CDI] Resetting event IDs");
-        stack.factory_reset_all_events(cfg.seg().internal_config()
-                                     , CONFIG_OLCB_NODE_ID, config_fd);
-        fsync(config_fd);
+        factory_reset_events();
     }
 
     // Create auto-sync hook since LittleFS will not persist the config until
