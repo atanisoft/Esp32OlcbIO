@@ -43,28 +43,28 @@
 #include "sdkconfig.h"
 
 /// Configurable IO Pin 1.
-GPIO_PIN(IO1, GpioOutputSafeHigh, GPIO_NUM_18);
+GPIO_PIN(IO1, GpioInputNP, GPIO_NUM_18);
 
 /// Configurable IO Pin 2.
-GPIO_PIN(IO2, GpioOutputSafeHigh, GPIO_NUM_17);
+GPIO_PIN(IO2, GpioInputNP, GPIO_NUM_17);
 
 /// Configurable IO Pin 3.
-GPIO_PIN(IO3, GpioOutputSafeHigh, GPIO_NUM_16);
+GPIO_PIN(IO3, GpioInputNP, GPIO_NUM_16);
 
 /// Configurable IO Pin 4.
-GPIO_PIN(IO4, GpioOutputSafeHigh, GPIO_NUM_0);
+GPIO_PIN(IO4, GpioInputNP, GPIO_NUM_0);
 
 /// Configurable IO Pin 5.
-GPIO_PIN(IO5, GpioOutputSafeLow, GPIO_NUM_2);
+GPIO_PIN(IO5, GpioInputNP, GPIO_NUM_2);
 
 /// Configurable IO Pin 6.
-GPIO_PIN(IO6, GpioOutputSafeHigh, GPIO_NUM_15);
+GPIO_PIN(IO6, GpioInputNP, GPIO_NUM_15);
 
 /// Configurable IO Pin 7.
-GPIO_PIN(IO7, GpioOutputSafeLow, GPIO_NUM_12);
+GPIO_PIN(IO7, GpioInputNP, GPIO_NUM_12);
 
 /// Configurable IO Pin 8.
-GPIO_PIN(IO8, GpioOutputSafeHigh, GPIO_NUM_13);
+GPIO_PIN(IO8, GpioInputNP, GPIO_NUM_13);
 
 /// Input only pin 9.
 GPIO_PIN(IO9, GpioInputPU, GPIO_NUM_34);
@@ -73,22 +73,22 @@ GPIO_PIN(IO9, GpioInputPU, GPIO_NUM_34);
 GPIO_PIN(IO10, GpioInputPU, GPIO_NUM_35);
 
 /// Configurable IO Pin 11.
-GPIO_PIN(IO11, GpioOutputSafeHigh, GPIO_NUM_32);
+GPIO_PIN(IO11, GpioInputNP, GPIO_NUM_32);
 
 /// Configurable IO Pin 12.
-GPIO_PIN(IO12, GpioOutputSafeHigh, GPIO_NUM_33);
+GPIO_PIN(IO12, GpioInputNP, GPIO_NUM_33);
 
 /// Configurable IO Pin 13.
-GPIO_PIN(IO13, GpioOutputSafeHigh, GPIO_NUM_25);
+GPIO_PIN(IO13, GpioInputNP, GPIO_NUM_25);
 
 /// Configurable IO Pin 14.
-GPIO_PIN(IO14, GpioOutputSafeHigh, GPIO_NUM_26);
+GPIO_PIN(IO14, GpioInputNP, GPIO_NUM_26);
 
 /// Configurable IO Pin 15.
-GPIO_PIN(IO15, GpioOutputSafeHigh, GPIO_NUM_27);
+GPIO_PIN(IO15, GpioInputNP, GPIO_NUM_27);
 
 /// Configurable IO Pin 16.
-GPIO_PIN(IO16, GpioOutputSafeHigh, GPIO_NUM_14);
+GPIO_PIN(IO16, GpioInputNP, GPIO_NUM_14);
 
 /// Node Activity indicator LED. Active (ON) Low.
 GPIO_PIN(LED_ACTIVITY, GpioOutputSafeHighInvert, GPIO_NUM_22);
