@@ -100,6 +100,10 @@ if (NOT CONFIG_FREERTOS_HZ EQUAL 1000)
     message(FATAL_ERROR "FreeRTOS tick rate (hz) is required to be 1000.")
 endif()
 
+if (NOT CONFIG_FREERTOS_SUPPORT_STATIC_ALLOCATION)
+    message(FATAL_ERROR "FreeRTOS static allocation support must be enabled.")
+endif()
+
 if (NOT CONFIG_PARTITION_TABLE_FILENAME STREQUAL "esp32io-partitions.csv")
     message(FATAL_ERROR "The custom partition table option is not enabled in menuconfig and is required for compilation.")
 endif()
