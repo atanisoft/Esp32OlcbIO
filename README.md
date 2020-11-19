@@ -91,12 +91,45 @@ The default behavior of the User button is to emit the well-known event
 The ESP32 IO Board PCB can be found under the pcb directory and is provided
 as both KiCad files and generated Gerber files.
 
+![PCB Render](pcb/pcb.png)
+
 ### Mouser BOM
 
 The ESP32 IO Board components have been entered on Mouser for easy ordering
 via this shared [project](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=f3c392b9f2).
 
+#### Optional parts
+
+The following parts are optional depending on board usage:
+
+| Part | Mouser # | Notes |
+| ---- | -------- | ----- |
+| J2, J4 | 571-6-534237-1 | These are only needed for attaching an extension daughter board. |
+| J5 | 523-NY0210800000G | This is only required if using an external power supply. |
+
+#### Alternative part numbers
+
+The following parts have compatible alternatives:
+
+| Part | Default Mouser # | Alternative Mouser # | Notes |
+| ---- | ---------------- | -------------------- | ----- |
+| J2, J4 | 571-6-534237-1 | 992-13FX1-254MM, 485-598, 485-4158, 485-4156, 485-4159, 485-4157, 485-4155, 485-4160 | Parts 485-XXXX will need to be cut to the correct length. |
+| J6, J7 | 571-6-534237-1 | 534-949 or 493-HCJV1-812UK |
+
 ## Extending the base board
 
 The ESP32 IO Board can be extended by using the pcb-ext daughter board files
-as a basis for creating a compatible extension PCB.
+as a basis for creating a compatible extension PCB. This PCB sits on top of the
+base board.
+
+### Servo controller and 2x5 IDC extension
+
+A great example of extending the functionality of the base board would be to control turnouts via servos and relays (for frog polarity). Below is an example of one such approach to this using an I2C connected PCA9685 to control up to 16 servos while keeping all other pins available for controlling relays. Design files are not available for this at this time.
+
+![Extension PCB as Servo controller](pcb-ext/pcb-ext-servo-2x5.png)
+
+### Single character display example
+
+While not entirely practical for most use cases, this shows one example of creating a single character display using a 5x7 grid of WS2812 (or similar) addressable LEDs connected in series to a single IO pin on the base board. Design files are not available for this at this time.
+
+![Extension PCB as Digit](pcb-ext/pcb-ext.png)
