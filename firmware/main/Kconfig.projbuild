@@ -68,6 +68,17 @@ menu "WiFi Configuration"
         default "esp32io"
         depends on WIFI_MODE_SOFTAP || WIFI_MODE_SOFTAP_STATION
 
+    config WIFI_SOFTAP_CHANNEL
+        int "SoftAP Channel"
+        default 1
+        range 1 14
+        depends on WIFI_MODE_SOFTAP || WIFI_MODE_SOFTAP_STATION
+        help
+            This configures the channel that will be used by the SoftAP. There
+            are fourteen channels available to pick from and some are better
+            than others. The best channels to pick from are: 1, 6, 11 since
+            these do not overlap with other channels.
+
     config WIFI_STATION_SSID
         string "Station SSID"
         depends on WIFI_MODE_STATION || WIFI_MODE_SOFTAP_STATION

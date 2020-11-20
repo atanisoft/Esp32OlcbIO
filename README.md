@@ -26,8 +26,9 @@ sufficient current is available for the node to operate as intended.
 
 ### Node Brownout detection
 
-If the ESP32 detects a brownout it can (and should!) produce the well-known
-event `01.00.00.00.00.00.FF.F1` if possible.
+If the ESP32 detects a brownout condition it will attempt to produce the
+well-known event `01.00.00.00.00.00.FF.F1` soon after startup. This delivery
+is not guaranteed.
 
 ## Pin Mapping
 
@@ -80,11 +81,6 @@ The four pins marked as INPUT ONLY in the table above have a 10k pull-up to
 IO4 and IO6 typically have a pull-up resistor. IO5 and IO7 typically have a
 pull-down resistor that can not be disabled. Keep this in mind as this may
 require adjustments to usage patterns.
-
-### User button default behavior
-
-The default behavior of the User button is to emit the well-known event
-`01.00.00.00.00.00.FE.00` (Node Identity).
 
 ## Base IO PCB
 

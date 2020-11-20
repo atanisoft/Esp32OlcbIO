@@ -102,7 +102,33 @@ static constexpr int8_t FACTORY_RESET_HOLD_TIME = 10;
 /// all Event IDs. NOTE: This will *NOT* clear WiFi configuration data.
 static constexpr int8_t FACTORY_RESET_EVENTS_HOLD_TIME = 5;
 
-openlcb::SimpleCanStack *prepare_openlcb_stack(node_config_t *config, bool reset_events);
+openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
+                                              , bool reset_events);
+
+/// Halts execution with a specific blink pattern for the two LEDs that are on
+/// the IO base board.
+///
+/// @param wifi Sets the initial state of the WiFi LED.
+/// @param activity Sets the initial state of the Activity LED.
+/// @param period Sets the delay between blinking the LED(s).
+/// @param toggle_both Controls if both LEDs will blink or if only the activity
+/// LED will blink.
+void die_with(bool wifi, bool activity, unsigned period = 1000
+            , bool toggle_both = false)
+{
+    LED_WIFI_Pin::set(wifi);
+    LED_ACTIVITY_Pin::set(activity);
+
+    while(true)
+    {
+        if (toggle_both)
+        {
+            LED_WIFI_Pin::toggle();
+        }
+        LED_ACTIVITY_Pin::toggle();
+        usleep(period);
+    }
+}
 
 extern "C"
 {

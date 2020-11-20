@@ -110,8 +110,6 @@ constexpr const Gpio *const CONFIGURABLE_GPIO_PIN_INSTANCES[] =
   , IO14_Pin::instance(), IO15_Pin::instance(), IO16_Pin::instance()
 };
 
-// TODO: shift to SimpleStackBase to allow shift to TCP/IP native stack rather
-// than GridConnect TCP/IP stack.
 openlcb::SimpleCanStack stack(CONFIG_OLCB_NODE_ID);
 static int config_fd;
 FactoryResetHelper factory_reset_helper(cfg);
@@ -121,12 +119,20 @@ openlcb::ConfiguredProducer gpi_9(stack.node(), cfg.seg().gpi().entry<0>()
                                 , IO9_Pin::instance());
 openlcb::ConfiguredProducer gpi_10(stack.node(), cfg.seg().gpi().entry<1>()
                                  , IO10_Pin::instance());
+openlcb::ConfiguredProducer factory_button(stack.node()
+                                         , cfg.seg().gpi().entry<2>()
+                                         , IO10_Pin::instance());
+openlcb::ConfiguredProducer user_button(stack.node()
+                                      , cfg.seg().gpi().entry<3>()
+                                      , IO10_Pin::instance());
 openlcb::MultiConfiguredPC multi_pc(stack.node(), CONFIGURABLE_GPIO_PIN_INSTANCES
                                   , ARRAYSIZE(CONFIGURABLE_GPIO_PIN_INSTANCES)
                                   , cfg.seg().gpio());
 openlcb::RefreshLoop refresh_loop(stack.node()
                                 , { gpi_9.polling()
                                   , gpi_10.polling()
+                                  , factory_button.polling()
+                                  , user_button.polling()
                                   , multi_pc.polling()});
 std::unique_ptr<Esp32WiFiManager> wifi_manager;
 std::unique_ptr<AutoSyncFileFlow> config_sync;
@@ -178,7 +184,8 @@ void factory_reset_events()
     fsync(config_fd);
 }
 
-openlcb::SimpleCanStack *prepare_openlcb_stack(node_config_t *config, bool reset_events)
+openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
+                                              , bool reset_events)
 {
     stack.set_tx_activity_led(LED_ACTIVITY_Pin::instance());
 
@@ -201,7 +208,7 @@ openlcb::SimpleCanStack *prepare_openlcb_stack(node_config_t *config, bool reset
                                , config->wifi_mode
                                , nullptr // TODO add config.sta_ip
                                , ip_addr_any
-                               , 1
+                               , config->ap_channel
                                , config->ap_auth
                                , config->ap_ssid
                                , config->ap_pass));

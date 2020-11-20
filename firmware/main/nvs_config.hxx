@@ -59,7 +59,8 @@ typedef struct
     wifi_auth_mode_t ap_auth;
     char ap_ssid[AP_SSID_PASS_LEN];
     char ap_pass[AP_SSID_PASS_LEN];
-    uint8_t reserved[10];
+    uint8_t ap_channel;
+    uint8_t reserved[9];
 } node_config_t;
 
 esp_err_t load_config(node_config_t *config);

@@ -32,8 +32,9 @@
  * @date 4 July 2020
  */
 
-#include "sdkconfig.h"
+#include "hardware.hxx"
 #include "nvs_config.hxx"
+#include "sdkconfig.h"
 
 // TODO: adjust format_utils.hxx not to require this line here.
 using std::string;
@@ -54,8 +55,8 @@ esp_err_t load_config(node_config_t *config)
     nvs_handle_t nvs;
     size_t size = sizeof(node_config_t);
     esp_err_t res =
-        ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_open(NVS_NAMESPACE, NVS_READWRITE
-                                             , &nvs));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs));
     if (res != ESP_OK)
     {
         LOG_ERROR("[NVS] Configuration load failed: %s (%d)"
@@ -72,21 +73,25 @@ esp_err_t load_config(node_config_t *config)
                   "%zu vs %zu)", size, sizeof(node_config_t));
         res = ESP_FAIL;
     }
-    if (config->wifi_mode != WIFI_MODE_STA &&
-        config->wifi_mode != WIFI_MODE_NULL &&
-        config->ap_ssid[0] == '\0')
+    if (config->wifi_mode != WIFI_MODE_NULL)
     {
-        LOG_ERROR("[NVS] Configuration doesn't appear to be valid, AP SSID is "
-                  "blank!");
-        res = ESP_FAIL;
+        if (config->wifi_mode != WIFI_MODE_STA && config->ap_ssid[0] == '\0')
+        {
+            LOG_ERROR("[NVS] Configuration doesn't appear to be valid, AP "
+                      "SSID is blank!");
+            res = ESP_FAIL;
+        }
+        if (config->wifi_mode != WIFI_MODE_AP && config->sta_ssid[0] == '\0')
+        {
+            LOG_ERROR("[NVS] Configuration doesn't appear to be valid, "
+                      "Station SSID is blank!");
+            res = ESP_FAIL;
+        }
     }
-    if (config->wifi_mode != WIFI_MODE_AP &&
-        config->wifi_mode != WIFI_MODE_NULL &&
-        config->sta_ssid[0] == '\0')
+
+    if (config->ap_channel == 0)
     {
-        LOG_ERROR("[NVS] Configuration doesn't appear to be valid, Station "
-                  "SSID is blank!");
-        res = ESP_FAIL;
+        config->ap_channel = 1;
     }
     return res;
 }
@@ -94,16 +99,22 @@ esp_err_t load_config(node_config_t *config)
 esp_err_t save_config(node_config_t *config)
 {
     nvs_handle_t nvs;
-    esp_err_t res = ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs));
+    esp_err_t res =
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs));
     if (res != ESP_OK)
     {
-        LOG_ERROR("[NVS] Configuration save failed: %s (%d)", esp_err_to_name(res), res);
+        LOG_ERROR("[NVS] Configuration save failed: %s (%d)"
+                , esp_err_to_name(res), res);
         return res;
     }
-    res = ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_set_blob(nvs, NVS_CFG_KEY, config, sizeof(node_config_t)));
+    res =
+        ESP_ERROR_CHECK_WITHOUT_ABORT(
+            nvs_set_blob(nvs, NVS_CFG_KEY, config, sizeof(node_config_t)));
     if (res != ESP_OK)
     {
-        LOG_ERROR("[NVS] Configuration save failed: %s (%d)", esp_err_to_name(res), res);
+        LOG_ERROR("[NVS] Configuration save failed: %s (%d)"
+                , esp_err_to_name(res), res);
         return res;
     }
     res = ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_commit(nvs));
@@ -140,6 +151,10 @@ esp_err_t save_config(node_config_t *config)
 #define CONFIG_WIFI_HOSTNAME_PREFIX "esp32io_"
 #endif
 
+#ifndef CONFIG_WIFI_SOFTAP_CHANNEL
+#define CONFIG_WIFI_SOFTAP_CHANNEL 1
+#endif
+
 esp_err_t default_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Initializing default configuration");
@@ -149,12 +164,16 @@ esp_err_t default_config(node_config_t *config)
     strcpy(config->sta_ssid, CONFIG_WIFI_STATION_SSID);
     strcpy(config->sta_pass, CONFIG_WIFI_STATION_PASSWORD);
     config->sta_wait_for_connect = CONFIG_WIFI_RESTART_ON_SSID_CONNECT_FAILURE;
+    config->ap_channel = CONFIG_WIFI_SOFTAP_CHANNEL;
     strcpy(config->ap_ssid, CONFIG_WIFI_SOFTAP_SSID);
     strcpy(config->ap_pass, CONFIG_WIFI_SOFTAP_PASSWORD);
     strcpy(config->hostname_prefix, CONFIG_WIFI_HOSTNAME_PREFIX);
     config->ap_auth = WIFI_AUTH_WPA2_PSK;
     return save_config(config);
 }
+
+void die_with(bool wifi, bool activity, unsigned period = 1000
+            , bool toggle_both = false);
 
 void nvs_init()
 {
@@ -164,55 +183,56 @@ void nvs_init()
     LOG(INFO, "[NVS] Initializing NVS");
     if (ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_flash_init()) == ESP_ERR_NVS_NO_FREE_PAGES)
     {
-        const esp_partition_t* partition =
-        esp_partition_find_first(ESP_PARTITION_TYPE_DATA
-                               , ESP_PARTITION_SUBTYPE_DATA_NVS, NULL);
-        if (partition != NULL)
+        const esp_partition_t *part =
+            esp_partition_find_first(ESP_PARTITION_TYPE_DATA
+                                   , ESP_PARTITION_SUBTYPE_DATA_NVS, NULL);
+        if (part != NULL)
         {
-            LOG(INFO, "[NVS] Erasing partition %s...", partition->label);
-            ESP_ERROR_CHECK(esp_partition_erase_range(partition, 0,
-                                                      partition->size));
+            LOG(INFO, "[NVS] Erasing partition %s...", part->label);
+            ESP_ERROR_CHECK(esp_partition_erase_range(part, 0, part->size));
             ESP_ERROR_CHECK(nvs_flash_init());
+        }
+        else
+        {
+            LOG_ERROR("[NVS] Unable to locate NVS partition!");
+            die_with(true, false);
         }
     }
 }
 
 void dump_config(node_config_t *config)
 {
-    // display current configuration settings.
     uint8_t mac[6];
     switch(config->wifi_mode)
     {
         case WIFI_MODE_STA:
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(esp_read_mac(mac, ESP_MAC_WIFI_STA));
-            LOG(INFO, "[NVS] WiFi mode: %d (Station)", config->wifi_mode);
+            LOG(INFO, "[NVS] WiFi mode: %d (Station:%s)", config->wifi_mode
+              , config->sta_ssid);
             LOG(INFO, "[NVS] Station MAC: %s", mac_to_string(mac).c_str());
-            LOG(INFO, "[NVS] Station SSID: %s", config->sta_ssid);
             break;
         case WIFI_MODE_AP:
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(
                 esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
-            LOG(INFO, "[NVS] WiFi mode: %d (SoftAP)", config->wifi_mode);
+            LOG(INFO, "[NVS] WiFi mode: %d (SoftAP:%s, auth:%d, channel:%d)"
+              , config->wifi_mode, config->ap_ssid, config->ap_auth
+              , config->ap_channel);
             LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
-            LOG(INFO, "[NVS] SoftAP SSID: %s", config->ap_ssid);
             //LOG(INFO, "[NVS] SoftAP PW: %s", config->ap_pass);
-            LOG(INFO, "[NVS] SoftAP Auth: %d", config->ap_auth);
             break;
         case WIFI_MODE_APSTA:
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(esp_read_mac(mac, ESP_MAC_WIFI_STA));
-            LOG(INFO, "[NVS] WiFi mode: %d (Station + SoftAP)"
-              , config->wifi_mode);
+            LOG(INFO, "[NVS] WiFi mode: %d (Station:%s, SoftAP:esp32s2io_%s)"
+              , config->wifi_mode, config->ap_ssid
+              , uint64_to_string_hex(config->node_id).c_str());
             LOG(INFO, "[NVS] Station MAC: %s", mac_to_string(mac).c_str());
-            LOG(INFO, "[NVS] Station SSID: %s", config->ap_ssid);
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(
                 esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
             LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
-            LOG(INFO, "[NVS] SoftAP SSID: esp32s2io_%s"
-              , uint64_to_string_hex(config->node_id).c_str());
             break;
         case WIFI_MODE_NULL:
         case WIFI_MODE_MAX:

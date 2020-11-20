@@ -38,14 +38,34 @@ idf_build_set_property(COMPILE_DEFINITIONS "-D_GLIBCXX_USE_C99" APPEND)
 ###############################################################################
 
 FIND_PROGRAM(GZIP
-  NAMES gzip
-  PATHS /bin
-        /usr/bin
-        /usr/local/bin
+    NAMES gzip
+    PATHS /bin
+          /usr/bin
+          /usr/local/bin
 )
 
 if (NOT GZIP)
-  message(FATAL_ERROR "Unable to find 'gzip' program")
+    message(FATAL_ERROR "Unable to find 'gzip' program")
+endif()
+
+###############################################################################
+# Verify submodules were checked out correctly
+###############################################################################
+
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/CMakeLists.txt)
+    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/src/littlefs/lfs.c)
+    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/src/littelfs does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs")
+endif()
+
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/HttpServer/CMakeLists.txt)
+    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/HttpServer does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNLite/CMakeLists.txt)
+    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNLite does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
 ###############################################################################

@@ -40,8 +40,6 @@
 #include <os/Gpio.hxx>
 #include <utils/GpioInitializer.hxx>
 
-#include "sdkconfig.h"
-
 /// Configurable IO Pin 1.
 GPIO_PIN(IO1, GpioInputNP, GPIO_NUM_18);
 

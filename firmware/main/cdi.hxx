@@ -44,7 +44,7 @@
 namespace esp32io
 {
 
-using INPUT_ONLY_PINS = openlcb::RepeatedGroup<openlcb::ProducerConfig, 2>;
+using INPUT_ONLY_PINS = openlcb::RepeatedGroup<openlcb::ProducerConfig, 4>;
 using CONFIGURABLE_GPIO_PINS = openlcb::RepeatedGroup<openlcb::PCConfig, 14>;
 
 /// Defines the main segment in the configuration CDI. This is laid out at
