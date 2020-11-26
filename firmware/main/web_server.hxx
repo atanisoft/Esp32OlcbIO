@@ -42,7 +42,7 @@ namespace openlcb
     class SimpleStackBase;
 }
 
-void init_webserver(node_config_t *config, int fd, openlcb::SimpleStackBase *stack);
+void init_webserver(node_config_t *config, openlcb::SimpleStackBase *stack);
 void shutdown_webserver();
 
 #endif // WEB_SERVER_HXX_

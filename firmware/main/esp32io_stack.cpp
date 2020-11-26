@@ -140,13 +140,6 @@ std::unique_ptr<esp32io::NodeRebootHelper> node_reboot_helper;
 
 Esp32Twai twai("/dev/twai", CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
 
-static void twai_init_task(void *param)
-{
-  twai.hw_init();
-  stack.add_can_port_select("/dev/twai/twai0");
-  vTaskDelete(nullptr);
-}
-
 #if CONFIG_SNTP
 static bool sntp_callback_called_previously = false;
 static void sntp_received(struct timeval *tv)
@@ -184,9 +177,15 @@ void factory_reset_events()
     fsync(config_fd);
 }
 
-openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
-                                              , bool reset_events)
+void start_openlcb_stack(node_config_t *config, bool reset_events
+                       , bool brownout_detected)
 {
+    LOG(INFO, "[SNIP] version:%d, manufacturer:%s, model:%s, hw-v:%s, sw-v:%s"
+      , openlcb::SNIP_STATIC_DATA.version
+      , openlcb::SNIP_STATIC_DATA.manufacturer_name
+      , openlcb::SNIP_STATIC_DATA.model_name
+      , openlcb::SNIP_STATIC_DATA.hardware_version
+      , openlcb::SNIP_STATIC_DATA.software_version);
     stack.set_tx_activity_led(LED_ACTIVITY_Pin::instance());
 
     // If the wifi mode is enabled start the wifi manager and httpd.
@@ -246,12 +245,6 @@ openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
     stack.print_all_packets();
 #endif
 
-    // Initialize the TWAI driver from core 1 to ensure the TWAI driver is
-    // tied to the core that the OpenMRN stack is *NOT* running on.
-    xTaskCreatePinnedToCore(twai_init_task, "twai-init", 2048, nullptr
-                          , config_arduino_openmrn_task_priority(), nullptr
-                          , APP_CPU_NUM);
-
     // Create / update CDI, if the CDI is out of date a factory reset will be
     // forced.
     if (CDIHelper::create_config_descriptor_xml(cfg, openlcb::CDI_FILE
@@ -289,8 +282,28 @@ openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
     // Initialize the webserver after the config file has been created/opened.
     if (config->wifi_mode > WIFI_MODE_NULL && config->wifi_mode < WIFI_MODE_MAX)
     {
-        init_webserver(config, config_fd, &stack);
+        init_webserver(config, &stack);
     }
 
-    return &stack;
+    stack.executor()->add(new CallbackExecutable([]
+    {
+        // Initialize the TWAI driver
+        twai.hw_init();
+        stack.add_can_port_select("/dev/twai/twai0");
+    }));
+
+    if (brownout_detected)
+    {
+        // Queue the brownout event to be sent.
+        stack.executor()->add(new CallbackExecutable([]()
+        {
+            LOG_ERROR("[Brownout] Detected a brownout reset, sending event");
+            stack.send_event(openlcb::Defs::NODE_POWER_BROWNOUT_EVENT);
+        }));
+    }
+
+    // Start the stack in the background using it's own task.
+    stack.start_executor_thread("OpenMRN"
+                              , config_arduino_openmrn_task_priority()
+                              , config_arduino_openmrn_stack_size());
 }

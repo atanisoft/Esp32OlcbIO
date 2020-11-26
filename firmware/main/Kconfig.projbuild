@@ -115,3 +115,25 @@ menu "WiFi Configuration"
         default "pool.ntp.org"
         depends on SNTP
 endmenu
+
+menu "Advanced Configuration"
+    config ENABLE_TASK_LIST_REPORTING
+        bool "Enable TaskList reporting"
+        default n
+        select FREERTOS_VTASKLIST_INCLUDE_COREID
+        select FREERTOS_USE_TRACE_FACILITY
+        select FREERTOS_GENERATE_RUN_TIME_STATS
+
+    config TASK_LIST_INTERVAL
+        int "Task list interval (sec)"
+        default 25
+        depends on ENABLE_TASK_LIST_REPORTING
+
+    config HEALTH_INTERVAL
+        int "Health report interval (sec)"
+        default 15
+
+    config EXTERNAL_HTTP_EXECUTOR
+        bool "Use external executor for httpd"
+        default n
+endmenu

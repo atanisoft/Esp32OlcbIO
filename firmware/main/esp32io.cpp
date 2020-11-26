@@ -102,8 +102,8 @@ static constexpr int8_t FACTORY_RESET_HOLD_TIME = 10;
 /// all Event IDs. NOTE: This will *NOT* clear WiFi configuration data.
 static constexpr int8_t FACTORY_RESET_EVENTS_HOLD_TIME = 5;
 
-openlcb::SimpleStackBase *prepare_openlcb_stack(node_config_t *config
-                                              , bool reset_events);
+void start_openlcb_stack(node_config_t *config, bool reset_events
+                       , bool brownout_detected);
 
 /// Halts execution with a specific blink pattern for the two LEDs that are on
 /// the IO base board.
@@ -187,8 +187,22 @@ void app_main()
     GpioInit::hw_init();
 
     const esp_app_desc_t *app_data = esp_ota_get_app_description();
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
     LOG(INFO, "\n\n%s %s starting up (%d:%s)...", app_data->project_name
       , app_data->version, reset_reason, reset_reasons[reset_reason]);
+    LOG(INFO
+      , "[SoC] model:%s, rev:%d, cores:%d, flash:%s, WiFi:%s, BLE:%s, BT:%s"
+      , chip_info.model == CHIP_ESP32 ? "ESP32" :
+        chip_info.model == CHIP_ESP32S2 ? "ESP32-S2" : "unknown"
+      , chip_info.revision, chip_info.cores
+      , chip_info.features & CHIP_FEATURE_EMB_FLASH ? "Yes" : "No"
+      , chip_info.features & CHIP_FEATURE_WIFI_BGN ? "Yes" : "No"
+      , chip_info.features & CHIP_FEATURE_BLE ? "Yes" : "No"
+      , chip_info.features & CHIP_FEATURE_BT ? "Yes" : "No");
+    LOG(INFO, "[SoC] Heap: %.2fkB / %.2fKb"
+      , heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f
+      , heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f);
     LOG(INFO, "Compiled on %s %s using ESP-IDF %s", app_data->date
       , app_data->time, app_data->idf_ver);
     LOG(INFO, "Running from: %s", esp_ota_get_running_partition()->label);
@@ -274,36 +288,12 @@ void app_main()
     dump_config(&config);
     mount_fs(cleanup_config_tree);
 
-    LOG(INFO, "[SNIP] version:%d, manufacturer:%s, model:%s, hw-v:%s, sw-v:%s"
-      , openlcb::SNIP_STATIC_DATA.version
-      , openlcb::SNIP_STATIC_DATA.manufacturer_name
-      , openlcb::SNIP_STATIC_DATA.model_name
-      , openlcb::SNIP_STATIC_DATA.hardware_version
-      , openlcb::SNIP_STATIC_DATA.software_version);
+    start_openlcb_stack(&config, reset_events
+                      , reset_reason == RTCWDT_BROWN_OUT_RESET);
 
-    auto *stack = prepare_openlcb_stack(&config, reset_events);
-
-    // Check if the reset reason was due to brownout.
-    if (reset_reason == RTCWDT_BROWN_OUT_RESET)
-    {
-        // Queue the brownout event to be sent.
-        stack->executor()->add(new CallbackExecutable([&]()
-        {
-            LOG_ERROR("[Brownout] Detected a brownout reset, sending event");
-            stack->send_event(openlcb::Defs::NODE_POWER_BROWNOUT_EVENT);
-        }));
-    }
-
-    // disable the task WDT before passing ownership of the task to the stack.
-    LOG(INFO, "[WDT] Disabling WDT for app_main");
-    esp_task_wdt_delete(NULL);
-
-    // increase main task priority to ensure it is not competing with other
-    // tasks.
-    vTaskPrioritySet(nullptr, config_arduino_openmrn_task_priority());
-
-    LOG(INFO, "[LCC] Starting LCC stack");
-    stack->loop_executor();
+    // At this point the OpenMRN stack is running in it's own task and we can
+    // safely exit from this one. We do not need to cleanup as that will be
+    // handled automatically by ESP-IDF.
 }
 
 } // extern "C"
