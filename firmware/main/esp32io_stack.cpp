@@ -121,10 +121,10 @@ openlcb::ConfiguredProducer gpi_10(stack.node(), cfg.seg().gpi().entry<1>()
                                  , IO10_Pin::instance());
 openlcb::ConfiguredProducer factory_button(stack.node()
                                          , cfg.seg().gpi().entry<2>()
-                                         , IO10_Pin::instance());
+                                         , FACTORY_RESET_Pin::instance());
 openlcb::ConfiguredProducer user_button(stack.node()
                                       , cfg.seg().gpi().entry<3>()
-                                      , IO10_Pin::instance());
+                                      , USER_BUTTON_Pin::instance());
 openlcb::MultiConfiguredPC multi_pc(stack.node(), CONFIGURABLE_GPIO_PIN_INSTANCES
                                   , ARRAYSIZE(CONFIGURABLE_GPIO_PIN_INSTANCES)
                                   , cfg.seg().gpio());
