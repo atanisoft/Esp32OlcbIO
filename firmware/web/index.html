@@ -433,6 +433,10 @@
             ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:field}));
             disable_button('save-' + field);
         }
+        function test_event(field) {
+            var event = $('#' + field).val();
+            ws_send(JSON.stringify({req_type:'test-event', value:event}));
+        }
         function hide_spinner(target) {
             $('#spinner-' + target).hide();
         }
@@ -676,7 +680,11 @@
                 content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
                 content += String.format('<div class="column column-50"><input type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
                 content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
-                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
+                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button>', node_alias);
+                if (node_data_type === 'eventid') {
+                    content += String.format('<button class="button-small" id="btn-test-{0}">Test</button>', node_alias);
+                }
+                content += String.format('<div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
                 content += '</div>';
                 content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description)
                 cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
@@ -773,6 +781,11 @@
             $('[id^=btn-refresh-]').each(function (i, e) {
                 $(e).on('click', function () {
                     refresh_field($(e).attr('id').replace('btn-refresh-', ''));
+                });
+            });
+            $('[id^=btn-test-]').each(function (i, e) {
+                $(e).on('click', function () {
+                    test_event($(e).attr('id').replace('btn-test-', ''));
                 });
             });
         }

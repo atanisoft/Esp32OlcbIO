@@ -444,6 +444,16 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             }
             wifi->clear_ssid_scan_results();
         }
+        else if (!strcmp(req_type->valuestring, "test-event"))
+        {
+            string value = cJSON_GetObjectItem(root, "value")->valuestring;
+            uint64_t eventID = string_to_uint64(value);
+            node_stack->executor()->add(new CallbackExecutable([eventID]()
+            {
+                node_stack->send_event(eventID);
+            }));
+            response = R"!^!({"resp_type":"event-test"})!^!";
+        }
         else
         {
             LOG_ERROR("Unrecognized request: %s", req.c_str());
