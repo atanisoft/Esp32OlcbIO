@@ -469,7 +469,7 @@
         function upload_ota() {
             var xhr = new XMLHttpRequest();
             var file = $('#firmware_file')[0].files[0];
-            if (file.size > 1024 * 1024) {
+            if (file.size > (1024 * 1024 * 1.5)) {
                 $('#firmware_upload_results').append("<p>Firmware is too large for upload, aborting!</p>");
                 return;
             }
