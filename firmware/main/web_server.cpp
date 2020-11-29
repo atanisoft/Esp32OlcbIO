@@ -32,9 +32,11 @@
  * @date 4 July 2020
  */
 
-
+#include "sdkconfig.h"
 #include "DelayRebootHelper.hxx"
+#include "EventBroadcastHelper.hxx"
 #include "nvs_config.hxx"
+
 #include <cJSON.h>
 #include <esp_log.h>
 #include <esp_ota_ops.h>
@@ -50,10 +52,9 @@
 #include <utils/logging.h>
 
 static std::unique_ptr<http::Httpd> http_server;
-static std::unique_ptr<openlcb::MemoryConfigClient> memory_client;
+static openlcb::MemoryConfigClient *memory_client;
 static MDNS mdns;
-static node_config_t *node_cfg;
-static openlcb::SimpleStackBase *node_stack;
+static node_config_t node_cfg;
 static Executor<1> http_executor{NO_THREAD()};
 
 /// Statically embedded index.html start location.
@@ -171,12 +172,13 @@ void factory_reset_events();
 class CDIRequestProcessor : public StateFlowBase
 {
 public:
-    CDIRequestProcessor(http::WebSocketFlow *socket, size_t offs, size_t size
-                      , string target, string type, string value = "")
-                      : StateFlowBase(node_stack->service()), socket_(socket)
+    CDIRequestProcessor(http::WebSocketFlow *socket, uint64_t node_id
+                      , size_t offs, size_t size, string target, string type
+                      , string value = "")
+                      : StateFlowBase(http_server.get()), socket_(socket)
+                      , client_(memory_client), nodeHandle_(node_id)
                       , offs_(offs), size_(size), target_(target), type_(type)
                       , value_(value)
-                      , nodeHandle_(openlcb::NodeID(CONFIG_OLCB_NODE_ID))
     {
         start_flow(STATE(send_request));
     }
@@ -184,12 +186,13 @@ public:
 private:
     uint8_t attempts_{3};
     http::WebSocketFlow *socket_;
+    openlcb::MemoryConfigClient *client_;
+    NodeHandle nodeHandle_;
     size_t offs_;
     size_t size_;
     string target_;
     string type_;
     string value_;
-    NodeHandle nodeHandle_;
 
     Action send_request()
     {
@@ -197,7 +200,7 @@ private:
         {
             LOG(VERBOSE, "[CDI:%s] Writing %zu bytes from offset %zu"
               , target_.c_str(), size_, offs_);
-            return invoke_subflow_and_wait(memory_client.get()
+            return invoke_subflow_and_wait(client_
                                          , STATE(response_received)
                                          , MemoryConfigClientRequest::WRITE
                                          , nodeHandle_
@@ -206,7 +209,7 @@ private:
         }
         LOG(VERBOSE, "[CDI:%s] Requesting %zu bytes from offset %zu"
           , target_.c_str(), size_, offs_);
-        return invoke_subflow_and_wait(memory_client.get()
+        return invoke_subflow_and_wait(client_
                                      , STATE(response_received)
                                      , MemoryConfigClientRequest::READ_PART
                                      , nodeHandle_
@@ -216,7 +219,7 @@ private:
 
     Action response_received()
     {
-        auto b = get_buffer_deleter(full_allocation_result(memory_client.get()));
+        auto b = get_buffer_deleter(full_allocation_result(client_));
         string response;
         if (b->data()->resultCode)
         {
@@ -306,39 +309,52 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             // NO OP, the websocket is outbound only to trigger events on the client side.
             LOG(INFO, "[Web] Failed to parse:%s", req.c_str());
         }
+        else if (!strcmp(req_type->valuestring, "set-nodeid"))
+        {
+            std::string value =
+                cJSON_GetObjectItem(root, "value")->valuestring;
+            node_cfg.node_id = string_to_uint64(value);
+            node_cfg.force_reset = true;
+            save_config(&node_cfg);
+            LOG(INFO, "[Web] Node ID updated to: %s, reboot pending"
+              , uint64_to_string_hex(node_cfg.node_id).c_str());
+            Singleton<esp32io::DelayRebootHelper>::instance()->start();
+            response = R"!^!({"resp_type":"set-nodeid"})!^!";
+        }
         else if (!strcmp(req_type->valuestring, "info"))
         {
             const esp_app_desc_t *app_data = esp_ota_get_app_description();
             const esp_partition_t *partition = esp_ota_get_running_partition();
             response =
                 StringPrintf(R"!^!({"resp_type":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
-                                app_data->version, app_data->date,
-                                app_data->time, partition->label,
-                                openlcb::SNIP_STATIC_DATA.model_name,
-                                openlcb::SNIP_STATIC_DATA.hardware_version,
-                                openlcb::SNIP_STATIC_DATA.software_version,
-                                uint64_to_string_hex(CONFIG_OLCB_NODE_ID).c_str());
+                    app_data->version, app_data->date
+                  , app_data->time, partition->label
+                  , openlcb::SNIP_STATIC_DATA.model_name
+                  , openlcb::SNIP_STATIC_DATA.hardware_version
+                  , openlcb::SNIP_STATIC_DATA.software_version
+                  , uint64_to_string_hex(node_cfg.node_id).c_str());
         }
         else if (!strcmp(req_type->valuestring, "wifi"))
         {
             response =
                 StringPrintf(R"!^!({"resp_type":"wifi","mode":%d,"sta_ssid":"%s","ap_ssid":"%s"})!^!"
-                            , node_cfg->wifi_mode, node_cfg->sta_ssid, node_cfg->ap_ssid);
+                           , node_cfg.wifi_mode, node_cfg.sta_ssid, node_cfg.ap_ssid);
         }
         else if (!strcmp(req_type->valuestring, "cdi-get"))
         {
-            new CDIRequestProcessor(socket, cJSON_GetObjectItem(root, "offs")->valueint
-                                    , cJSON_GetObjectItem(root, "size")->valueint
-                                    , cJSON_GetObjectItem(root, "target")->valuestring
-                                    , cJSON_GetObjectItem(root, "type")->valuestring);
+            new CDIRequestProcessor(socket, node_cfg.node_id
+                                  , cJSON_GetObjectItem(root, "offs")->valueint
+                                  , cJSON_GetObjectItem(root, "size")->valueint
+                                  , cJSON_GetObjectItem(root, "target")->valuestring
+                                  , cJSON_GetObjectItem(root, "type")->valuestring);
             cJSON_Delete(root);
             return;
         }
         else if (!strcmp(req_type->valuestring, "update-complete"))
         {
-            auto b = invoke_flow(memory_client.get()
-                                , MemoryConfigClientRequest::UPDATE_COMPLETE
-                                , openlcb::NodeHandle(openlcb::NodeID(CONFIG_OLCB_NODE_ID)));
+            auto b = invoke_flow(memory_client
+                               , MemoryConfigClientRequest::UPDATE_COMPLETE
+                               , openlcb::NodeHandle(node_cfg.node_id));
             response =
                 StringPrintf(R"!^!({"resp_type":"update-complete","code":%d})!^!"
                             , b->data()->resultCode);
@@ -346,7 +362,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
         else if (!strcmp(req_type->valuestring, "cdi-set"))
         {
             size_t offs = cJSON_GetObjectItem(root, "offs")->valueint;
-            std::string param_type = cJSON_GetObjectItem(root, "type")->valuestring;
+            std::string param_type =
+                cJSON_GetObjectItem(root, "type")->valuestring;
             size_t size = cJSON_GetObjectItem(root, "size")->valueint;
             string value = cJSON_GetObjectItem(root, "value")->valuestring;
             string target = cJSON_GetObjectItem(root, "target")->valuestring;
@@ -354,7 +371,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             {
                 // make sure value is null terminated
                 value += '\0';
-                new CDIRequestProcessor(socket, offs, size, target, param_type, value);
+                new CDIRequestProcessor(socket, node_cfg.node_id, offs
+                                      , size, target, param_type, value);
             }
             else if (param_type == "int")
             {
@@ -363,7 +381,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     uint8_t data8 = std::stoi(value);
                     value.clear();
                     value.push_back(data8);
-                    new CDIRequestProcessor(socket, offs, size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
+                                          , size, target, param_type, value);
                 }
                 else if (size == 2)
                 {
@@ -371,7 +390,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     value.clear();
                     value.push_back((data16 >> 8) & 0xFF);
                     value.push_back(data16 & 0xFF);
-                    new CDIRequestProcessor(socket, offs, size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
+                                          , size, target, param_type, value);
                 }
                 else
                 {
@@ -381,12 +401,14 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     value.push_back((data32 >> 16) & 0xFF);
                     value.push_back((data32 >> 8) & 0xFF);
                     value.push_back(data32 & 0xFF);
-                    new CDIRequestProcessor(socket, offs, size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
+                                          , size, target, param_type, value);
                 }
             }
             else if (param_type == "eventid")
             {
-                LOG(VERBOSE, "[Web] CDI EVENT WRITE offs:%d, value: %s", offs, value.c_str());
+                LOG(VERBOSE, "[Web] CDI EVENT WRITE offs:%d, value: %s", offs
+                  , value.c_str());
                 uint64_t data = string_to_uint64(value);
                 value.clear();
                 value.push_back((data >> 56) & 0xFF);
@@ -397,7 +419,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 value.push_back((data >> 16) & 0xFF);
                 value.push_back((data >> 8) & 0xFF);
                 value.push_back(data & 0xFF);
-                new CDIRequestProcessor(socket, offs, size, target, param_type, value);
+                new CDIRequestProcessor(socket, node_cfg.node_id, offs, size
+                                      , target, param_type, value);
             }
             cJSON_Delete(root);
             return;
@@ -437,21 +460,19 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 }
                 seen_ssids.push_back((char *)entry.ssid);
                 string part = StringPrintf(
-                    R"!^!({"resp_type":"wifi-entry","auth":%d,"rssi":%d,"ssid":"%s"})!^!",
-                    entry.authmode, entry.rssi, http::url_encode((char *)entry.ssid).c_str());
+                    R"!^!({"resp_type":"wifi-entry","auth":%d,"rssi":%d,"ssid":"%s"})!^!"
+                  , entry.authmode, entry.rssi
+                  , http::url_encode((char *)entry.ssid).c_str());
                 part += "\n";
                 socket->send_text(part);
             }
             wifi->clear_ssid_scan_results();
         }
-        else if (!strcmp(req_type->valuestring, "test-event"))
+        else if (!strcmp(req_type->valuestring, "event-test"))
         {
             string value = cJSON_GetObjectItem(root, "value")->valuestring;
             uint64_t eventID = string_to_uint64(value);
-            node_stack->executor()->add(new CallbackExecutable([eventID]()
-            {
-                node_stack->send_event(eventID);
-            }));
+            Singleton<esp32io::EventBroadcastHelper>::instance()->send_event(eventID);
             response = R"!^!({"resp_type":"event-test"})!^!";
         }
         else
@@ -465,11 +486,41 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
     }
 }
 
-void init_webserver(node_config_t *config, openlcb::SimpleStackBase *stack)
+HTTP_HANDLER_IMPL(fs_proc, request)
 {
-    node_cfg = config;
-    node_stack = stack;
-    memory_client.reset(new openlcb::MemoryConfigClient(node_stack->node(), node_stack->memory_config_handler()));
+    string path = request->param("path");
+    LOG(VERBOSE, "[Web] Searching for path: %s", path.c_str());
+    struct stat statbuf;
+    // verify that the requested path exists
+    if (!stat(path.c_str(), &statbuf))
+    {
+        string data = read_file_to_string(path);
+        string mimetype = http::MIME_TYPE_TEXT_PLAIN;
+        if (path.find(".xml") != string::npos)
+        {
+            mimetype = http::MIME_TYPE_TEXT_XML;
+            // CDI xml files have a trailing null, this can cause
+            // issues in browsers parsing/rendering the XML data.
+            if (request->param("remove_nulls", false))
+            {
+                std::replace(data.begin(), data.end(), '\0', ' ');
+            }
+        }
+        else if (path.find(".json") != string::npos)
+        {
+            mimetype = http::MIME_TYPE_APPLICATION_JSON;
+        }
+        return new http::StringResponse(data, mimetype);
+    }
+    LOG(INFO, "[Web] Path not found");
+    request->set_status(http::HttpStatusCode::STATUS_NOT_FOUND);
+    return nullptr;
+}
+
+void init_webserver(openlcb::MemoryConfigClient *cfg_client, bool soft_ap)
+{
+    memory_client = cfg_client;
+    load_config(&node_cfg);
 
 #if CONFIG_EXTERNAL_HTTP_EXECUTOR
     LOG(INFO, "[Httpd] Initializing Executor");
@@ -483,11 +534,13 @@ void init_webserver(node_config_t *config, openlcb::SimpleStackBase *stack)
         &http_executor,
 #endif // CONFIG_EXTERNAL_HTTP_EXECUTOR
         &mdns));
-    if (config->wifi_mode == WIFI_MODE_AP || config->wifi_mode == WIFI_MODE_APSTA)
+    if (soft_ap)
     {
         const esp_app_desc_t *app_data = esp_ota_get_app_description();
         http_server->captive_portal(
-            StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name, app_data->version, app_data->project_name, app_data->project_name));
+            StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name
+                       , app_data->version, app_data->project_name
+                       , app_data->project_name));
     }
     http_server->redirect_uri("/", "/index.html");
     http_server->static_uri("/index.html", indexHtmlGz, indexHtmlGz_size
@@ -504,35 +557,7 @@ void init_webserver(node_config_t *config, openlcb::SimpleStackBase *stack)
                           , normalizeMinCssGz_size, http::MIME_TYPE_TEXT_CSS
                           , http::HTTP_ENCODING_GZIP);
     http_server->websocket_uri("/ws", websocket_proc);
-    http_server->uri("/fs", http::HttpMethod::GET, [&](http::HttpRequest *request) -> http::AbstractHttpResponse * {
-        string path = request->param("path");
-        LOG(VERBOSE, "[Web] Searching for path: %s", path.c_str());
-        struct stat statbuf;
-        // verify that the requested path exists
-        if (!stat(path.c_str(), &statbuf))
-        {
-            string data = read_file_to_string(path);
-            string mimetype = http::MIME_TYPE_TEXT_PLAIN;
-            if (path.find(".xml") != string::npos)
-            {
-                mimetype = http::MIME_TYPE_TEXT_XML;
-                // CDI xml files have a trailing null, this can cause
-                // issues in browsers parsing/rendering the XML data.
-                if (request->param("remove_nulls", false))
-                {
-                    std::replace(data.begin(), data.end(), '\0', ' ');
-                }
-            }
-            else if (path.find(".json") != string::npos)
-            {
-                mimetype = http::MIME_TYPE_APPLICATION_JSON;
-            }
-            return new http::StringResponse(data, mimetype);
-        }
-        LOG(INFO, "[Web] Path not found");
-        request->set_status(http::HttpStatusCode::STATUS_NOT_FOUND);
-        return nullptr;
-    });
+    http_server->uri("/fs", http::HttpMethod::GET, fs_proc);
     http_server->uri("/ota", http::HttpMethod::POST, nullptr, process_ota);
 }
 

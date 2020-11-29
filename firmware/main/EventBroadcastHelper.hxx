@@ -24,26 +24,48 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * \file web_server.hxx
+ * \file DelayReboot.hxx
  *
- * Built-in webserver for the ESP32 IO Board.
+ * Implementation of a countdown to reboot
  *
  * @author Mike Dunston
- * @date 4 July 2020
+ * @date 29 November 2020
  */
 
-#ifndef WEB_SERVER_HXX_
-#define WEB_SERVER_HXX_
+#ifndef EVENT_BROADCAST_HELPER_HXX_
+#define EVENT_BROADCAST_HELPER_HXX_
 
-namespace openlcb
+#include <openlcb/SimpleStack.hxx>
+#include <utils/logging.h>
+#include <utils/Singleton.hxx>
+
+namespace esp32io
 {
-    class SimpleStackBase;
-    class MemoryConfigClient;
-}
 
-class Service;
+/// Utility class that will send an event out onto the bus.
+class EventBroadcastHelper : public Singleton<EventBroadcastHelper>
+{
+public:
+    /// Constructor.
+    ///
+    /// @param service is the @ref Service that will execute this flow.
+    EventBroadcastHelper(openlcb::SimpleStackBase *stack) : stack_(stack)
+    {
+    }
 
-void init_webserver(openlcb::MemoryConfigClient *cfg_client, bool soft_ap);
-void shutdown_webserver();
+    void send_event(uint64_t eventID)
+    {
+        stack_->executor()->add(new CallbackExecutable([&]()
+        {
+            stack_->send_event(eventID);
+        }));
+    }
 
-#endif // WEB_SERVER_HXX_
+private:
+    openlcb::SimpleStackBase *stack_;
+
+};
+
+} // namespace esp32io
+
+#endif // EVENT_BROADCAST_HELPER_HXX_

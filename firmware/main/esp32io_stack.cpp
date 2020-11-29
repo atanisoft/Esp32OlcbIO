@@ -35,6 +35,7 @@
 #include "sdkconfig.h"
 #include "cdi.hxx"
 #include "DelayRebootHelper.hxx"
+#include "EventBroadcastHelper.hxx"
 #include "FactoryResetHelper.hxx"
 #include "fs.hxx"
 #include "hardware.hxx"
@@ -50,12 +51,14 @@
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
 #include <freertos_drivers/esp32/Esp32Twai.hxx>
 #include <openlcb/ConfiguredProducer.hxx>
+#include <openlcb/MemoryConfigClient.hxx>
 #include <openlcb/MultiConfiguredPC.hxx>
 #include <openlcb/RefreshLoop.hxx>
 #include <openlcb/SimpleStack.hxx>
 #include <utils/AutoSyncFileFlow.hxx>
 #include <utils/format_utils.hxx>
 #include <utils/constants.hxx>
+#include <utils/Uninitialized.hxx>
 
 static esp32io::ConfigDef cfg(0);
 
@@ -110,33 +113,22 @@ constexpr const Gpio *const CONFIGURABLE_GPIO_PIN_INSTANCES[] =
   , IO14_Pin::instance(), IO15_Pin::instance(), IO16_Pin::instance()
 };
 
-openlcb::SimpleCanStack stack(CONFIG_OLCB_NODE_ID);
 static int config_fd;
-FactoryResetHelper factory_reset_helper(cfg);
-esp32io::DelayRebootHelper delayed_reboot(stack.service());
-esp32io::HealthMonitor health_mon(stack.service());
-openlcb::ConfiguredProducer gpi_9(stack.node(), cfg.seg().gpi().entry<0>()
-                                , IO9_Pin::instance());
-openlcb::ConfiguredProducer gpi_10(stack.node(), cfg.seg().gpi().entry<1>()
-                                 , IO10_Pin::instance());
-openlcb::ConfiguredProducer factory_button(stack.node()
-                                         , cfg.seg().gpi().entry<2>()
-                                         , FACTORY_RESET_Pin::instance());
-openlcb::ConfiguredProducer user_button(stack.node()
-                                      , cfg.seg().gpi().entry<3>()
-                                      , USER_BUTTON_Pin::instance());
-openlcb::MultiConfiguredPC multi_pc(stack.node(), CONFIGURABLE_GPIO_PIN_INSTANCES
-                                  , ARRAYSIZE(CONFIGURABLE_GPIO_PIN_INSTANCES)
-                                  , cfg.seg().gpio());
-openlcb::RefreshLoop refresh_loop(stack.node()
-                                , { gpi_9.polling()
-                                  , gpi_10.polling()
-                                  , factory_button.polling()
-                                  , user_button.polling()
-                                  , multi_pc.polling()});
-std::unique_ptr<Esp32WiFiManager> wifi_manager;
-std::unique_ptr<AutoSyncFileFlow> config_sync;
-std::unique_ptr<esp32io::NodeRebootHelper> node_reboot_helper;
+uninitialized<openlcb::SimpleCanStack> stack;
+uninitialized<openlcb::MemoryConfigClient> memory_client;
+uninitialized<openlcb::ConfiguredProducer> gpi_9;
+uninitialized<openlcb::ConfiguredProducer> gpi_10;
+uninitialized<openlcb::ConfiguredProducer> factory_button;
+uninitialized<openlcb::ConfiguredProducer> user_button;
+uninitialized<openlcb::MultiConfiguredPC> multi_pc;
+std::unique_ptr<openlcb::RefreshLoop> refresh_loop;
+uninitialized<Esp32WiFiManager> wifi_manager;
+uninitialized<AutoSyncFileFlow> config_sync;
+uninitialized<esp32io::FactoryResetHelper> factory_reset_helper;
+uninitialized<esp32io::EventBroadcastHelper> event_helper;
+uninitialized<esp32io::DelayRebootHelper> delayed_reboot;
+uninitialized<esp32io::HealthMonitor> health_mon;
+uninitialized<esp32io::NodeRebootHelper> node_reboot_helper;
 
 Esp32Twai twai("/dev/twai", CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
 
@@ -172,8 +164,8 @@ static void sntp_received(struct timeval *tv)
 void factory_reset_events()
 {
     LOG(WARNING, "[CDI] Resetting event IDs");
-    stack.factory_reset_all_events(cfg.seg().internal_config()
-                                    , CONFIG_OLCB_NODE_ID, config_fd);
+    stack->factory_reset_all_events(cfg.seg().internal_config()
+                                  , CONFIG_OLCB_NODE_ID, config_fd);
     fsync(config_fd);
 }
 
@@ -186,7 +178,31 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
       , openlcb::SNIP_STATIC_DATA.model_name
       , openlcb::SNIP_STATIC_DATA.hardware_version
       , openlcb::SNIP_STATIC_DATA.software_version);
-    stack.set_tx_activity_led(LED_ACTIVITY_Pin::instance());
+    stack.emplace(config->node_id);
+    memory_client.emplace(stack->node(), stack->memory_config_handler());
+    gpi_9.emplace(stack->node(), cfg.seg().gpi().entry<0>()
+                , IO9_Pin::instance());
+    gpi_10.emplace(stack->node(), cfg.seg().gpi().entry<1>()
+                 , IO10_Pin::instance());
+    factory_button.emplace(stack->node(), cfg.seg().gpi().entry<2>()
+                         , FACTORY_RESET_Pin::instance());
+    user_button.emplace(stack->node(), cfg.seg().gpi().entry<3>()
+                      , USER_BUTTON_Pin::instance());
+    multi_pc.emplace(stack->node(), CONFIGURABLE_GPIO_PIN_INSTANCES
+                   , ARRAYSIZE(CONFIGURABLE_GPIO_PIN_INSTANCES)
+                   , cfg.seg().gpio());
+    refresh_loop.reset(
+        new openlcb::RefreshLoop(stack->node()
+                               , { gpi_9->polling(), gpi_10->polling()
+                               , factory_button->polling()
+                               , user_button->polling()
+                               , multi_pc->polling() }));
+    factory_reset_helper.emplace(cfg, config->node_id);
+    event_helper.emplace(stack.get_mutable());
+    delayed_reboot.emplace(stack->service());
+    health_mon.emplace(stack->service());
+
+    stack->set_tx_activity_led(LED_ACTIVITY_Pin::instance());
 
     // If the wifi mode is enabled start the wifi manager and httpd.
     if (config->wifi_mode > WIFI_MODE_NULL && config->wifi_mode < WIFI_MODE_MAX)
@@ -198,19 +214,13 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
             reset_wifi_config_to_softap(config);
         }
 
-        wifi_manager.reset(
-            new Esp32WiFiManager(config->wifi_mode != WIFI_MODE_AP ? config->sta_ssid : config->ap_ssid
-                               , config->wifi_mode != WIFI_MODE_AP ? config->sta_pass : config->ap_pass
-                               , &stack
-                               , cfg.seg().wifi()
-                               , config->hostname_prefix
-                               , config->wifi_mode
-                               , nullptr // TODO add config.sta_ip
-                               , ip_addr_any
-                               , config->ap_channel
-                               , config->ap_auth
-                               , config->ap_ssid
-                               , config->ap_pass));
+        wifi_manager.emplace(config->wifi_mode != WIFI_MODE_AP ? config->sta_ssid : config->ap_ssid
+                           , config->wifi_mode != WIFI_MODE_AP ? config->sta_pass : config->ap_pass
+                           , stack.get_mutable(), cfg.seg().wifi()
+                           , config->hostname_prefix, config->wifi_mode
+                           , nullptr // TODO add config.sta_ip
+                           , ip_addr_any, config->ap_channel, config->ap_auth
+                           , config->ap_ssid, config->ap_pass);
 
         wifi_manager->wait_for_ssid_connect(config->sta_wait_for_connect);
         wifi_manager->register_network_up_callback(
@@ -242,13 +252,13 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     }
 
 #if CONFIG_OLCB_PRINT_ALL_PACKETS
-    stack.print_all_packets();
+    stack->print_all_packets();
 #endif
 
     // Create / update CDI, if the CDI is out of date a factory reset will be
     // forced.
     if (CDIHelper::create_config_descriptor_xml(cfg, openlcb::CDI_FILE
-                                              , &stack))
+                                              , stack.get_mutable()))
     {
         LOG(WARNING, "[CDI] Forcing factory reset due to CDI update");
         unlink(openlcb::CONFIG_FILENAME);
@@ -257,9 +267,9 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     // Create config file and initiate factory reset if it doesn't exist or is
     // otherwise corrupted.
     config_fd =
-        stack.create_config_file_if_needed(cfg.seg().internal_config()
-                                         , CDI_VERSION
-                                         , openlcb::CONFIG_FILE_SIZE);
+        stack->create_config_file_if_needed(cfg.seg().internal_config()
+                                          , CDI_VERSION
+                                          , openlcb::CONFIG_FILE_SIZE);
 
     if (reset_events)
     {
@@ -270,40 +280,40 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     // fflush or file close.
     // NOTE: This can be removed if/when OpenMRN issues an fsync() as part of
     // processing MemoryConfigDefs::COMMAND_UPDATE_COMPLETE.
-    config_sync.reset(
-        new AutoSyncFileFlow(stack.service(), config_fd
-                           , SEC_TO_USEC(CONFIG_OLCB_CONFIG_SYNC_SEC)));
+    config_sync.emplace(stack->service(), config_fd
+                      , SEC_TO_USEC(CONFIG_OLCB_CONFIG_SYNC_SEC));
 
     // Configure the node reboot helper to allow safe shutdown of file handles
     // and file systems etc.
-    node_reboot_helper.reset(
-        new esp32io::NodeRebootHelper(&stack, config_fd, config_sync.get()));
+    node_reboot_helper.emplace(stack.get_mutable(), config_fd
+                             , config_sync.get_mutable());
 
     // Initialize the webserver after the config file has been created/opened.
     if (config->wifi_mode > WIFI_MODE_NULL && config->wifi_mode < WIFI_MODE_MAX)
     {
-        init_webserver(config, &stack);
+        init_webserver(memory_client.get_mutable()
+                     , config->wifi_mode != WIFI_MODE_STA);
     }
 
-    stack.executor()->add(new CallbackExecutable([]
+    stack->executor()->add(new CallbackExecutable([]
     {
         // Initialize the TWAI driver
         twai.hw_init();
-        stack.add_can_port_select("/dev/twai/twai0");
+        stack->add_can_port_select("/dev/twai/twai0");
     }));
 
     if (brownout_detected)
     {
         // Queue the brownout event to be sent.
-        stack.executor()->add(new CallbackExecutable([]()
+        stack->executor()->add(new CallbackExecutable([]()
         {
             LOG_ERROR("[Brownout] Detected a brownout reset, sending event");
-            stack.send_event(openlcb::Defs::NODE_POWER_BROWNOUT_EVENT);
+            stack->send_event(openlcb::Defs::NODE_POWER_BROWNOUT_EVENT);
         }));
     }
 
     // Start the stack in the background using it's own task.
-    stack.start_executor_thread("OpenMRN"
-                              , config_arduino_openmrn_task_priority()
-                              , config_arduino_openmrn_stack_size());
+    stack->start_executor_thread("OpenMRN"
+                               , config_arduino_openmrn_task_priority()
+                               , config_arduino_openmrn_stack_size());
 }

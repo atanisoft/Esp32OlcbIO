@@ -193,17 +193,27 @@
             <h1 id="h1-loading">Loading...</h1>
             <h1 id="h1-reboot" style="display:none;">Node rebooting...</h1>
             <h1 id="h1-factoryreset" style="display:none;">Factory Reset in progress...</h1>
+            <h1 id="h1-nodeidreset" style="display:none;">Node ID updated, factory reset in progress...</h1>
             <div class="spinner"></div>
         </section>
         <section class="container" style="display:none;" id="node_info">
             <div class="row">
                 <div class="column"><b>Node ID:</b></div>
-                <div class="column column-75"><input type="text" id="node_id" value="PENDING"
-                        readonly></input></div>
+                <div class="column column-50"><input type="text" id="node_id" value="PENDING"
+                    oninput="enable_button('node_id')"></input></div>
+                <div class="column">
+                    <button class="button-small" id="btn-node_id" href="#" disabled
+                        onclick="save_node_id()">Save</button>
+                    <div id="spinner-node_id" class="small-spinner" style="display:none;"></div>
+                </div>
             </div>
             <div class="row" style="height: 3.8rem;">
                 <div class="column"><b>Software Version:</b></div>
                 <div class="column column-75" id="sw_version">PENDING</div>
+            </div>
+            <div class="row" style="height: 3.8rem;">
+                <div class="column"><b>Hardware Version:</b></div>
+                <div class="column column-75" id="hw_version">PENDING</div>
             </div>
             <div id="node_info_dynamic"></div>
             <div class="row">&nbsp;</div>
@@ -243,15 +253,13 @@
                     <div class="column column-25"><label for="wifi-sta-password">Station Password:</label></div>
                     <div class="column column-75"><input type="password" id="wifi-sta-password"></div>
                 </div>
-                <div id="wifi-sta-ip" style="display:none;">
-                    <div class="row">
-                        <div class="column column-25"><label for="wifi-sta-ip-mode">Station IP Assignment:</label></div>
-                        <div class="column column-75"><select id="wifi-sta-ip-mode"
-                                onchange="wifi_sta_ip_mode_change()">
-                                <option value="dhcp">DHCP</option>
-                                <option value="static">Static IP</option>
-                            </select>
-                        </div>
+                <div class="row">
+                    <div class="column column-25"><label for="wifi-sta-ip-mode">Station IP Assignment:</label></div>
+                    <div class="column column-75"><select id="wifi-sta-ip-mode"
+                            onchange="wifi_sta_ip_mode_change()">
+                            <option value="dhcp">DHCP</option>
+                            <option value="static">Static IP</option>
+                        </select>
                     </div>
                 </div>
                 <div id="wifi-sta-static-ip" style="display:none;">
@@ -272,6 +280,12 @@
                         <div class="column column-25"><label for="wifi-dns">DNS:</label></div>
                         <div class="column column-75"><input id="wifi-dns" type="text" value="8.8.8.8"></div>
                     </div>
+                </div>
+            </div>
+            <div id="wifi-ap">
+                <div class="row">
+                    <div class="column column-25"><label for="wifi-ap-ssid">SoftAP SSID:</label></div>
+                    <div class="column column-75"><input type="text" id="wifi-ap-ssid"></div>
                 </div>
             </div>
             <div id="spinner-wifi" class="spinner" style="display:none;"></div>
@@ -356,14 +370,18 @@
                             console.error('ERROR:', json.error);
                         } else if (json.resp_type === 'info') {
                             $('#node_id').val(pad_hex(json.node_id, 12));
+                            hide_spinner('node_id');
                             $('#sw_version').text(json.snip_sw);
+                            $('#hw_version').text(json.snip_hw);
                             $('[id^=navtab-]').each(function (i, e) {
                                 $(e).attr('href', '#');
                             });
                         } else if (json.resp_type === 'wifi') {
                             $('#wifi-mode').val(json.mode);
                             $('#wifi-sta-ssid').val(json.sta_ssid);
-                            // TODO: add SoftAP SSID printing
+                            $('#wifi-ap-ssid').val(json.ap_ssid);
+                            wifi_mode_change();
+                            hide_spinner('wifi');
                         } else if (json.resp_type === 'field-saved') {
                             hide_spinner(json.target);
                         } else if (json.resp_type === 'field-value') {
@@ -373,13 +391,22 @@
                                 $('#' + json.target).val(json.value);
                             }
                             hide_spinner(json.target);
+                        } else if (json.resp_type === 'set-nodeid') {
+                            $('#node_info').hide();
+                            $('#h1-loading').hide();
+                            $('#h1-reboot').hide();
+                            $('#h1-factoryreset').hide();
+                            $('#h1-nodeidreset').show();
+                            $('#loading').show();
+                            setTimeout(function () { location.reload(); }, 7500);
                         } else if (json.resp_type === 'factory-reset') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
                             $('#h1-reboot').hide();
+                            $('#h1-nodeidreset').hide();
                             $('#h1-factoryreset').show();
                             $('#loading').show();
-                            setTimeout(function () { location.reload(); }, 5000);
+                            setTimeout(function () { location.reload(); }, 7500);
                         } else if (json.resp_type === 'reset-events') {
                             refresh_all_fields();
                         } else if (json.resp_type === 'wifi-scan') {
@@ -417,6 +444,11 @@
                 });
             });
         }
+        function save_node_id() {
+            show_spinner('node_id');
+            disable_button('node_id');
+            ws_send(JSON.stringify({req_type:'set-nodeid', value:$('#node_id').val()}));
+        }
         function refresh_all_fields() {
             $('[id^=cdi_]').each(function (i, e) {
                 refresh_field($(e).attr('id'));
@@ -435,7 +467,7 @@
         }
         function test_event(field) {
             var event = $('#' + field).val();
-            ws_send(JSON.stringify({req_type:'test-event', value:event}));
+            ws_send(JSON.stringify({req_type:'event-test', value:event}));
         }
         function hide_spinner(target) {
             $('#spinner-' + target).hide();
@@ -536,17 +568,21 @@
             if (mode === 0) {
                 // disabled
                 $('#wifi-sta').hide();
-                $('#wifi-sta-ip').hide();
                 $('#btn-sta-scan').hide();
-            } else if (mode !== 2) {
-                // station or station + softap
+                $('#wifi-ap').hide();
+            } else if (mode === 1) {
+                // station only
                 $('#wifi-sta').show();
-                $('#wifi-sta-ip').show();
-                $('#btn-sta-scan').show();
-            } else {
+                $('#wifi-ap').hide();
+            } else if (mode === 2) {
                 // softap only
                 $('#wifi-sta').hide();
-                $('#wifi-sta-ip').hide();
+                $('#wifi-ap').show();
+            } else {
+                // station or station + softap
+                $('#wifi-sta').show();
+                $('#btn-sta-scan').show();
+                $('#wifi-ap').show();
             }
         }
         function wifi_save() {

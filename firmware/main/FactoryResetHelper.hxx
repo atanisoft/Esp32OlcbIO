@@ -43,13 +43,16 @@
 #include <utils/ConfigUpdateListener.hxx>
 #include <utils/format_utils.hxx>
 
+namespace esp32io
+{
+
 // when the io board starts up the first time the config is blank and needs to
 // be reset to factory settings.
 class FactoryResetHelper : public DefaultConfigUpdateListener
 {
 public:
-    FactoryResetHelper(const esp32io::ConfigDef &cfg)
-        : cfg_(cfg)
+    FactoryResetHelper(const esp32io::ConfigDef &cfg, uint64_t node_id)
+        : cfg_(cfg), nodeID_(node_id)
     {
 
     }
@@ -67,13 +70,14 @@ public:
     {
         LOG(VERBOSE, "[CFG] factory_reset(%d)", fd);
         cfg_.userinfo().name().write(fd, SNIP_PROJECT_NAME);
-        string node_id = uint64_to_string_hex(CONFIG_OLCB_NODE_ID, 12);
+        string node_id = uint64_to_string_hex(nodeID_, 12);
         std::replace(node_id.begin(), node_id.end(), ' ', '0');
         inject_seperator<2, '.'>(node_id);
         cfg_.userinfo().description().write(fd, node_id.c_str());
     }
 private:
     const esp32io::ConfigDef &cfg_;
+    const uint64_t nodeID_;
 
     template<const unsigned num, const char separator>
     void inject_seperator(std::string & input)
@@ -86,5 +90,7 @@ private:
         }
     }
 };
+
+} // namespace esp32io
 
 #endif // FACTORY_RESET_HELPER_HXX_

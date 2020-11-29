@@ -126,7 +126,6 @@ esp_err_t save_config(node_config_t *config)
     return res;
 }
 
-
 #ifndef CONFIG_WIFI_STATION_SSID
 #define CONFIG_WIFI_STATION_SSID ""
 #endif
@@ -202,42 +201,37 @@ void nvs_init()
 
 void dump_config(node_config_t *config)
 {
-    uint8_t mac[6];
-    switch(config->wifi_mode)
+    LOG(INFO, "[NVS] Node ID: %s"
+      , uint64_to_string_hex(config->node_id).c_str());
+    if (config->wifi_mode != WIFI_MODE_NULL &&
+        config->wifi_mode != WIFI_MODE_MAX)
     {
-        case WIFI_MODE_STA:
+        uint8_t mac[6];
+        LOG(INFO, "[NVS] Hostname Prefix: %s", config->hostname_prefix);
+        if (config->wifi_mode == WIFI_MODE_STA ||
+            config->wifi_mode == WIFI_MODE_APSTA)
+        {
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(esp_read_mac(mac, ESP_MAC_WIFI_STA));
-            LOG(INFO, "[NVS] WiFi mode: %d (Station:%s)", config->wifi_mode
-              , config->sta_ssid);
-            LOG(INFO, "[NVS] Station MAC: %s", mac_to_string(mac).c_str());
-            break;
-        case WIFI_MODE_AP:
+            LOG(INFO, "[NVS] Station: %s, MAC address:%s", config->sta_ssid
+              , mac_to_string(mac).c_str());
+        }
+        if (config->wifi_mode == WIFI_MODE_AP ||
+            config->wifi_mode == WIFI_MODE_APSTA)
+        {
             bzero(&mac, 6);
             ESP_ERROR_CHECK_WITHOUT_ABORT(
                 esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
-            LOG(INFO, "[NVS] WiFi mode: %d (SoftAP:%s, auth:%d, channel:%d)"
-              , config->wifi_mode, config->ap_ssid, config->ap_auth
-              , config->ap_channel);
-            LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
-            //LOG(INFO, "[NVS] SoftAP PW: %s", config->ap_pass);
-            break;
-        case WIFI_MODE_APSTA:
-            bzero(&mac, 6);
-            ESP_ERROR_CHECK_WITHOUT_ABORT(esp_read_mac(mac, ESP_MAC_WIFI_STA));
-            LOG(INFO, "[NVS] WiFi mode: %d (Station:%s, SoftAP:esp32s2io_%s)"
-              , config->wifi_mode, config->ap_ssid
-              , uint64_to_string_hex(config->node_id).c_str());
-            LOG(INFO, "[NVS] Station MAC: %s", mac_to_string(mac).c_str());
-            bzero(&mac, 6);
-            ESP_ERROR_CHECK_WITHOUT_ABORT(
-                esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
-            LOG(INFO, "[NVS] SoftAP MAC: %s", mac_to_string(mac).c_str());
-            break;
-        case WIFI_MODE_NULL:
-        case WIFI_MODE_MAX:
-            LOG(INFO, "[NVS] WiFi mode: %d (OFF)", config->wifi_mode);
+            LOG(INFO, "[NVS] SoftAP: %s, auth:%d, channel:%d, MAC address:%s"
+              , config->ap_ssid, config->ap_auth, config->ap_channel
+              , mac_to_string(mac).c_str());
+        }
     }
+    else
+    {
+        LOG(INFO, "[NVS] WiFi Disabled");
+    }
+
 }
 
 bool reconfigure_wifi(wifi_mode_t mode, const string &ssid
