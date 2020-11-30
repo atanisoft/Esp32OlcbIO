@@ -103,6 +103,19 @@ namespace openlcb
     };
 }
 
+extern "C" void enter_bootloader()
+{
+    node_config_t config;
+    if (load_config(&config) != ESP_OK)
+    {
+        default_config(&config);
+    }
+    config.bootloader_req = true;
+    save_config(&config);
+    LOG(INFO, "[Bootloader] Rebooting into bootloader");
+    reboot();
+}
+
 // Configurable IO pins
 constexpr const Gpio *const CONFIGURABLE_GPIO_PIN_INSTANCES[] =
 {
