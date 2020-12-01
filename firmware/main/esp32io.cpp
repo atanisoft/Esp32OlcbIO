@@ -105,7 +105,7 @@ static constexpr int8_t FACTORY_RESET_EVENTS_HOLD_TIME = 5;
 void start_openlcb_stack(node_config_t *config, bool reset_events
                        , bool brownout_detected);
 
-void start_bootloader_stack(node_config_t *config);
+void start_bootloader_stack(uint64_t node_id);
 
 /// Halts execution with a specific blink pattern for the two LEDs that are on
 /// the IO base board.
@@ -324,7 +324,7 @@ void app_main()
             config.bootloader_req = false;
             save_config(&config);
         }
-        start_bootloader_stack(&config);
+        start_bootloader_stack(config.node_id);
     }
 
     // At this point the OpenMRN stack is running in it's own task and we can
