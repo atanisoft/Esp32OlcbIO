@@ -110,7 +110,7 @@ The following parts have compatible alternatives:
 | Part | Default Mouser # | Alternative Mouser # | Notes |
 | ---- | ---------------- | -------------------- | ----- |
 | J2, J4 | 571-6-534237-1 | 992-13FX1-254MM, 485-598, 485-4158, 485-4156, 485-4159, 485-4157, 485-4155, 485-4160 | Parts 485-XXXX will need to be cut to the correct length. |
-| J6, J7 | 571-6-534237-1 | 534-949 or 493-HCJV1-812UK |
+| J6, J7 | 571-5569284-1 | 534-949 or 493-HCJV1-812UK |
 
 ## Extending the base board
 
