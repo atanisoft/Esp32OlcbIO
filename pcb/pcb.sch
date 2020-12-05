@@ -5,7 +5,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "ESP32 IO Board"
-Date "2020-11-19"
+Date "2020-12-04"
 Rev "1.0"
 Comp ""
 Comment1 ""
@@ -435,7 +435,7 @@ F 0 "J5" H 8630 6242 50  0000 L CNN
 F 1 "EXT POWER" H 8630 6151 50  0000 L CNN
 F 2 "TerminalBlock_Phoenix:TerminalBlock_Phoenix_PT-1,5-2-3.5-H_1x02_P3.50mm_Horizontal" H 8550 6250 50  0001 C CNN
 F 3 "~" H 8550 6250 50  0001 C CNN
-F 4 "523-NY0210800000G" H 8550 6250 50  0001 C CNN "Mouser"
+F 4 "651-1984617" H 8550 6250 50  0001 C CNN "Mouser"
 	1    8550 6250
 	1    0    0    1   
 $EndComp
