@@ -1,0 +1,37 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Set up Python 3.5
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.5
+      - name: Install ESP-IDF
+        uses: CalinRadoni/esp-idf-v4-action@v2
+        with:
+          esp_idf_version: 'release/v4.2'
+      - name: Build
+        run: |
+          source ~/esp/esp-idf/export.sh
+          cd firmware
+          idf.py reconfigure
+          idf.py app
+          idf.py size
+          mkdir binaries
+          cp build/ESP32IO.bin binaries
+      - name: Package binaries
+        uses: actions/upload-artifact@v1
+        with:
+          name: Esp32io
+          path: firmware/binaries
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
