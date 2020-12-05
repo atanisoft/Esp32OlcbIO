@@ -21,6 +21,9 @@ menu "OpenLCB Configuration"
             Enabling this option will cause all packets that are sent or
             received to be printed by the ESP32 OpenLCB Hub.
 
+    config OLCB_ENABLE_TWAI
+        bool "Enable TWAI (CAN) interface"
+        default y
 endmenu
 
 menu "WiFi Configuration"

@@ -49,7 +49,7 @@
 #include <esp_task.h>
 #include <freertos_includes.h>
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
-#include <freertos_drivers/esp32/Esp32Twai.hxx>
+#include <freertos_drivers/esp32/Esp32HardwareTwai.hxx>
 #include <openlcb/ConfiguredProducer.hxx>
 #include <openlcb/MemoryConfigClient.hxx>
 #include <openlcb/MultiConfiguredPC.hxx>
@@ -143,7 +143,9 @@ uninitialized<esp32io::DelayRebootHelper> delayed_reboot;
 uninitialized<esp32io::HealthMonitor> health_mon;
 uninitialized<esp32io::NodeRebootHelper> node_reboot_helper;
 
-Esp32Twai twai("/dev/twai", CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
+#if CONFIG_OLCB_ENABLE_TWAI
+Esp32HardwareTwai twai(CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
+#endif // CONFIG_OLCB_ENABLE_TWAI
 
 #if CONFIG_SNTP
 static bool sntp_callback_called_previously = false;
@@ -308,12 +310,14 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
                      , config->wifi_mode != WIFI_MODE_STA);
     }
 
+#if CONFIG_OLCB_ENABLE_TWAI
     stack->executor()->add(new CallbackExecutable([]
     {
         // Initialize the TWAI driver
         twai.hw_init();
-        stack->add_can_port_select("/dev/twai/twai0");
+        stack->add_can_port_async("/dev/twai/twai0");
     }));
+#endif // CONFIG_OLCB_ENABLE_TWAI
 
     if (brownout_detected)
     {
