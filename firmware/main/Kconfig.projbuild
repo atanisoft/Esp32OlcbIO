@@ -27,14 +27,6 @@ menu "OpenLCB Configuration"
 endmenu
 
 menu "WiFi Configuration"
-    config WIFI_RESTART_ON_SSID_CONNECT_FAILURE
-        bool "Restart if SSID connect fails"
-        default y
-        help
-            By default the ESP32 OpenLCB Hub will wait up to ~3min for the SSID
-            connect process to complete, if it does not complete within this
-            period it will reboot and try again.
-
     choice WIFI_MODE
         bool "WiFi Mode"
         config WIFI_MODE_SOFTAP
@@ -90,21 +82,6 @@ menu "WiFi Configuration"
         string "Station Password"
         depends on WIFI_MODE_STATION || WIFI_MODE_SOFTAP_STATION
 
-    config TIMEZONE
-        string "Timezone"
-        default "UTC0"
-        depends on WIFI_MODE_STATION || WIFI_MODE_SOFTAP_STATION
-        help
-            This is the timezone that the ESP32 OpenLCB Hub is running in.
-            The value must follow POSIX notation.
-            A few common values:
-            * PST8PDT,M3.2.0,M11.1.0 -- UTC-8 with automatic DST adjustment
-            * MST7MDT,M3.2.0,M11.1.0 -- UTC-7 with automatic DST adjustment
-            * CST6CDT,M3.2.0,M11.1.0 -- UTC-6 with automatic DST adjustment
-            * EST5EDT,M3.2.0,M11.1.0 -- UTC-5 with automatic DST adjustment
-            A complete list can be seen here in the second column:
-            https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-
     config SNTP
         bool "Enable SNTP synchronization"
         default n
@@ -117,6 +94,21 @@ menu "WiFi Configuration"
         string "SNTP Server"
         default "pool.ntp.org"
         depends on SNTP
+
+    config TIMEZONE
+        string "Timezone"
+        default "UTC0"
+        depends on SNTP
+        help
+            This is the timezone that the ESP32 OpenLCB Hub is running in.
+            The value must follow POSIX notation.
+            A few common values:
+            * PST8PDT,M3.2.0,M11.1.0 -- UTC-8 with automatic DST adjustment
+            * MST7MDT,M3.2.0,M11.1.0 -- UTC-7 with automatic DST adjustment
+            * CST6CDT,M3.2.0,M11.1.0 -- UTC-6 with automatic DST adjustment
+            * EST5EDT,M3.2.0,M11.1.0 -- UTC-5 with automatic DST adjustment
+            A complete list can be seen here in the second column:
+            https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 endmenu
 
 menu "Advanced Configuration"
@@ -135,8 +127,4 @@ menu "Advanced Configuration"
     config HEALTH_INTERVAL
         int "Health report interval (sec)"
         default 15
-
-    config EXTERNAL_HTTP_EXECUTOR
-        bool "Use external executor for httpd"
-        default n
 endmenu

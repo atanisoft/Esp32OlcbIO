@@ -46,7 +46,10 @@ using std::string;
 static constexpr char NVS_NAMESPACE[] = "iocfg";
 
 /// NVS Persistence key.
-static constexpr char NVS_CFG_KEY[] = "cfg";
+static constexpr char NVS_CFG_KEY[] = "node";
+
+/// Old NVS Persistence key, used only for loading old config entry.
+static constexpr char NVS_OLD_CFG_KEY[] = "cfg";
 
 esp_err_t load_config(node_config_t *config)
 {
@@ -64,6 +67,24 @@ esp_err_t load_config(node_config_t *config)
         return res;
     }
     res = nvs_get_blob(nvs, NVS_CFG_KEY, config, &size);
+    // if the key is not found check if the old config entry exists and migrate
+    // the node-id over and resave the config.
+    if (res == ESP_ERR_NVS_NOT_FOUND)
+    {
+        old_node_config_t old_config;
+        size = sizeof(old_node_config_t);
+        res = nvs_get_blob(nvs, NVS_OLD_CFG_KEY, &old_config, &size);
+        if (res == ESP_OK && size == sizeof(old_node_config_t))
+        {
+            bzero(config, sizeof(node_config_t));
+            config->node_id = old_config.node_id;
+            // cleanup the old key
+            nvs_erase_key(nvs, NVS_OLD_CFG_KEY);
+            nvs_close(nvs);
+            // save the new config
+            return save_config(config);
+        }
+    }
     nvs_close(nvs);
 
     // if the size read in is not as expected reset the result code to failure.
@@ -72,26 +93,6 @@ esp_err_t load_config(node_config_t *config)
         LOG_ERROR("[NVS] Configuration load failed (loaded size incorrect: "
                   "%zu vs %zu)", size, sizeof(node_config_t));
         res = ESP_FAIL;
-    }
-    if (config->wifi_mode != WIFI_MODE_NULL)
-    {
-        if (config->wifi_mode != WIFI_MODE_STA && config->ap_ssid[0] == '\0')
-        {
-            LOG_ERROR("[NVS] Configuration doesn't appear to be valid, AP "
-                      "SSID is blank!");
-            res = ESP_FAIL;
-        }
-        if (config->wifi_mode != WIFI_MODE_AP && config->sta_ssid[0] == '\0')
-        {
-            LOG_ERROR("[NVS] Configuration doesn't appear to be valid, "
-                      "Station SSID is blank!");
-            res = ESP_FAIL;
-        }
-    }
-
-    if (config->ap_channel == 0)
-    {
-        config->ap_channel = 1;
     }
     return res;
 }
@@ -126,48 +127,12 @@ esp_err_t save_config(node_config_t *config)
     return res;
 }
 
-#ifndef CONFIG_WIFI_STATION_SSID
-#define CONFIG_WIFI_STATION_SSID ""
-#endif
-
-#ifndef CONFIG_WIFI_STATION_PASSWORD
-#define CONFIG_WIFI_STATION_PASSWORD ""
-#endif
-
-#ifndef CONFIG_WIFI_SOFTAP_SSID
-#define CONFIG_WIFI_SOFTAP_SSID "esp32io"
-#endif
-
-#ifndef CONFIG_WIFI_SOFTAP_PASSWORD
-#define CONFIG_WIFI_SOFTAP_PASSWORD "esp32io"
-#endif
-
-#ifndef CONFIG_WIFI_RESTART_ON_SSID_CONNECT_FAILURE
-#define CONFIG_WIFI_RESTART_ON_SSID_CONNECT_FAILURE 0
-#endif
-
-#ifndef CONFIG_WIFI_HOSTNAME_PREFIX
-#define CONFIG_WIFI_HOSTNAME_PREFIX "esp32io_"
-#endif
-
-#ifndef CONFIG_WIFI_SOFTAP_CHANNEL
-#define CONFIG_WIFI_SOFTAP_CHANNEL 1
-#endif
 
 esp_err_t default_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Initializing default configuration");
     bzero(config, sizeof(node_config_t));
     config->node_id = CONFIG_OLCB_NODE_ID;
-    config->wifi_mode = (wifi_mode_t)CONFIG_WIFI_MODE;
-    strcpy(config->sta_ssid, CONFIG_WIFI_STATION_SSID);
-    strcpy(config->sta_pass, CONFIG_WIFI_STATION_PASSWORD);
-    config->sta_wait_for_connect = CONFIG_WIFI_RESTART_ON_SSID_CONNECT_FAILURE;
-    config->ap_channel = CONFIG_WIFI_SOFTAP_CHANNEL;
-    strcpy(config->ap_ssid, CONFIG_WIFI_SOFTAP_SSID);
-    strcpy(config->ap_pass, CONFIG_WIFI_SOFTAP_PASSWORD);
-    strcpy(config->hostname_prefix, CONFIG_WIFI_HOSTNAME_PREFIX);
-    config->ap_auth = WIFI_AUTH_WPA2_PSK;
     return save_config(config);
 }
 
@@ -203,73 +168,6 @@ void dump_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Node ID: %s"
       , uint64_to_string_hex(config->node_id).c_str());
-    if (config->wifi_mode != WIFI_MODE_NULL &&
-        config->wifi_mode != WIFI_MODE_MAX)
-    {
-        uint8_t mac[6];
-        LOG(INFO, "[NVS] Hostname Prefix: %s", config->hostname_prefix);
-        if (config->wifi_mode == WIFI_MODE_STA ||
-            config->wifi_mode == WIFI_MODE_APSTA)
-        {
-            bzero(&mac, 6);
-            ESP_ERROR_CHECK_WITHOUT_ABORT(esp_read_mac(mac, ESP_MAC_WIFI_STA));
-            LOG(INFO, "[NVS] Station: %s, MAC address:%s", config->sta_ssid
-              , mac_to_string(mac).c_str());
-        }
-        if (config->wifi_mode == WIFI_MODE_AP ||
-            config->wifi_mode == WIFI_MODE_APSTA)
-        {
-            bzero(&mac, 6);
-            ESP_ERROR_CHECK_WITHOUT_ABORT(
-                esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP));
-            LOG(INFO, "[NVS] SoftAP: %s, auth:%d, channel:%d, MAC address:%s"
-              , config->ap_ssid, config->ap_auth, config->ap_channel
-              , mac_to_string(mac).c_str());
-        }
-    }
-    else
-    {
-        LOG(INFO, "[NVS] WiFi Disabled");
-    }
-
-}
-
-bool reconfigure_wifi(wifi_mode_t mode, const string &ssid
-                    , const string &password)
-{
-    if (ssid.length() > AP_SSID_PASS_LEN)
-    {
-        LOG_ERROR("[NVS] Requested SSID is longer than permitted: %zu (max:%d)"
-                , ssid.length(), AP_SSID_PASS_LEN);
-        return false;
-    }
-    if (password.length() > AP_SSID_PASS_LEN)
-    {
-        LOG_ERROR("[NVS] Requested PASSWORD is longer than permitted: %zu "
-                  "(max:%d)", password.length(), AP_SSID_PASS_LEN);
-        return false;
-    }
-
-    node_config_t config;
-    load_config(&config);
-    LOG(INFO, "[NVS] Setting wifi_mode to: %d (%s)", mode
-      , mode == WIFI_MODE_NULL ? "Off" :
-        mode == WIFI_MODE_STA ? "Station" :
-        mode == WIFI_MODE_APSTA ? "Station + SoftAP" : "SoftAP");
-    config.wifi_mode = mode;
-    if (mode == WIFI_MODE_STA || mode == WIFI_MODE_APSTA)
-    {
-        LOG(INFO, "[NVS] Setting STATION ssid to: %s", ssid.c_str());
-        strcpy(config.sta_ssid, ssid.c_str());
-        strcpy(config.sta_pass, password.c_str());
-    }
-    else if (mode == WIFI_MODE_AP)
-    {
-        LOG(INFO, "[NVS] Setting AP ssid to: %s", ssid.c_str());
-        strcpy(config.ap_ssid, ssid.c_str());
-        strcpy(config.ap_pass, password.c_str());
-    }
-    return save_config(&config) == ESP_OK;
 }
 
 bool force_factory_reset()
@@ -281,16 +179,12 @@ bool force_factory_reset()
     return save_config(&config) == ESP_OK;
 }
 
-bool reset_wifi_config_to_softap(node_config_t *config)
+bool set_node_id(uint64_t node_id)
 {
-    LOG(WARNING, "[NVS] Switching to SoftAP mode as the station SSID is blank!");
-    config->wifi_mode = WIFI_MODE_AP;
-    if (strlen(config->ap_ssid) == 0)
-    {
-        LOG(WARNING, "[NVS] SoftAP SSID is blank, resetting to %s"
-          , CONFIG_WIFI_SOFTAP_SSID);
-        strcpy(config->ap_ssid, CONFIG_WIFI_SOFTAP_SSID);
-        strcpy(config->ap_pass, CONFIG_WIFI_SOFTAP_PASSWORD);
-    }
-    return save_config(config) == ESP_OK;
+    node_config_t config;
+    load_config(&config);
+    config.node_id = node_id;
+    config.force_reset = true;
+
+    return save_config(&config) == ESP_OK;
 }

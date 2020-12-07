@@ -4,6 +4,14 @@ cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
+if (IDF_VERSION_MAJOR LESS 4)
+    message(FATAL_ERROR "ESP32IO requires IDF v4.2 (or newer)")
+endif()
+
+if (IDF_VERSION_MAJOR EQUAL 4 AND IDF_VERSION_MINOR LESS 2)
+    message(FATAL_ERROR "ESP32IO requires IDF v4.2 (or newer)")
+endif()
+
 set(SUPPORTED_TARGETS esp32)
 project(ESP32IO)
 

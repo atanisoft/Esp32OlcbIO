@@ -22,7 +22,7 @@ string(SUBSTRING "${project_name}" 0 40 SNIP_PROJECT_NAME)
 
 set(SNIP_HW_VERSION "1.0.0")
 set(SNIP_PROJECT_PAGE "http://atanisoft.github.io/esp32io")
-set(CDI_VERSION "0x0100")
+set(CDI_VERSION "0x0101")
 
 set_source_files_properties(esp32io.cpp PROPERTIES COMPILE_FLAGS "-Wno-implicit-fallthrough -Wno-ignored-qualifiers")
 set_source_files_properties(esp32io_stack.cpp PROPERTIES COMPILE_DEFINITIONS "SNIP_PROJECT_PAGE=\"${SNIP_PROJECT_PAGE}\"; SNIP_HW_VERSION=\"${SNIP_HW_VERSION}\"; SNIP_SW_VERSION=\"${SNIP_SW_VERSION}\"; SNIP_PROJECT_NAME=\"${SNIP_PROJECT_NAME}\"; CDI_VERSION=${CDI_VERSION}")

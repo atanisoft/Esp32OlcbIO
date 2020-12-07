@@ -42,6 +42,14 @@
 #include <stdint.h>
 #include <string>
 
+typedef struct
+{
+    bool force_reset;
+    bool bootloader_req;
+    uint64_t node_id;
+    uint8_t reserved[22];
+} node_config_t;
+
 static constexpr size_t AP_SSID_PASS_LEN = 65;
 static constexpr size_t HOSTNAME_PREFIX_LEN = 21;
 typedef struct
@@ -62,15 +70,14 @@ typedef struct
     char ap_pass[AP_SSID_PASS_LEN];
     uint8_t ap_channel;
     uint8_t reserved[9];
-} node_config_t;
+} old_node_config_t;
 
 esp_err_t load_config(node_config_t *config);
 esp_err_t save_config(node_config_t *config);
 esp_err_t default_config(node_config_t *config);
 void nvs_init();
 void dump_config(node_config_t *config);
-bool reconfigure_wifi(wifi_mode_t, const std::string &ssid, const std::string &password);
 bool force_factory_reset();
-bool reset_wifi_config_to_softap(node_config_t *config);
+bool set_node_id(uint64_t node_id);
 
 #endif // NVS_CONFIG_HXX_

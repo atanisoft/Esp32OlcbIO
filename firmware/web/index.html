@@ -154,23 +154,6 @@
             border-color: #606c76;
             border-radius: 0.5rem;
         }
-
-        .wifi-none {
-            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.717c-4.502 0-8.251 1.227-10.95 2.51s-4.399 2.661-4.654 2.855l-0.395 0.303 15.747 19.614h0.504l0.147-0.183 15.602-19.431-0.399-0.305c-0.253-0.193-1.953-1.57-4.652-2.854s-6.449-2.51-10.95-2.51zM16 7.694c4.324 0 7.932 1.178 10.532 2.415 2.351 1.118 3.534 2.087 4.047 2.485l-14.579 18.158-14.579-18.158c0.512-0.397 1.696-1.368 4.047-2.485 2.6-1.236 6.208-2.415 10.532-2.415z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-        }
-        .wifi-quarter {
-            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.457c-4.502 0-8.251 1.226-10.948 2.509s-4.402 2.663-4.645 2.847l-0.406 0.306 15.96 19.881 0.422-0.422 0.015-0.019 15.603-19.44-0.406-0.306c-0.244-0.184-1.948-1.565-4.645-2.847s-6.446-2.508-10.948-2.508zM16 7.443c4.323 0 7.927 1.178 10.525 2.412 2.345 1.115 3.52 2.076 4.041 2.478l-7.649 9.53c-0.364-0.269-0.93-0.662-1.838-1.095-1.26-0.601-2.998-1.169-5.079-1.169s-3.817 0.567-5.077 1.169c-0.907 0.433-1.474 0.826-1.838 1.095l-7.651-9.53c0.521-0.401 1.696-1.363 4.041-2.478 2.598-1.235 6.202-2.412 10.525-2.412z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-        }
-        .wifi-half {
-            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath d='M16 6.305c-4.502 0-8.251 1.226-10.948 2.508s-4.402 2.663-4.645 2.847l-0.406 0.306 5.835 7.269c-0.010 0.008-0.021 0.015-0.031 0.023 1.197 1.437 2.368 2.897 3.544 4.353l6.611 8.236c0.041 0.051 0.081 0.102 0.121 0.152l0.329-0.61 15.59-19.423-0.406-0.306c-0.244-0.184-1.948-1.565-4.645-2.847s-6.446-2.508-10.948-2.508zM16 7.291c4.323 0 7.927 1.178 10.525 2.412 2.345 1.115 3.52 2.076 4.041 2.478l-5.177 6.451c-0.446-0.338-1.258-0.926-2.595-1.563-1.686-0.804-4.009-1.563-6.792-1.563s-5.108 0.759-6.794 1.563c-0.929 0.417-1.762 0.988-2.576 1.586l-5.198-6.474c0.521-0.401 1.696-1.363 4.041-2.478 2.598-1.235 6.202-2.412 10.525-2.412z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-        }
-        .wifi-full {
-            background-image: url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctitle/%3E%3Cpath fill='%23000' d='M16 6.57c-9.23 0-15.381 5.030-16 5.497l16 19.933 0.014-0.014 15.986-19.918c-0.619-0.467-6.77-5.497-16-5.497z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-        }
     </style>
 </head>
 
@@ -182,7 +165,6 @@
                 <ul>
                     <li><a id="navtab-node_info">Node Information</a></li>
                     <li><a id="navtab-firmware_upload">Firmware Update</a></li>
-                    <li><a id="navtab-wifi_info">WiFi Configuration</a></li>
                     <li><a id="navtab-config">Node Configuration</a></li>
                 </ul>
             </div>
@@ -231,84 +213,6 @@
                     id="firmware_upload_results"></span></div>
             <div class="row">
                 <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button></div>
-            </div>
-        </section>
-        <section class="container" style="display:none;" id="wifi_info">
-            <div class="row">
-                <div class="column column-25"><label for="wifi-mode">WiFi Mode:</label></div>
-                <div class="column column-75"><select id="wifi-mode" oninput="wifi_mode_change()">
-                        <option value="0">Disabled</option>
-                        <option value="1">Station Only</option>
-                        <option value="2">SoftAP Only</option>
-                        <option value="3">Station and SoftAP</option>
-                    </select>
-                </div>
-            </div>
-            <div id="wifi-sta">
-                <div class="row">
-                    <div class="column column-25"><label for="wifi-sta-ssid">Station SSID:</label></div>
-                    <div class="column column-75"><input type="text" id="wifi-sta-ssid"></div>
-                </div>
-                <div class="row">
-                    <div class="column column-25"><label for="wifi-sta-password">Station Password:</label></div>
-                    <div class="column column-75"><input type="password" id="wifi-sta-password"></div>
-                </div>
-                <div class="row">
-                    <div class="column column-25"><label for="wifi-sta-ip-mode">Station IP Assignment:</label></div>
-                    <div class="column column-75"><select id="wifi-sta-ip-mode"
-                            onchange="wifi_sta_ip_mode_change()">
-                            <option value="dhcp">DHCP</option>
-                            <option value="static">Static IP</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="wifi-sta-static-ip" style="display:none;">
-                    <div class="row">
-                        <div class="column column-25"><label for="wifi-sta-ip">IP:</label></div>
-                        <div class="column column-75"><input type="text" id="wifi-sta-ip"></div>
-                    </div>
-                    <div class="row">
-                        <div class="column column-25"><label for="wifi-sta-gateway">Gateway IP:</label></div>
-                        <div class="column column-75"><input type="text" id="wifi-sta-gateway"></div>
-                    </div>
-                    <div class="row">
-                        <div class="column column-25"><label for="wifi-sta-netmask">Subnet Mask:</label></div>
-                        <div class="column column-75"><input type="text" id="wifi-sta-netmask" value="255.255.255.0">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="column column-25"><label for="wifi-dns">DNS:</label></div>
-                        <div class="column column-75"><input id="wifi-dns" type="text" value="8.8.8.8"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="wifi-ap">
-                <div class="row">
-                    <div class="column column-25"><label for="wifi-ap-ssid">SoftAP SSID:</label></div>
-                    <div class="column column-75"><input type="text" id="wifi-ap-ssid"></div>
-                </div>
-            </div>
-            <div id="spinner-wifi" class="spinner" style="display:none;"></div>
-            <div class="container" id="wifi-sta-scan-results" style="display:none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>SSID</th>
-                            <th>Signal Strength</th>
-                            <th>Encryption</th>
-                            <th>Select</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scan-results">
-                    </tbody>
-                </table>
-            </div>
-            <div class="row">&nbsp;</div>
-            <div class="row" id="wifi-buttons">
-                <div class="column column-25"><button id="btn-wifi-save" href="#" onclick="wifi_save()">Save</button>
-                </div>
-                <div class="column column-25"><button id="btn-sta-scan" href="#" onclick="wifi_scan()">WiFi
-                        Scan</button></div>
             </div>
         </section>
         <section class="container" id="config" style="display:none;">
@@ -368,6 +272,7 @@
                             console.error('Invalid JSON payload (missing resp_type):', msg);
                         } else if (json.resp_type === 'error') {
                             console.error('ERROR:', json.error);
+                            alert(json.error);
                         } else if (json.resp_type === 'info') {
                             $('#node_id').val(pad_hex(json.node_id, 12));
                             hide_spinner('node_id');
@@ -376,12 +281,6 @@
                             $('[id^=navtab-]').each(function (i, e) {
                                 $(e).attr('href', '#');
                             });
-                        } else if (json.resp_type === 'wifi') {
-                            $('#wifi-mode').val(json.mode);
-                            $('#wifi-sta-ssid').val(json.sta_ssid);
-                            $('#wifi-ap-ssid').val(json.ap_ssid);
-                            wifi_mode_change();
-                            hide_spinner('wifi');
                         } else if (json.resp_type === 'field-saved') {
                             hide_spinner(json.target);
                         } else if (json.resp_type === 'field-value') {
@@ -409,37 +308,7 @@
                             setTimeout(function () { location.reload(); }, 7500);
                         } else if (json.resp_type === 'reset-events') {
                             refresh_all_fields();
-                        } else if (json.resp_type === 'wifi-scan') {
-                            hide_spinner('wifi');
-                            $('[id^=wifi-select-]').each(function (i, e) {
-                                $(e).on('click', function () {
-                                    $('#wifi-sta-ssid').val($(e).attr('id').replace('wifi-select-', ''));
-                                });
-                            });
-                            $('#wifi-sta-scan-results').show();
-                            $('#wifi-buttons').show();
-                        } else if (json.resp_type === 'wifi-entry') {
-                            // filter out entries that have a blank ssid (hidden) or have an RSSI that is lower than -85
-                            if (json.rssi > -85 && json.ssid.length > 0) {
-                                var auth_values = ['None', 'WEP', 'WPA', 'WPA2', 'WPA/WPA2', 'WPA2 Enterprise'];
-                                var rssi_class = 'wifi-none';
-                                if (json.rssi < -80) {
-                                    rssi_class = 'wifi-none';
-                                } else if (json.rssi < -70) {
-                                    rssi_class = 'wifi-quarter';
-                                } else if (json.rssi < -60) {
-                                    rssi_class = 'wifi-half';
-                                } else {
-                                    rssi_class = 'wifi-full';
-                                }
-                                $('#scan-results').append(String.format('<tr><td>{0}</td>' +
-                                    '<td class="{1}" title="{2}"/></td>' +
-                                    '<td>{3}</td>' +
-                                    '<td><button class="button-small" id="wifi-select-{0}">Select</button></td>' +
-                                    '</tr>', decodeURI(json.ssid), rssi_class, json.rssi, auth_values[json.auth]));
-                            }
                         }
-                        
                     }
                 });
             });
@@ -495,13 +364,6 @@
                 ws_send(JSON.stringify({req_type:'reset-events'}));
             }
         }
-        function wifi_scan() {
-            $('#wifi-sta-scan-results').hide();
-            $('#scan-results').children().remove();
-            $('#wifi-buttons').hide();
-            show_spinner('wifi');
-            ws_send(JSON.stringify({req_type:'wifi-scan'}));
-        }
         function upload_ota() {
             var xhr = new XMLHttpRequest();
             var file = $('#firmware_file')[0].files[0];
@@ -555,46 +417,6 @@
             add_tab_events('navtab');
             add_tab_events('configtab');
         });
-        function wifi_sta_ip_mode_change() {
-            if ($('#wifi-sta-ip-mode').val() !== 'dhcp') {
-                $('#wifi-sta-static-ip').show();
-            }
-            else {
-                $('#wifi-sta-static-ip').hide();
-            }
-        }
-        function wifi_mode_change() {
-            var mode = parseInt($('#wifi-mode').val());
-            if (mode === 0) {
-                // disabled
-                $('#wifi-sta').hide();
-                $('#btn-sta-scan').hide();
-                $('#wifi-ap').hide();
-            } else if (mode === 1) {
-                // station only
-                $('#wifi-sta').show();
-                $('#wifi-ap').hide();
-            } else if (mode === 2) {
-                // softap only
-                $('#wifi-sta').hide();
-                $('#wifi-ap').show();
-            } else {
-                // station or station + softap
-                $('#wifi-sta').show();
-                $('#btn-sta-scan').show();
-                $('#wifi-ap').show();
-            }
-        }
-        function wifi_save() {
-            var mode = $('#wifi-mode').val();
-            var url = String.format('/wifi?mode={0}', mode);
-            if (mode === '1' || mode === '3') {
-                url += String.format('&ssid={0}&pass={1}', $('#wifi-sta-ssid').val(), $('#wifi-sta-password').val());
-            }
-            fetch(url, { method: 'POST', body: ' ', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
-                .then(res => { alert('WiFi configuration persisted, node rebooting'); setTimeout(function () { location.reload(); }, 15000); })
-                .catch(alert('WiFi configuration persistence failed'));
-        }
         function process_group(group) {
             var groupsize = 0;
             if (group.nodeName == 'int' || group.nodeName == 'string') {
@@ -797,7 +619,6 @@
             cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
             cdi_segment_loader.push('{"req_type":"info"}');
-            cdi_segment_loader.push('{"req_type":"wifi"}');
             cdi_segment_loader.forEach(elem => ws_send(elem));
             cdi_segment_loader.splice(0, cdi_segment_loader.length);
             $('#node_info').show();

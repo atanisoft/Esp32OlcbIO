@@ -142,6 +142,9 @@ uninitialized<esp32io::EventBroadcastHelper> event_helper;
 uninitialized<esp32io::DelayRebootHelper> delayed_reboot;
 uninitialized<esp32io::HealthMonitor> health_mon;
 uninitialized<esp32io::NodeRebootHelper> node_reboot_helper;
+#if CONFIG_SNTP
+static bool sntp_configured = false;
+#endif // CONFIG_SNTP
 
 #if CONFIG_OLCB_ENABLE_TWAI
 Esp32HardwareTwai twai(CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
@@ -184,6 +187,30 @@ void factory_reset_events()
     fsync(config_fd);
 }
 
+#ifndef CONFIG_WIFI_STATION_SSID
+#define CONFIG_WIFI_STATION_SSID ""
+#endif
+
+#ifndef CONFIG_WIFI_STATION_PASSWORD
+#define CONFIG_WIFI_STATION_PASSWORD ""
+#endif
+
+#ifndef CONFIG_WIFI_SOFTAP_SSID
+#define CONFIG_WIFI_SOFTAP_SSID "esp32io"
+#endif
+
+#ifndef CONFIG_WIFI_SOFTAP_PASSWORD
+#define CONFIG_WIFI_SOFTAP_PASSWORD "esp32io"
+#endif
+
+#ifndef CONFIG_WIFI_HOSTNAME_PREFIX
+#define CONFIG_WIFI_HOSTNAME_PREFIX "esp32io_"
+#endif
+
+#ifndef CONFIG_WIFI_SOFTAP_CHANNEL
+#define CONFIG_WIFI_SOFTAP_CHANNEL 1
+#endif
+
 void start_openlcb_stack(node_config_t *config, bool reset_events
                        , bool brownout_detected)
 {
@@ -219,52 +246,38 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
 
     stack->set_tx_activity_led(LED_ACTIVITY_Pin::instance());
 
-    // If the wifi mode is enabled start the wifi manager and httpd.
-    if (config->wifi_mode > WIFI_MODE_NULL && config->wifi_mode < WIFI_MODE_MAX)
+    wifi_manager.emplace(CONFIG_WIFI_STATION_SSID, CONFIG_WIFI_STATION_PASSWORD
+                       , stack.get_mutable(), cfg.seg().wifi()
+                       , CONFIG_WIFI_HOSTNAME_PREFIX
+                       , (wifi_mode_t)CONFIG_WIFI_MODE
+                       , nullptr, ip_addr_any, CONFIG_WIFI_SOFTAP_SSID
+                       , CONFIG_WIFI_SOFTAP_PASSWORD
+                       , WIFI_AUTH_WPA2_PSK, CONFIG_WIFI_SOFTAP_CHANNEL);
+    
+    wifi_manager->register_network_status_led(LED_WIFI_Pin::instance());
+
+    wifi_manager->register_network_up_callback(
+    [](esp_interface_t iface, uint32_t ip)
     {
-        // if the wifi mode is not SoftAP and we do not have a station SSID
-        // force reset to SoftAP only.
-        if (config->wifi_mode != WIFI_MODE_AP && strlen(config->sta_ssid) == 0)
-        {
-            reset_wifi_config_to_softap(config);
-        }
-
-        wifi_manager.emplace(config->wifi_mode != WIFI_MODE_AP ? config->sta_ssid : config->ap_ssid
-                           , config->wifi_mode != WIFI_MODE_AP ? config->sta_pass : config->ap_pass
-                           , stack.get_mutable(), cfg.seg().wifi()
-                           , config->hostname_prefix, config->wifi_mode
-                           , nullptr // TODO add config.sta_ip
-                           , ip_addr_any, config->ap_channel, config->ap_auth
-                           , config->ap_ssid, config->ap_pass);
-
-        wifi_manager->wait_for_ssid_connect(config->sta_wait_for_connect);
-        wifi_manager->register_network_up_callback(
-        [](esp_interface_t iface, uint32_t ip)
-        {
-            LED_WIFI_Pin::set(true);
-        });
-        wifi_manager->register_network_down_callback(
-        [](esp_interface_t iface)
-        {
-            LED_WIFI_Pin::set(false);
-        });
-#ifdef CONFIG_TIMEZONE
-        LOG(INFO, "[TimeZone] %s", CONFIG_TIMEZONE);
-        setenv("TZ", CONFIG_TIMEZONE, 1);
-        tzset();
-#endif // CONFIG_TIMEZONE
+// TODO: move this inside Esp32WiFiManager
 #if CONFIG_SNTP
-        if (config->wifi_mode == WIFI_MODE_APSTA ||
-            config->wifi_mode == WIFI_MODE_STA)
+        if (!sntp_configured)
         {
-            LOG(INFO, "[SNTP] Polling %s for time updates", CONFIG_SNTP_SERVER);
+            LOG(INFO, "[SNTP] Polling %s for time updates",
+                CONFIG_SNTP_SERVER);
             sntp_setoperatingmode(SNTP_OPMODE_POLL);
             sntp_setservername(0, CONFIG_SNTP_SERVER);
             sntp_set_time_sync_notification_cb(sntp_received);
             sntp_init();
+            sntp_configured = true;
+#ifdef CONFIG_TIMEZONE
+            LOG(INFO, "[TimeZone] %s", CONFIG_TIMEZONE);
+            setenv("TZ", CONFIG_TIMEZONE, 1);
+            tzset();
+#endif // CONFIG_TIMEZONE
         }
 #endif // CONFIG_SNTP
-    }
+    });
 
 #if CONFIG_OLCB_PRINT_ALL_PACKETS
     stack->print_all_packets();
@@ -303,12 +316,7 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     node_reboot_helper.emplace(stack.get_mutable(), config_fd
                              , config_sync.get_mutable());
 
-    // Initialize the webserver after the config file has been created/opened.
-    if (config->wifi_mode > WIFI_MODE_NULL && config->wifi_mode < WIFI_MODE_MAX)
-    {
-        init_webserver(memory_client.get_mutable()
-                     , config->wifi_mode != WIFI_MODE_STA);
-    }
+    init_webserver(memory_client.get_mutable(), config->node_id);
 
 #if CONFIG_OLCB_ENABLE_TWAI
     stack->executor()->add(new CallbackExecutable([]

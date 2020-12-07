@@ -43,7 +43,7 @@ namespace openlcb
 
 class Service;
 
-void init_webserver(openlcb::MemoryConfigClient *cfg_client, bool soft_ap);
+void init_webserver(openlcb::MemoryConfigClient *cfg_client, uint64_t id);
 void shutdown_webserver();
 
 #endif // WEB_SERVER_HXX_

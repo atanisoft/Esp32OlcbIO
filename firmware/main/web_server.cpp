@@ -54,8 +54,7 @@
 static std::unique_ptr<http::Httpd> http_server;
 static openlcb::MemoryConfigClient *memory_client;
 static MDNS mdns;
-static node_config_t node_cfg;
-static Executor<1> http_executor{NO_THREAD()};
+static uint64_t node_id;
 
 /// Statically embedded index.html start location.
 extern const uint8_t indexHtmlGz[] asm("_binary_index_html_gz_start");
@@ -313,13 +312,18 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
         {
             std::string value =
                 cJSON_GetObjectItem(root, "value")->valuestring;
-            node_cfg.node_id = string_to_uint64(value);
-            node_cfg.force_reset = true;
-            save_config(&node_cfg);
-            LOG(INFO, "[Web] Node ID updated to: %s, reboot pending"
-              , uint64_to_string_hex(node_cfg.node_id).c_str());
-            Singleton<esp32io::DelayRebootHelper>::instance()->start();
-            response = R"!^!({"resp_type":"set-nodeid"})!^!";
+            uint64_t new_node_id = string_to_uint64(value);
+            if (set_node_id(new_node_id))
+            {
+                LOG(INFO, "[Web] Node ID updated to: %s, reboot pending"
+                , uint64_to_string_hex(new_node_id).c_str());
+                Singleton<esp32io::DelayRebootHelper>::instance()->start();
+                response = R"!^!({"resp_type":"set-nodeid"})!^!";
+            }
+            else
+            {
+                response = R"!^!({"resp_type":"error","error":"Failed to update node-id"})!^!";
+            }
         }
         else if (!strcmp(req_type->valuestring, "info"))
         {
@@ -332,17 +336,11 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                   , openlcb::SNIP_STATIC_DATA.model_name
                   , openlcb::SNIP_STATIC_DATA.hardware_version
                   , openlcb::SNIP_STATIC_DATA.software_version
-                  , uint64_to_string_hex(node_cfg.node_id).c_str());
-        }
-        else if (!strcmp(req_type->valuestring, "wifi"))
-        {
-            response =
-                StringPrintf(R"!^!({"resp_type":"wifi","mode":%d,"sta_ssid":"%s","ap_ssid":"%s"})!^!"
-                           , node_cfg.wifi_mode, node_cfg.sta_ssid, node_cfg.ap_ssid);
+                  , uint64_to_string_hex(node_id).c_str());
         }
         else if (!strcmp(req_type->valuestring, "cdi-get"))
         {
-            new CDIRequestProcessor(socket, node_cfg.node_id
+            new CDIRequestProcessor(socket, node_id
                                   , cJSON_GetObjectItem(root, "offs")->valueint
                                   , cJSON_GetObjectItem(root, "size")->valueint
                                   , cJSON_GetObjectItem(root, "target")->valuestring
@@ -354,7 +352,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
         {
             auto b = invoke_flow(memory_client
                                , MemoryConfigClientRequest::UPDATE_COMPLETE
-                               , openlcb::NodeHandle(node_cfg.node_id));
+                               , openlcb::NodeHandle(node_id));
             response =
                 StringPrintf(R"!^!({"resp_type":"update-complete","code":%d})!^!"
                             , b->data()->resultCode);
@@ -371,8 +369,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             {
                 // make sure value is null terminated
                 value += '\0';
-                new CDIRequestProcessor(socket, node_cfg.node_id, offs
-                                      , size, target, param_type, value);
+                new CDIRequestProcessor(socket, node_id, offs, size, target
+                                      , param_type, value);
             }
             else if (param_type == "int")
             {
@@ -381,8 +379,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     uint8_t data8 = std::stoi(value);
                     value.clear();
                     value.push_back(data8);
-                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
-                                          , size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_id, offs, size, target
+                                          , param_type, value);
                 }
                 else if (size == 2)
                 {
@@ -390,8 +388,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     value.clear();
                     value.push_back((data16 >> 8) & 0xFF);
                     value.push_back(data16 & 0xFF);
-                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
-                                          , size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_id, offs, size, target
+                                          , param_type, value);
                 }
                 else
                 {
@@ -401,8 +399,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     value.push_back((data32 >> 16) & 0xFF);
                     value.push_back((data32 >> 8) & 0xFF);
                     value.push_back(data32 & 0xFF);
-                    new CDIRequestProcessor(socket, node_cfg.node_id, offs
-                                          , size, target, param_type, value);
+                    new CDIRequestProcessor(socket, node_id, offs, size, target
+                                          , param_type, value);
                 }
             }
             else if (param_type == "eventid")
@@ -419,8 +417,8 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 value.push_back((data >> 16) & 0xFF);
                 value.push_back((data >> 8) & 0xFF);
                 value.push_back(data & 0xFF);
-                new CDIRequestProcessor(socket, node_cfg.node_id, offs, size
-                                      , target, param_type, value);
+                new CDIRequestProcessor(socket, node_id, offs, size, target
+                                      , param_type, value);
             }
             cJSON_Delete(root);
             return;
@@ -437,36 +435,6 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
         {
             factory_reset_events();
             response = R"!^!({"resp_type":"reset-events"})!^!";
-        }
-        else if (!strcmp(req_type->valuestring, "wifi-scan"))
-        {
-            auto wifi = Singleton<openmrn_arduino::Esp32WiFiManager>::instance();
-            response = R"!^!({"resp_type":"wifi-scan"})!^!";
-            SyncNotifiable n;
-            wifi->start_ssid_scan(&n);
-            n.wait_for_notification();
-            size_t num_found = wifi->get_ssid_scan_result_count();
-            vector<string> seen_ssids;
-            for (int i = 0; i < num_found; i++)
-            {
-                auto entry = wifi->get_ssid_scan_result(i);
-                if (std::find_if(seen_ssids.begin(), seen_ssids.end(),
-                    [entry](string &s) {
-                        return s == (char *)entry.ssid;
-                    }) != seen_ssids.end())
-                {
-                    // filter duplicate SSIDs
-                    continue;
-                }
-                seen_ssids.push_back((char *)entry.ssid);
-                string part = StringPrintf(
-                    R"!^!({"resp_type":"wifi-entry","auth":%d,"rssi":%d,"ssid":"%s"})!^!"
-                  , entry.authmode, entry.rssi
-                  , http::url_encode((char *)entry.ssid).c_str());
-                part += "\n";
-                socket->send_text(part);
-            }
-            wifi->clear_ssid_scan_results();
         }
         else if (!strcmp(req_type->valuestring, "event-test"))
         {
@@ -517,31 +485,13 @@ HTTP_HANDLER_IMPL(fs_proc, request)
     return nullptr;
 }
 
-void init_webserver(openlcb::MemoryConfigClient *cfg_client, bool soft_ap)
+void init_webserver(openlcb::MemoryConfigClient *cfg_client, uint64_t id)
 {
+    const esp_app_desc_t *app_data = esp_ota_get_app_description();
     memory_client = cfg_client;
-    load_config(&node_cfg);
-
-#if CONFIG_EXTERNAL_HTTP_EXECUTOR
-    LOG(INFO, "[Httpd] Initializing Executor");
-    xTaskCreate(http_exec_task, "httpd", http::config_httpd_server_stack_size()
-              , nullptr, config_arduino_openmrn_task_priority(), nullptr);
-#endif // CONFIG_EXTERNAL_HTTP_EXECUTOR
-    
+    node_id = id;
     LOG(INFO, "[Httpd] Initializing webserver");
-    http_server.reset(new http::Httpd(
-#if CONFIG_EXTERNAL_HTTP_EXECUTOR
-        &http_executor,
-#endif // CONFIG_EXTERNAL_HTTP_EXECUTOR
-        &mdns));
-    if (soft_ap)
-    {
-        const esp_app_desc_t *app_data = esp_ota_get_app_description();
-        http_server->captive_portal(
-            StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name
-                       , app_data->version, app_data->project_name
-                       , app_data->project_name));
-    }
+    http_server.reset(new http::Httpd(&mdns));
     http_server->redirect_uri("/", "/index.html");
     http_server->static_uri("/index.html", indexHtmlGz, indexHtmlGz_size
                           , http::MIME_TYPE_TEXT_HTML
@@ -559,14 +509,14 @@ void init_webserver(openlcb::MemoryConfigClient *cfg_client, bool soft_ap)
     http_server->websocket_uri("/ws", websocket_proc);
     http_server->uri("/fs", http::HttpMethod::GET, fs_proc);
     http_server->uri("/ota", http::HttpMethod::POST, nullptr, process_ota);
+    http_server->captive_portal(
+        StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name
+                    , app_data->version, app_data->project_name
+                    , app_data->project_name));
 }
 
 void shutdown_webserver()
 {
     LOG(INFO, "[Httpd] Shutting down webserver");
     http_server.reset(nullptr);
-#if CONFIG_EXTERNAL_HTTP_EXECUTOR
-    LOG(INFO, "[Httpd] Shutting down webserver executor");
-    http_executor.shutdown();
-#endif // CONFIG_EXTERNAL_HTTP_EXECUTOR
 }
