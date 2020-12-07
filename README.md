@@ -92,7 +92,17 @@ as both KiCad files and generated Gerber files.
 ### Mouser BOM
 
 The ESP32 IO Board components have been entered on Mouser for easy ordering
-via this shared [project](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=f3c392b9f2).
+via the following shared carts:
+- [single PCB](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=6d57d6cf6a)
+- [five PCBs](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=a15be25217)
+
+Ordering in larger quantities can decrease the per-PCB cost considerably. In
+the case of resistors and capacitors it is recommended to order 100 of each
+as they are tiny and easily lost. Other parts can often be substituted as long
+as they have the same footprint and pinout. The pin headers will need to be cut
+to length in both of the carts above, in the case of the five PCBs option there
+should be enough to populate all five PCBs for the ESP32 *AND* the extension
+board (when available).
 
 #### Optional parts
 
