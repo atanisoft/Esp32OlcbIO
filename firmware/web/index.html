@@ -411,9 +411,7 @@
             registerStringFormat();
             connectWebSocket();
             console.log('Downloading cdi.xml to generate config dialogs');
-            fetch('/fs?path=/fs/cdi.xml&remove_nulls=true')
-                .then(res => res.text())
-                .then(cdi => build_cdi_dom(cdi));
+            fetch('/cdi.xml').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
             add_tab_events('navtab');
             add_tab_events('configtab');
         });

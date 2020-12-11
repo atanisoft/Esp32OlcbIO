@@ -38,7 +38,6 @@
 #include <freertos_drivers/esp32/Esp32WiFiConfiguration.hxx>
 #include <openlcb/ConfigRepresentation.hxx>
 #include <openlcb/ConfiguredProducer.hxx>
-#include <openlcb/MemoryConfig.hxx>
 #include <openlcb/MultiConfiguredPC.hxx>
 
 namespace esp32io
@@ -54,8 +53,7 @@ CDI_GROUP(IoBoard, Segment(openlcb::MemoryConfigDefs::SPACE_CONFIG),
 /// Each entry declares the name of the current entry, then the type and then
 /// optional arguments list.
 CDI_GROUP_ENTRY(internal_config, openlcb::InternalConfigData);
-CDI_GROUP_ENTRY(wifi, openmrn_arduino::WiFiConfiguration,
-                Name("WiFi Configuration"));
+CDI_GROUP_ENTRY(wifi, WiFiConfiguration, Name("WiFi Configuration"));
 CDI_GROUP_ENTRY(gpi, INPUT_ONLY_PINS, Name("Input Only Pins"),
                 RepName("Input"));
 CDI_GROUP_ENTRY(gpio, CONFIGURABLE_GPIO_PINS, Name("Input Output Pins"),

@@ -32,14 +32,7 @@
  * @date 4 July 2020
  */
 
-#include <openlcb/SimpleStack.hxx>
-#include <utils/AutoSyncFileFlow.hxx>
-#include <utils/logging.h>
 #include <utils/Singleton.hxx>
-#include <esp_system.h>
-
-#include "fs.hxx"
-#include "web_server.hxx"
 
 namespace esp32io
 {
@@ -49,47 +42,13 @@ class NodeRebootHelper : public Singleton<NodeRebootHelper>
 {
 public:
     /// Constructor.
-    ///
-    /// @param stack is the @ref SimpleStackBase to shutdown.
-    /// @param fd is the file handle for the configuration file.
-    /// @param sync is the background synchronization task to stop.
-    NodeRebootHelper(openlcb::SimpleStackBase *stack, int fd
-                   , AutoSyncFileFlow *sync)
-                   : stack_(stack), fd_(fd), sync_(sync)
+    NodeRebootHelper()
     {
     }
 
     /// Initiates an orderly shutdown of all components before restarting the
     /// ESP32.
-    void reboot()
-    {
-        // make sure we are not called from the executor thread otherwise there
-        // will be a deadlock
-        HASSERT(os_thread_self() != stack_->executor()->thread_handle());
-        LOG(INFO, "[Reboot] Stopping config file sync handler...");
-        SyncNotifiable n;
-        sync_->shutdown(&n);
-        n.wait_for_notification();
-        shutdown_webserver();
-        LOG(INFO, "[Reboot] Shutting down LCC executor...");
-        stack_->executor()->sync_run([&]()
-        {
-            close(fd_);
-            unmount_fs();
-            // restart the node
-            LOG(INFO, "[Reboot] Restarting!");
-            esp_restart();
-        });
-    }
-private:
-    /// @ref SimpleCanStack to be shutdown.
-    openlcb::SimpleStackBase *stack_;
-
-    /// Configuration file descriptor to be closed prior to shutdown.
-    int fd_;
-
-    /// @ref AutoSyncFileFlow to be shutdown prior to shutdown.
-    AutoSyncFileFlow *sync_;
+    void reboot();
 };
 
 } // namespace esp32s2io

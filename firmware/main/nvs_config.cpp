@@ -32,9 +32,12 @@
  * @date 4 July 2020
  */
 
-#include "hardware.hxx"
 #include "nvs_config.hxx"
 #include "sdkconfig.h"
+
+#include <nvs.h>
+#include <nvs_flash.h>
+#include <string>
 
 // TODO: adjust format_utils.hxx not to require this line here.
 using std::string;

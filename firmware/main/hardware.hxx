@@ -64,10 +64,10 @@ GPIO_PIN(IO7, GpioInputNP, GPIO_NUM_12);
 /// Configurable IO Pin 8.
 GPIO_PIN(IO8, GpioInputNP, GPIO_NUM_13);
 
-/// Input only pin 9.
+/// Input only pin 9. Pull-Up enabled by default.
 GPIO_PIN(IO9, GpioInputPU, GPIO_NUM_34);
 
-/// Input only pin 10.
+/// Input only pin 10. Pull-Up enabled by default.
 GPIO_PIN(IO10, GpioInputPU, GPIO_NUM_35);
 
 /// Configurable IO Pin 11.
@@ -94,11 +94,10 @@ GPIO_PIN(LED_ACTIVITY, GpioOutputSafeHighInvert, GPIO_NUM_22);
 /// WiFi Active indicator LED. Active (ON) Low.
 GPIO_PIN(LED_WIFI, GpioOutputSafeHighInvert, GPIO_NUM_23);
 
-/// Factory Reset Pin, pull LOW (GND) during startup to force reset of events
-/// or all configuration based on how long it is held.
+/// Factory Reset Pin, Pull-Up enabled by default.
 GPIO_PIN(FACTORY_RESET, GpioInputPU, GPIO_NUM_39);
 
-/// User Button Pin.
+/// User Button Pin. Pull-Up enabled by default.
 GPIO_PIN(USER_BUTTON, GpioInputPU, GPIO_NUM_36);
 
 /// GPIO Pin initializer.
@@ -108,6 +107,36 @@ typedef GpioInitializer<IO1_Pin,  IO2_Pin,  IO3_Pin,  IO4_Pin,
                         IO13_Pin, IO14_Pin, IO15_Pin, IO16_Pin,
                         LED_WIFI_Pin,       LED_ACTIVITY_Pin,
                         FACTORY_RESET_Pin,  USER_BUTTON_Pin> GpioInit;
+
+/// Configurable IO pins.
+constexpr const Gpio *const CONFIGURABLE_GPIO[] =
+{
+    IO1_Pin::instance(),  IO2_Pin::instance(),  IO3_Pin::instance()
+  , IO4_Pin::instance(),  IO5_Pin::instance(),  IO6_Pin::instance()
+  , IO7_Pin::instance(),  IO8_Pin::instance()
+  , IO11_Pin::instance(), IO12_Pin::instance(), IO13_Pin::instance()
+  , IO14_Pin::instance(), IO15_Pin::instance(), IO16_Pin::instance()
+};
+
+/// Configurable IO pin names.
+constexpr const char *const CONFIGURABLE_GPIO_NAMES[] =
+{
+  "IO 1",  "IO 2",  "IO 3",  "IO 4",  "IO 5",  "IO 6", "IO 7", "IO 8",
+  "IO 11", "IO 12", "IO 13", "IO 14", "IO 15", "IO 16"
+};
+
+/// Input only pins.
+constexpr const Gpio *const INPUT_ONLY_GPIO[] =
+{
+    FACTORY_RESET_Pin::instance(), USER_BUTTON_Pin::instance()
+  , IO9_Pin::instance(),           IO10_Pin::instance()
+};
+
+/// Input only pin names.
+constexpr const char *const INPUT_ONLY_GPIO_NAMES[] =
+{
+  "Factory Reset Button", "User Button", "Input 9", "Input 10"
+};
 
 /// GPIO Pin connected to the TWAI (CAN) Transceiver RX pin.
 static constexpr gpio_num_t CONFIG_TWAI_RX_PIN = GPIO_NUM_4;

@@ -35,8 +35,6 @@
 #ifndef EVENT_BROADCAST_HELPER_HXX_
 #define EVENT_BROADCAST_HELPER_HXX_
 
-#include <openlcb/SimpleStack.hxx>
-#include <utils/logging.h>
 #include <utils/Singleton.hxx>
 
 namespace esp32io
@@ -49,21 +47,11 @@ public:
     /// Constructor.
     ///
     /// @param service is the @ref Service that will execute this flow.
-    EventBroadcastHelper(openlcb::SimpleStackBase *stack) : stack_(stack)
+    EventBroadcastHelper()
     {
     }
 
-    void send_event(uint64_t eventID)
-    {
-        stack_->executor()->add(new CallbackExecutable([&]()
-        {
-            stack_->send_event(eventID);
-        }));
-    }
-
-private:
-    openlcb::SimpleStackBase *stack_;
-
+    void send_event(uint64_t eventID);
 };
 
 } // namespace esp32io

@@ -37,9 +37,10 @@
 
 #include <executor/Service.hxx>
 #include <executor/StateFlow.hxx>
-#include <openlcb/MemoryConfig.hxx>
 #include <utils/logging.h>
 #include <utils/Singleton.hxx>
+
+extern "C" void reboot();
 
 namespace esp32io
 {

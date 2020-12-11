@@ -51,44 +51,13 @@ namespace esp32io
 class FactoryResetHelper : public DefaultConfigUpdateListener
 {
 public:
-    FactoryResetHelper(const esp32io::ConfigDef &cfg, uint64_t node_id)
-        : cfg_(cfg), nodeID_(node_id)
+    FactoryResetHelper()
     {
-
     }
 
     UpdateAction apply_configuration(int fd, bool initial_load,
-                                     BarrierNotifiable *done) override
-    {
-        // nothing to do here as we do not load config
-        AutoNotify n(done);
-        LOG(VERBOSE, "[CFG] apply_configuration(%d, %d)", fd, initial_load);
-        return UPDATED;
-    }
-
-    void factory_reset(int fd) override
-    {
-        LOG(VERBOSE, "[CFG] factory_reset(%d)", fd);
-        cfg_.userinfo().name().write(fd, SNIP_PROJECT_NAME);
-        string node_id = uint64_to_string_hex(nodeID_, 12);
-        std::replace(node_id.begin(), node_id.end(), ' ', '0');
-        inject_seperator<2, '.'>(node_id);
-        cfg_.userinfo().description().write(fd, node_id.c_str());
-    }
-private:
-    const esp32io::ConfigDef &cfg_;
-    const uint64_t nodeID_;
-
-    template<const unsigned num, const char separator>
-    void inject_seperator(std::string & input)
-    {
-        for (auto it = input.begin(); (num + 1) <= std::distance(it, input.end());
-            ++it)
-        {
-            std::advance(it, num);
-            it = input.insert(it, separator);
-        }
-    }
+                                     BarrierNotifiable *done) override;
+    void factory_reset(int fd) override;
 };
 
 } // namespace esp32io

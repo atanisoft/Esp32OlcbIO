@@ -40,7 +40,6 @@
 #include <executor/StateFlow.hxx>
 #include <utils/logging.h>
 
-#include "hardware.hxx"
 #include "sdkconfig.h"
 
 namespace esp32io

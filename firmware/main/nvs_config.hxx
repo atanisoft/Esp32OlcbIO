@@ -36,11 +36,8 @@
 #define NVS_CONFIG_HXX_
 
 #include <esp_err.h>
-#include <esp_wifi.h>
-#include <nvs.h>
-#include <nvs_flash.h>
+#include <esp_wifi_types.h>
 #include <stdint.h>
-#include <string>
 
 typedef struct
 {

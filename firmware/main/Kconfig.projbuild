@@ -3,8 +3,8 @@ menu "OpenLCB Configuration"
         hex "Node ID"
         default 0x050201030000
         help 
-            This is the OpenLCB unique node identifier for the ESP32 OpenLCB
-            Hub. It is recommended, but not required, to request your own
+            This is the OpenLCB unique node identifier for the ESP32 OpenLCB IO
+            Board. It is recommended, but not required, to request your own
             identifier range via:
             https://registry.openlcb.org/requestuniqueidrange
             The default node identifier is part of a reserved range of
@@ -19,7 +19,7 @@ menu "OpenLCB Configuration"
         default n
         help
             Enabling this option will cause all packets that are sent or
-            received to be printed by the ESP32 OpenLCB Hub.
+            received to be printed by the ESP32 OpenLCB IO Board.
 
     config OLCB_ENABLE_TWAI
         bool "Enable TWAI (CAN) interface"
@@ -100,7 +100,7 @@ menu "WiFi Configuration"
         default "UTC0"
         depends on SNTP
         help
-            This is the timezone that the ESP32 OpenLCB Hub is running in.
+            This is the timezone that the ESP32 OpenLCB IO Board is running in.
             The value must follow POSIX notation.
             A few common values:
             * PST8PDT,M3.2.0,M11.1.0 -- UTC-8 with automatic DST adjustment
