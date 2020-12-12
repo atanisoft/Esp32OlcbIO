@@ -1,23 +1,23 @@
-# ESP32 IO Board
+# ESP32 OpenLCB IO Board
 
-The ESP32 IO Board is a basic OpenLCB (LCC) node offering 14 input/output
+The ESP32 OpenLCB IO Board is a basic OpenLCB (LCC) node offering 14 input/output
 capable pins, and two that are input only. Additionally all IO pins are exposed
 through two 13 pin headers which allows for extending the functionality of 
 the base board using a daughter board approach.
 
-## Powering the IO Board
+## Powering the ESP32 OpenLCB IO Board
 
-The IO Board can be powered from an external power supply (12V) on J5
-connector, or using the OpenLCB (LCC) Bus power on RJ45. To enable powering
+The ESP32 OpenLCB IO Board can be powered from an external power supply (12V) on
+J5 connector, or using the OpenLCB (LCC) Bus power on RJ45. To enable powering
 from the external supply, bridge pins 1 and 2 on JP1. To power from the OpenLCB
 (LCC) Bus, bridge pins 2 and 3. Note that when using the USB connector on the
 ESP32 module JP1 should not have any pins bridged.
 
 ### OpenLCB (LCC) Power requirements
 
-The IO Board will draw around 100mA from the OpenLCB (LCC) Bus when the PWR_POS
-pin provides 15VDC. If the PWR_POS pin provides less, the node may draw more
-current from the bus.
+The ESP32 OpenLCB IO Board will draw around 100mA from the OpenLCB (LCC) Bus when
+the PWR_POS pin provides 15VDC. If the PWR_POS pin provides less, the node may
+draw more current from the bus.
 
 ### External Power requirements
 
@@ -82,10 +82,10 @@ IO4 and IO6 typically have a pull-up resistor. IO5 and IO7 typically have a
 pull-down resistor that can not be disabled. Keep this in mind as this may
 require adjustments to usage patterns.
 
-## Base IO PCB
+## Base ESP32 OpenLCB IO PCB
 
-The ESP32 IO Board PCB can be found under the pcb directory and is provided
-as both KiCad files and generated Gerber files.
+The ESP32 OpenLCB IO Board PCB can be found under the pcb directory and is
+provided as both KiCad files and generated Gerber files.
 
 ![PCB Render](pcb/pcb.png)
 
@@ -124,18 +124,25 @@ The following parts have compatible alternatives:
 
 ## Extending the base board
 
-The ESP32 IO Board can be extended by using the pcb-ext daughter board files
-as a basis for creating a compatible extension PCB. This PCB sits on top of the
-base board.
+The ESP32 OpenLCB IO Board can be extended by using the pcb-ext daughter board
+files as a basis for creating a compatible extension PCB. This PCB sits on top
+of the base board.
 
 ### Servo controller and 2x5 IDC extension
 
-A great example of extending the functionality of the base board would be to control turnouts via servos and relays (for frog polarity). Below is an example of one such approach to this using an I2C connected PCA9685 to control up to 16 servos while keeping all other pins available for controlling relays. Design files are not available for this at this time.
+A great example of extending the functionality of the base board would be to
+control turnouts via servos and relays (for frog polarity). Below is an example
+of one such approach to this using an I2C connected PCA9685 to control up to 16
+servos while keeping all other pins available for controlling relays. Design
+files are not available for this at this time.
 
 ![Extension PCB as Servo controller](pcb-ext/pcb-ext-servo-2x5.png)
 
 ### Single character display example
 
-While not entirely practical for most use cases, this shows one example of creating a single character display using a 5x7 grid of WS2812 (or similar) addressable LEDs connected in series to a single IO pin on the base board. Design files are not available for this at this time.
+While not entirely practical for most use cases, this shows one example of
+creating a single character display using a 5x7 grid of WS2812 (or similar)
+addressable LEDs connected in series to a single IO pin on the base board.
+Design files are not available for this at this time.
 
 ![Extension PCB as Digit](pcb-ext/pcb-ext.png)
