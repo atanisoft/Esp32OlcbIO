@@ -1,15 +1,15 @@
-# ESP32 IO Board Firmware
+# ESP32 OpenLCB IO Board Firmware
 
 ## Features
 
-The ESP32 IO Board supports all features of the base IO Board PCB. Some of the
-functionality has been customized in this firmware as described below.
+The ESP32 OpenLCB IO Board supports all features of the base IO Board PCB. Some
+of the functionality has been customized in this firmware as described below.
 
 ### Input/Output pins
 
-The ESP32 IO Board firmware exposes sixteen input/output connections with two
-of these being input only. Additionally there are two buttons which can be used
-to generate events from the base IO board.
+The ESP32 OpenLCB IO Board firmware exposes sixteen input/output connections with
+two of these being input only. Additionally there are two buttons which can be
+used to generate events from the base IO board.
 
 ### Factory reset
 
@@ -32,8 +32,9 @@ Pressing the User button will generate a pair of events.
 
 ## Building
 
-The ESP32 IO Board requires ESP-IDF v4.0 or later. When checking out the code
-be sure to checkout recursively as: `git clone --recursive git@github.com:atanisoft/esp32io.git`.
+The ESP32 OpenLCB IO Board requires ESP-IDF v4.0 or later. When checking out the
+code be sure to checkout recursively as:
+`git clone --recursive git@github.com:atanisoft/esp32io.git`.
 If you receive an error related to littlefs it is likely that the esp_littlefs
 dependencies are not present, to fix this navigate to `components/esp_littlefs`
 and execute `git submodule update --init --recursive`.
