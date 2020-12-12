@@ -127,4 +127,8 @@ menu "Advanced Configuration"
     config HEALTH_INTERVAL
         int "Health report interval (sec)"
         default 15
+
+    config USE_LITTLEFS
+        bool "Use LittleFS"
+        default n
 endmenu

@@ -5,6 +5,7 @@ set(deps
     vfs
     app_update
     esp_littlefs
+    spiffs
     HttpServer
     OpenMRNLite
     json

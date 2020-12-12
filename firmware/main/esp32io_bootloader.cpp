@@ -41,6 +41,7 @@
 extern "C"
 {
 
+/// Initializes the node specific bootloader hardware (LEDs)
 void bootloader_hw_set_to_safe(void)
 {
     LOG(VERBOSE, "[Bootloader] bootloader_hw_set_to_safe");
@@ -48,6 +49,13 @@ void bootloader_hw_set_to_safe(void)
     LED_ACTIVITY_Pin::hw_init();
 }
 
+
+/// Verifies that the bootloader has been requested.
+///
+/// @return true (always).
+///
+/// NOTE: On the ESP32 this defaults to always return true since this code will
+/// not be invoked through normal node startup.
 bool request_bootloader(void)
 {
     LOG(VERBOSE, "[Bootloader] request_bootloader");
@@ -56,6 +64,15 @@ bool request_bootloader(void)
     return true;
 }
 
+/// Updates the state of a status LED.
+///
+/// @param led is the LED to update.
+/// @param value is the new state of the LED.
+///
+/// NOTE: Currently the following mapping is being used for the LEDs:
+/// LED_ACTIVE -> Activity LED
+/// LED_WRITING -> WiFi LED
+/// LED_REQUEST -> Used only as a hook for printing bootloader startup.
 void bootloader_led(enum BootloaderLed led, bool value)
 {
     LOG(VERBOSE, "[Bootloader] bootloader_led(%d, %d)", led, value);
@@ -77,6 +94,9 @@ void bootloader_led(enum BootloaderLed led, bool value)
 
 } // extern "C"
 
+/// Starts the ESP32 Bootloader "lean" stack.
+///
+/// @param id is the node identifier to use.
 void start_bootloader_stack(uint64_t id)
 {
     esp32_bootloader_run(id, CONFIG_TWAI_TX_PIN, CONFIG_TWAI_RX_PIN, true);

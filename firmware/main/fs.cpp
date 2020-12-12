@@ -33,15 +33,19 @@
  */
 
 #include "fs.hxx"
+#if CONFIG_USE_LITTLEFS
 #include <esp_littlefs.h>
+#else
+#include <esp_spiffs.h>
+#endif
 #include <esp_vfs.h>
 #include <utils/logging.h>
 
 /// Partition name for the persistent filesystem.
-static constexpr char LITTLE_FS_PARTITION[] = "fs";
+static constexpr char FS_PARTITION[] = "fs";
 
 /// Mount point for the persistent filesystem.
-static constexpr char LITTLE_FS_MOUNTPOINT[] = "/fs";
+static constexpr char FS_MOUNTPOINT[] = "/fs";
 
 void recursive_dump_tree(const std::string &path, bool remove = false, bool first = true)
 {
@@ -93,27 +97,49 @@ void recursive_dump_tree(const std::string &path, bool remove = false, bool firs
 
 void mount_fs(bool cleanup)
 {
+    size_t total_len = 0, free_len = 0;
+#if CONFIG_USE_LITTLEFS
     // mount littlefs filesystem.
     const esp_vfs_littlefs_conf_t conf =
     {
-        .base_path = LITTLE_FS_MOUNTPOINT,
-        .partition_label = LITTLE_FS_PARTITION,
+        .base_path = FS_MOUNTPOINT,
+        .partition_label = FS_PARTITION,
         .format_if_mount_failed = true,
         .dont_mount = false
     };
-    LOG(INFO, "[FS] Mounting LittleFS: %s...", LITTLE_FS_PARTITION);
+    LOG(INFO, "[FS] Mounting LittleFS: %s...", FS_PARTITION);
     ESP_ERROR_CHECK(esp_vfs_littlefs_register(&conf));
     HASSERT(esp_littlefs_mounted(conf.partition_label));
-    size_t total_len, free_len;
     ESP_ERROR_CHECK(esp_littlefs_info(conf.partition_label, &total_len
                                     , &free_len));
-    LOG(INFO, "[FS] %zu/%zu kb space used", free_len / 1024, total_len / 1024);
-
-    recursive_dump_tree(LITTLE_FS_MOUNTPOINT, cleanup);
+#else
+    esp_vfs_spiffs_conf_t conf =
+    {
+      .base_path = FS_MOUNTPOINT,
+      .partition_label = FS_PARTITION,
+      .max_files = 10,
+      .format_if_mount_failed = true
+    };
+    LOG(INFO, "[FS] Mounting SPIFFS: %s...", FS_PARTITION);
+    // Attempt to mount the partition
+    ESP_ERROR_CHECK(esp_vfs_spiffs_register(&conf));
+    // check that the partition mounted
+    size_t used = 0;
+    ESP_ERROR_CHECK(esp_spiffs_info(FS_PARTITION, &total_len, &used));
+    free_len = total_len - used;
+#endif // CONFIG_USE_LITTLEFS
+    LOG(INFO, "[FS] %.2f/%.2f kb space used", (float)(free_len / 1024.0f)
+      , (float)(total_len / 1024.0f));
+    recursive_dump_tree(FS_MOUNTPOINT, cleanup);
 }
 
 void unmount_fs()
 {
-    LOG(INFO, "[Reboot] Unmounting LittleFS: %s...", LITTLE_FS_PARTITION);
-    ESP_ERROR_CHECK(esp_vfs_littlefs_unregister(LITTLE_FS_PARTITION));
+#if CONFIG_USE_LITTLEFS
+    LOG(INFO, "[FS] Unmounting LittleFS: %s...", FS_PARTITION);
+    ESP_ERROR_CHECK(esp_vfs_littlefs_unregister(FS_PARTITION));
+#else
+    LOG(INFO, "[FS] Unmounting SPIFFS: %s...", FS_PARTITION);
+    ESP_ERROR_CHECK(esp_vfs_spiffs_unregister(FS_PARTITION));
+#endif // CONFIG_USE_LITTLEFS
 }

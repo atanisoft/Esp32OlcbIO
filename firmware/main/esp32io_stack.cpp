@@ -137,10 +137,6 @@ ConfigUpdateListener::UpdateAction FactoryResetHelper::apply_configuration(
     AutoNotify n(done);
     LOG(VERBOSE, "[CFG] apply_configuration(%d, %d)", fd, initial_load);
 
-    // sync the CDI update to LittleFS. This can be removed if/when OpenMRN
-    // syncs automatically on update_complete message.
-    fsync(fd);
-
     return ConfigUpdateListener::UpdateAction::UPDATED;
 }
 
