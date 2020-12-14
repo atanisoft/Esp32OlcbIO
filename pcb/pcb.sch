@@ -4,8 +4,8 @@ EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
-Title "ESP32 IO Board"
-Date "2020-12-04"
+Title "ESP32 OpenLCB IO Board"
+Date "2020-12-14"
 Rev "1.0"
 Comp ""
 Comment1 ""
