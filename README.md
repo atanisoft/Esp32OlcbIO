@@ -89,9 +89,13 @@ provided as both KiCad files and generated Gerber files.
 
 ![PCB Render](pcb/pcb.png)
 
+### PCBWay project
+
+The ESP32 OpenLCB IO PCB has been shared via PCBWay [here](https://www.pcbway.com/project/shareproject/ESP32_OpenLCB__LCC__IO_PCB.html).
+
 ### Mouser BOM
 
-The ESP32 IO Board components have been entered on Mouser for easy ordering
+The ESP32 OpenLCB IO Board components have been entered on Mouser for easy ordering
 via the following shared carts:
 - [single PCB](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=6d57d6cf6a)
 - [five PCBs](https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=a15be25217)
