@@ -382,7 +382,7 @@ Note: the node ID will be appended to this value.</description>
 <min>0</min>
 <max>7</max>
 <default>3</default>
-<map><relation><property>0</property><value>Open</value></relation><relation><property>1</property><value>WEP</value></relation><relation><property>2</property><value>WPA</value></relation><relation><property>3</property><value>WPA2</value></relation><relation><property>4</property><value>WPA/WPA2</value></relation><relation><property>6</property><value>WPA3</value></relation><relation><property>7</property><value>WPA2/WPA3</value></relation></map>
+<map><relation><property>0</property><value>Open</value></relation><relation><property>1</property><value>WEP</value></relation><relation><property>2</property><value>WPA</value></relation><relation><property>3</property><value>WPA2</value></relation><relation><property>4</property><value>WPA/WPA2</value></relation></map>
 </int>
 <int size='1'>
 <name>WiFi Channel</name>
