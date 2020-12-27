@@ -47,28 +47,6 @@ typedef struct
     uint8_t reserved[22];
 } node_config_t;
 
-static constexpr size_t AP_SSID_PASS_LEN = 65;
-static constexpr size_t HOSTNAME_PREFIX_LEN = 21;
-typedef struct
-{
-    bool force_reset;
-    bool bootloader_req;
-    uint64_t node_id;
-    wifi_mode_t wifi_mode;
-    char hostname_prefix[HOSTNAME_PREFIX_LEN];
-    char sta_ssid[AP_SSID_PASS_LEN];
-    char sta_pass[AP_SSID_PASS_LEN];
-    bool sta_wait_for_connect;
-    uint32_t sta_ip;
-    uint32_t sta_gw;
-    uint32_t sta_nm;
-    wifi_auth_mode_t ap_auth;
-    char ap_ssid[AP_SSID_PASS_LEN];
-    char ap_pass[AP_SSID_PASS_LEN];
-    uint8_t ap_channel;
-    uint8_t reserved[9];
-} old_node_config_t;
-
 esp_err_t load_config(node_config_t *config);
 esp_err_t save_config(node_config_t *config);
 esp_err_t default_config(node_config_t *config);

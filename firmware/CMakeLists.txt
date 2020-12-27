@@ -13,7 +13,7 @@ if (IDF_VERSION_MAJOR EQUAL 4 AND IDF_VERSION_MINOR LESS 2)
 endif()
 
 set(SUPPORTED_TARGETS esp32)
-project(ESP32IO)
+project(ESP32OlcbIO)
 
 ###############################################################################
 # Switch from GNU++11 to GNU++14

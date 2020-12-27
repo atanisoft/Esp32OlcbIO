@@ -51,9 +51,6 @@ static constexpr char NVS_NAMESPACE[] = "iocfg";
 /// NVS Persistence key.
 static constexpr char NVS_CFG_KEY[] = "node";
 
-/// Old NVS Persistence key, used only for loading old config entry.
-static constexpr char NVS_OLD_CFG_KEY[] = "cfg";
-
 esp_err_t load_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Loading configuration");
@@ -70,24 +67,6 @@ esp_err_t load_config(node_config_t *config)
         return res;
     }
     res = nvs_get_blob(nvs, NVS_CFG_KEY, config, &size);
-    // if the key is not found check if the old config entry exists and migrate
-    // the node-id over and resave the config.
-    if (res == ESP_ERR_NVS_NOT_FOUND)
-    {
-        old_node_config_t old_config;
-        size = sizeof(old_node_config_t);
-        res = nvs_get_blob(nvs, NVS_OLD_CFG_KEY, &old_config, &size);
-        if (res == ESP_OK && size == sizeof(old_node_config_t))
-        {
-            bzero(config, sizeof(node_config_t));
-            config->node_id = old_config.node_id;
-            // cleanup the old key
-            nvs_erase_key(nvs, NVS_OLD_CFG_KEY);
-            nvs_close(nvs);
-            // save the new config
-            return save_config(config);
-        }
-    }
     nvs_close(nvs);
 
     // if the size read in is not as expected reset the result code to failure.
