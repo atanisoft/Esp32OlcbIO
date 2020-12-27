@@ -50,42 +50,55 @@ GPIO_PIN(IO2, GpioInputNP, GPIO_NUM_17);
 GPIO_PIN(IO3, GpioInputNP, GPIO_NUM_16);
 
 /// Configurable IO Pin 4.
+// ADC2_CHANNEL_0
 GPIO_PIN(IO4, GpioInputNP, GPIO_NUM_0);
 
 /// Configurable IO Pin 5.
+// ADC2_CHANNEL_2
 GPIO_PIN(IO5, GpioInputNP, GPIO_NUM_2);
 
 /// Configurable IO Pin 6.
+// ADC2_CHANNEL_3
 GPIO_PIN(IO6, GpioInputNP, GPIO_NUM_15);
 
 /// Configurable IO Pin 7.
+// ADC2_CHANNEL_5
 GPIO_PIN(IO7, GpioInputNP, GPIO_NUM_12);
 
 /// Configurable IO Pin 8.
+// ADC2_CHANNEL_4
 GPIO_PIN(IO8, GpioInputNP, GPIO_NUM_13);
 
 /// Input only pin 9. Pull-Up enabled by default.
+// ADC1_CHANNEL_6
 GPIO_PIN(IO9, GpioInputPU, GPIO_NUM_34);
 
 /// Input only pin 10. Pull-Up enabled by default.
+// ADC1_CHANNEL_7
 GPIO_PIN(IO10, GpioInputPU, GPIO_NUM_35);
 
 /// Configurable IO Pin 11.
+// ADC1_CHANNEL_4
 GPIO_PIN(IO11, GpioInputNP, GPIO_NUM_32);
 
 /// Configurable IO Pin 12.
+// ADC1_CHANNEL_5
 GPIO_PIN(IO12, GpioInputNP, GPIO_NUM_33);
 
 /// Configurable IO Pin 13.
+// ADC2_CHANNEL_8
 GPIO_PIN(IO13, GpioInputNP, GPIO_NUM_25);
 
 /// Configurable IO Pin 14.
+// ADC2_CHANNEL_9
 GPIO_PIN(IO14, GpioInputNP, GPIO_NUM_26);
 
 /// Configurable IO Pin 15.
+// ADC2_CHANNEL_7
 GPIO_PIN(IO15, GpioInputNP, GPIO_NUM_27);
 
 /// Configurable IO Pin 16.
+// ADC2_CHANNEL_6
 GPIO_PIN(IO16, GpioInputNP, GPIO_NUM_14);
 
 /// Node Activity indicator LED. Active (ON) Low.
@@ -95,9 +108,11 @@ GPIO_PIN(LED_ACTIVITY, GpioOutputSafeHighInvert, GPIO_NUM_22);
 GPIO_PIN(LED_WIFI, GpioOutputSafeHighInvert, GPIO_NUM_23);
 
 /// Factory Reset Pin, Pull-Up enabled by default.
+// ADC1_CHANNEL_3
 GPIO_PIN(FACTORY_RESET, GpioInputPU, GPIO_NUM_39);
 
 /// User Button Pin. Pull-Up enabled by default.
+// ADC1_CHANNEL_0
 GPIO_PIN(USER_BUTTON, GpioInputPU, GPIO_NUM_36);
 
 /// GPIO Pin initializer.
@@ -139,6 +154,7 @@ constexpr const char *const INPUT_ONLY_GPIO_NAMES[] =
 };
 
 /// GPIO Pin connected to the TWAI (CAN) Transceiver RX pin.
+// ADC2_CHANNEL_0
 static constexpr gpio_num_t CONFIG_TWAI_RX_PIN = GPIO_NUM_4;
 
 /// GPIO Pin connected to the TWAI (CAN) Transceiver TX pin.
