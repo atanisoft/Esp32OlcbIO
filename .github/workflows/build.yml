@@ -43,6 +43,7 @@ jobs:
           cp build/partition_table/partition-table.bin binaries
           cp build/ota_data_initial.bin binaries
           cp build/bootloader/bootloader.bin binaries
+          touch binaries/readme.txt
       - name: Create readme.txt for binary
         uses: DamianReeves/write-file-action@master
         with:
@@ -61,7 +62,7 @@ jobs:
       - name: Package binaries
         uses: actions/upload-artifact@v1
         with:
-          name: ESP32OlcbIO
+          name: ${{ matrix.target }}
           path: firmware/binaries
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
