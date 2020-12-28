@@ -19,7 +19,7 @@ jobs:
         if: ${{ matrix.target == 'ESP32OlcbIO-WiFiOff' }}
         uses: DamianReeves/write-file-action@master
         with:
-          path: sdkconfig.defaults
+          path: firmware/sdkconfig.defaults
           contents: |
             CONFIG_WIFI_MODE_OFF=y
           write-mode: append
