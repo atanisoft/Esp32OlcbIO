@@ -15,39 +15,30 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Set up Python 3.5
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.5
-      - name: Install ESP-IDF
-        uses: CalinRadoni/esp-idf-v4-action@v2
-        with:
-          esp_idf_version: 'release/v4.2'
       - name: Update config For WiFi=OFF
         if: ${{ matrix.target == 'ESP32OlcbIO-WiFiOff' }}
         uses: DamianReeves/write-file-action@master
         with:
-          path: sdkconfig.defaults
+          path: firmware/sdkconfig.defaults
           contents: |
             CONFIG_WIFI_MODE_OFF=y
           write-mode: append
       - name: Build
+        uses: atanisoft/esp-idf-ci-action@master
+        with:
+          path: firmware
+      - name: Prepare Binaries
         run: |
-          source ~/esp/esp-idf/export.sh
-          mkdir -p firmware/binaries
-          cp .github/firmwarereadme.txt firmware/binaries
-          cd firmware
-          idf.py reconfigure
-          idf.py build
-          idf.py size
-          cp build/ESP32OlcbIO.bin binaries
-          cp build/partition_table/partition-table.bin binaries
-          cp build/ota_data_initial.bin binaries
-          cp build/bootloader/bootloader.bin binaries
+          mkdir -p binaries
+          cp .github/firmwarereadme.txt binaries/readme.txt
+          cp firmware/build/ESP32OlcbIO.bin binaries
+          cp firmware/build/partition_table/partition-table.bin binaries
+          cp firmware/build/ota_data_initial.bin binaries
+          cp firmware/build/bootloader/bootloader.bin binaries
       - name: Package binaries
         uses: actions/upload-artifact@v1
         with:
           name: ${{ matrix.target }}
-          path: firmware/binaries
+          path: binaries
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
