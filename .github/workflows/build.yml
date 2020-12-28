@@ -24,9 +24,9 @@ jobs:
             CONFIG_WIFI_MODE_OFF=y
           write-mode: append
       - name: Build
-        uses: sagar448/ESP-IDF-GitHub-Action@2
+        uses: atanisoft/esp-idf-ci-action@main
         with:
-          tag: v4.2
+          path: firmware
       - name: Prepare Binaries
         run: |
           mkdir -p firmware/binaries
