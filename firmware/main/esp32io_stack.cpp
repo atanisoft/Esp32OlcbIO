@@ -198,7 +198,7 @@ void FactoryResetHelper::factory_reset(int fd)
 #endif
 
 void start_openlcb_stack(node_config_t *config, bool reset_events
-                       , bool brownout_detected)
+                       , bool brownout_detected, bool wifi_verbose)
 {
     LOG(INFO, "[SNIP] version:%d, manufacturer:%s, model:%s, hw-v:%s, sw-v:%s"
       , openlcb::SNIP_STATIC_DATA.version
@@ -225,6 +225,10 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
                        , CONFIG_SNTP_SERVER, CONFIG_TIMEZONE
                        , false);
     wifi_manager->set_status_led(LED_WIFI_Pin::instance());
+    if (wifi_verbose)
+    {
+        wifi_manager->enable_verbose_logging();
+    }
     init_webserver(memory_client.get_mutable(), config->node_id);
     factory_reset_helper.emplace();
     event_helper.emplace();

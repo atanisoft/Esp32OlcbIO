@@ -52,16 +52,20 @@ menu "WiFi Configuration"
         help
             The OpenLCB node identifier will be appended to this value, ie:
             esp32io_0502010300000.
+            Note: The maximum hostname length is 32 characters.
 
     config WIFI_SOFTAP_SSID
         string "SoftAP SSID"
-        default "esp32io"
+        default "esp32olcbio"
         depends on WIFI_MODE_SOFTAP || WIFI_MODE_SOFTAP_STATION
 
     config WIFI_SOFTAP_PASSWORD
         string "SoftAP Password"
-        default "esp32io"
+        default "esp32olcbio"
         depends on WIFI_MODE_SOFTAP || WIFI_MODE_SOFTAP_STATION
+        help
+            Note: When the authentication mode uses WPA (any version) the
+            password must be at least eight characters in length.
 
     config WIFI_SOFTAP_CHANNEL
         int "SoftAP Channel"

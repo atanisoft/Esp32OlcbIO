@@ -106,7 +106,7 @@ namespace esp32io
 {
 
 void start_openlcb_stack(node_config_t *config, bool reset_events
-                       , bool brownout_detected);
+                       , bool brownout_detected, bool wifi_verbose);
 
 } // namespace esp32io
 
@@ -233,6 +233,7 @@ void app_main()
     }
     bool reset_events = false;
     bool run_bootloader = false;
+    bool wifi_verbose = false;
 
     // Check for factory reset button being held to GND and the USER button
     // not being held to GND. If this is detected the factory reset process
@@ -240,8 +241,8 @@ void app_main()
     if (FACTORY_RESET_Pin::instance()->is_clr() && 
         USER_BUTTON_Pin::instance()->is_set())
     {
-        LED_WIFI_Pin::set(true);
-        LED_ACTIVITY_Pin::set(false);
+        LED_WIFI_Pin::instance()->set();
+        LED_ACTIVITY_Pin::instance()->clr();
         // Count down from the overall factory reset time.
         int8_t hold_time = FACTORY_RESET_HOLD_TIME;
         for (; hold_time > 0 && FACTORY_RESET_Pin::instance()->is_clr();
@@ -257,7 +258,7 @@ void app_main()
             else
             {
                 LOG(WARNING, "Factory reset in %d seconds.", hold_time);
-                LED_ACTIVITY_Pin::set(false);
+                LED_ACTIVITY_Pin::instance()->clr();
             }
             usleep(SEC_TO_USEC(1));
             LED_WIFI_Pin::toggle();
@@ -283,9 +284,8 @@ void app_main()
             // nothing.
             LOG(WARNING, "Factory reset aborted!");
         }
-        // reset LEDs to default state.
-        LED_WIFI_Pin::set(false);
-        LED_ACTIVITY_Pin::set(false);
+        LED_WIFI_Pin::instance()->clr();
+        LED_ACTIVITY_Pin::instance()->clr();
     }
     else if (FACTORY_RESET_Pin::instance()->is_clr() && 
              USER_BUTTON_Pin::instance()->is_clr())
@@ -297,13 +297,28 @@ void app_main()
         // give a visual indicator that the bootloader request has been ACK'd
         // turn on both WiFi and Activity LEDs, wait ~1sec, turn off WiFi LED,
         // wait ~1sec, turn off Activity LED.
-        LED_WIFI_Pin::set(true);
-        LED_ACTIVITY_Pin::set(true);
+        LED_WIFI_Pin::instance()->set();
+        LED_ACTIVITY_Pin::instance()->set();
         vTaskDelay(pdMS_TO_TICKS(1000));
-        LED_WIFI_Pin::set(false);
+        LED_WIFI_Pin::instance()->clr();
         vTaskDelay(pdMS_TO_TICKS(1000));
-        LED_ACTIVITY_Pin::set(false);
+        LED_ACTIVITY_Pin::instance()->clr();
     }
+    else if (USER_BUTTON_Pin::instance()->is_clr())
+    {
+        wifi_verbose = true;
+        // blink to ack
+        LED_WIFI_Pin::instance()->set();
+        vTaskDelay(pdMS_TO_TICKS(500));
+        LED_ACTIVITY_Pin::instance()->set();
+        vTaskDelay(pdMS_TO_TICKS(500));
+        LED_WIFI_Pin::instance()->clr();
+        LED_ACTIVITY_Pin::instance()->clr();
+    }
+
+    // Ensure the LEDs are both OFF when we startup.
+    LED_WIFI_Pin::instance()->clr();
+    LED_ACTIVITY_Pin::instance()->clr();
 
     // Check for and reset factory reset flag.
     if (config.force_reset)
@@ -331,7 +346,8 @@ void app_main()
     {
         mount_fs(cleanup_config_tree);
         esp32io::start_openlcb_stack(&config, reset_events
-                                   , reset_reason == RTCWDT_BROWN_OUT_RESET);
+                                   , reset_reason == RTCWDT_BROWN_OUT_RESET
+                                   , wifi_verbose);
     }
 
     // At this point the OpenMRN stack is running in it's own task and we can

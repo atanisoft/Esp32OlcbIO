@@ -43,22 +43,7 @@ jobs:
           cp build/partition_table/partition-table.bin binaries
           cp build/ota_data_initial.bin binaries
           cp build/bootloader/bootloader.bin binaries
-          touch binaries/readme.txt
-      - name: Create readme.txt for binary
-        uses: DamianReeves/write-file-action@master
-        with:
-          path: binaries/readme.txt
-          contents: |
-            The binaries can be sent to the ESP32 via esptool.py similar to the following:
-            python esptool.py -p (PORT) -b 460800 --before default_reset --after hard_reset
-                write_flash 0x1000 bootloader.bin
-                write_flash 0x8000 partition-table.bin
-                write_flash 0xe000 ota_data_initial.bin
-                write_flash 0x10000 Esp32OlcbIO.bin
-            Note: The esptool.py command above should be all on one line.
-            If you prefer a graphical utility for flashing you can use the Flash Download Tool
-            available from https://www.espressif.com/en/support/download/other-tools to write
-            the four binary files listed above at the listed offsets.
+          cp .github/readme.txt binaries
       - name: Package binaries
         uses: actions/upload-artifact@v1
         with:
