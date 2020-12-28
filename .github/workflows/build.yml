@@ -23,8 +23,8 @@ jobs:
           contents: |
             CONFIG_WIFI_MODE_OFF=y
           write-mode: append
-      - name: Set up Python 3.5
-        uses: sagar448/ESP-IDF-GitHub-Action@v2
+      - name: Build
+        uses: sagar448/ESP-IDF-GitHub-Action@2
         with:
           tag: v4.2
       - name: Prepare Binaries
