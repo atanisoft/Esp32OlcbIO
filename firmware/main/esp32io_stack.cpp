@@ -174,11 +174,11 @@ void FactoryResetHelper::factory_reset(int fd)
 #endif
 
 #ifndef CONFIG_WIFI_SOFTAP_SSID
-#define CONFIG_WIFI_SOFTAP_SSID "esp32io"
+#define CONFIG_WIFI_SOFTAP_SSID "esp32olcbio"
 #endif
 
 #ifndef CONFIG_WIFI_SOFTAP_PASSWORD
-#define CONFIG_WIFI_SOFTAP_PASSWORD "esp32io"
+#define CONFIG_WIFI_SOFTAP_PASSWORD "esp32olcbio"
 #endif
 
 #ifndef CONFIG_WIFI_HOSTNAME_PREFIX
