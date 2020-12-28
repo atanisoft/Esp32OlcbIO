@@ -35,7 +35,7 @@ jobs:
         run: |
           source ~/esp/esp-idf/export.sh
           mkdir -p firmware/binaries
-          cp .github/readme.txt firmware/binaries
+          cp .github/firmwarereadme.txt firmware/binaries
           cd firmware
           idf.py reconfigure
           idf.py build
