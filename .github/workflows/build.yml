@@ -29,20 +29,16 @@ jobs:
           path: firmware
       - name: Prepare Binaries
         run: |
-          mkdir -p firmware/binaries
-          cp .github/firmwarereadme.txt firmware/binaries
-          cd firmware
-          idf.py reconfigure
-          idf.py build
-          idf.py size
-          cp build/ESP32OlcbIO.bin binaries
-          cp build/partition_table/partition-table.bin binaries
-          cp build/ota_data_initial.bin binaries
-          cp build/bootloader/bootloader.bin binaries
+          mkdir -p binaries
+          cp .github/firmwarereadme.txt binaries/readme.txt
+          cp firmware/build/ESP32OlcbIO.bin binaries
+          cp firmware/build/partition_table/partition-table.bin binaries
+          cp firmware/build/ota_data_initial.bin binaries
+          cp firmware/build/bootloader/bootloader.bin binaries
       - name: Package binaries
         uses: actions/upload-artifact@v1
         with:
           name: ${{ matrix.target }}
-          path: firmware/binaries
+          path: binaries
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
