@@ -34,16 +34,16 @@ jobs:
       - name: Build
         run: |
           source ~/esp/esp-idf/export.sh
+          mkdir -p firmware/binaries
+          cp .github/readme.txt firmware/binaries
           cd firmware
           idf.py reconfigure
           idf.py build
           idf.py size
-          mkdir binaries
           cp build/ESP32OlcbIO.bin binaries
           cp build/partition_table/partition-table.bin binaries
           cp build/ota_data_initial.bin binaries
           cp build/bootloader/bootloader.bin binaries
-          cp .github/readme.txt binaries
       - name: Package binaries
         uses: actions/upload-artifact@v1
         with:
