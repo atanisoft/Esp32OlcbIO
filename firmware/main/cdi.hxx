@@ -35,16 +35,26 @@
 #ifndef CDI_HXX_
 #define CDI_HXX_
 
+#include "sdkconfig.h"
+
 #include <freertos_drivers/esp32/Esp32WiFiConfiguration.hxx>
 #include <openlcb/ConfigRepresentation.hxx>
 #include <openlcb/ConfiguredProducer.hxx>
 #include <openlcb/MultiConfiguredPC.hxx>
+
+#if CONFIG_OLCB_ENABLE_PWM
+#include <openlcb/ServoConsumerConfig.hxx>
+#endif // CONFIG_OLCB_ENABLE_PWM
 
 namespace esp32io
 {
 
 using INPUT_ONLY_PINS = openlcb::RepeatedGroup<openlcb::ProducerConfig, 4>;
 using CONFIGURABLE_GPIO_PINS = openlcb::RepeatedGroup<openlcb::PCConfig, 14>;
+
+#if CONFIG_OLCB_ENABLE_PWM
+using PWM_PINS = openlcb::RepeatedGroup<openlcb::ServoConsumerConfig, 16>;
+#endif // CONFIG_OLCB_ENABLE_PWM
 
 /// Defines the main segment in the configuration CDI. This is laid out at
 /// origin 128 to give space for the ACDI user data at the beginning.
@@ -58,6 +68,9 @@ CDI_GROUP_ENTRY(gpi, INPUT_ONLY_PINS, Name("Input Only Pins"),
                 RepName("Input"));
 CDI_GROUP_ENTRY(gpio, CONFIGURABLE_GPIO_PINS, Name("Input Output Pins"),
                 RepName("IO"));
+#if CONFIG_OLCB_ENABLE_PWM
+CDI_GROUP_ENTRY(pwm, PWM_PINS, Name("PWM"), RepName("PWM"));
+#endif // CONFIG_OLCB_ENABLE_PWM
 CDI_GROUP_END();
 
 /// This segment is only needed temporarily until there is program code to set

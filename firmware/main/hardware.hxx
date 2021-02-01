@@ -166,4 +166,7 @@ static constexpr gpio_num_t CONFIG_SDA_PIN = GPIO_NUM_19;
 /// GPIO Pin used for I2C SCL.
 static constexpr gpio_num_t CONFIG_SCL_PIN = GPIO_NUM_21;
 
+/// Default address for the PCA9685 PWM IC (all address pins to GND).
+static constexpr uint8_t PCA9685_ADDR = 0x40;
+
 #endif // HARDWARE_HXX_

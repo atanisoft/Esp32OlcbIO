@@ -11,7 +11,7 @@ set(deps
     json
 )
 
-idf_component_register(SRCS esp32io.cpp esp32io_stack.cpp esp32io_bootloader.cpp fs.cpp nvs_config.cpp web_server.cpp
+idf_component_register(SRCS esp32io.cpp esp32io_stack.cpp esp32io_bootloader.cpp fs.cpp nvs_config.cpp web_server.cpp Esp32I2C.cpp
                        REQUIRES "${deps}")
 
 # export the project version as a define for the SNIP data, note it must be
@@ -22,7 +22,7 @@ idf_build_get_property(project_name PROJECT_NAME)
 string(SUBSTRING "${project_name}" 0 40 SNIP_PROJECT_NAME)
 
 set(SNIP_HW_VERSION "1.0.0")
-set(SNIP_PROJECT_PAGE "http://atanisoft.github.io/esp32io")
+set(SNIP_PROJECT_PAGE "http://atanisoft.github.io/esp32olcbio")
 set(CDI_VERSION "0x0101")
 
 set_source_files_properties(esp32io.cpp PROPERTIES COMPILE_FLAGS "-Wno-implicit-fallthrough -Wno-ignored-qualifiers")

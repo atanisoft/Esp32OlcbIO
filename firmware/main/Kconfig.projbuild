@@ -24,6 +24,10 @@ menu "OpenLCB Configuration"
     config OLCB_ENABLE_TWAI
         bool "Enable TWAI (CAN) interface"
         default y
+
+    config OLCB_ENABLE_PWM
+        bool "Enable PCA9685 PWM interface"
+        default n
 endmenu
 
 menu "WiFi Configuration"

@@ -43,11 +43,14 @@
 #include "NodeRebootHelper.hxx"
 #include "nvs_config.hxx"
 #include "web_server.hxx"
+#include "Esp32I2C.hxx"
 
+#include <freertos_drivers/arduino/PCA9685PWM.hxx>
 #include <freertos_drivers/esp32/Esp32HardwareTwai.hxx>
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
 #include <openlcb/MemoryConfigClient.hxx>
 #include <openlcb/RefreshLoop.hxx>
+#include <openlcb/ServoConsumer.hxx>
 #include <openlcb/SimpleStack.hxx>
 #include <utils/constants.hxx>
 #include <utils/format_utils.hxx>
@@ -85,6 +88,12 @@ std::unique_ptr<openlcb::RefreshLoop> refresh_loop;
 #if CONFIG_OLCB_ENABLE_TWAI
 Esp32HardwareTwai twai(CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
 #endif // CONFIG_OLCB_ENABLE_TWAI
+#if CONFIG_OLCB_ENABLE_PWM
+Esp32I2C i2c_dev(CONFIG_SDA_PIN, CONFIG_SCL_PIN);
+uninitialized<PCA9685PWM> pca9685;
+uninitialized<PCA9685PWMBit> pca9685PWM[16];
+uninitialized<openlcb::ServoConsumer> servos[16];
+#endif // CONFIG_OLCB_ENABLE_PWM
 
 void factory_reset_events()
 {
@@ -264,6 +273,22 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     }));
 #endif // CONFIG_OLCB_ENABLE_TWAI
 
+#if CONFIG_OLCB_ENABLE_PWM
+    LOG(VERBOSE, "Initializing I2C");
+    i2c_dev.init();
+    LOG(VERBOSE, "Initializing PCA9685");
+    pca9685.emplace();
+    pca9685->init("/dev/i2c/pca9685", PCA9685_ADDR);
+    for (size_t idx = 0; idx < 16; idx++)
+    {
+        LOG(VERBOSE, "Creating ServoConsumer(%zu)", idx);
+        pca9685PWM[idx].emplace(pca9685.get_mutable(), idx);
+        servos[idx].emplace(stack->node(), cfg.seg().pwm().entry(idx)
+                          , CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000ULL
+                          , pca9685PWM[idx].get_mutable());
+    }
+#endif // CONFIG_OLCB_ENABLE_PWM
+
     // Create config file and initiate factory reset if it doesn't exist or is
     // otherwise corrupted.
     config_fd =
@@ -322,10 +347,14 @@ namespace openlcb
     const char CDI_DATA[] = R"xmlpayload(<?xml version="1.0"?>
 <cdi xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openlcb.org/schema/cdi/1/1/cdi.xsd">
 <identification>
-<manufacturer>http://atanisoft.github.io/esp32io</manufacturer>
-<model>ESP32IO</model>
-<hardwareVersion>1.0</hardwareVersion>
-<softwareVersion>1.0</softwareVersion>
+<manufacturer>http://atanisoft.github.io/esp32olcbio</manufacturer>)xmlpayload"
+#if CONFIG_OLCB_ENABLE_PWM
+R"xmlpayload(<model>Esp32OlcbIO + PWM</model>)xmlpayload"
+#else
+R"xmlpayload(<model>Esp32OlcbIO + PWM</model>)xmlpayload"
+#endif
+R"xmlpayload(<hardwareVersion>)xmlpayload" SNIP_HW_VERSION R"xmlpayload(</hardwareVersion>
+<softwareVersion>)xmlpayload" SNIP_SW_VERSION R"xmlpayload(</softwareVersion>
 </identification>
 <acdi/>
 <segment space='251' origin='1'>
@@ -552,6 +581,43 @@ Formally, the parameter tells how many times of tries, each 30 msec apart, the i
 </group>
 </group>
 </segment>
+)xmlpayload"
+#if CONFIG_OLCB_ENABLE_PWM
+R"xmlpayload(
+<group replication='16'>
+<name>PWM</name>
+<repname>PWM</repname>
+<string size='16'>
+<name>Description</name>
+<description>User name of this output.</description>
+</string>
+<eventid>
+<name>Minimum Rotation Event ID</name>
+<description>Receiving this event ID will rotate the servo to its mimimum configured point.</description>
+</eventid>
+<eventid>
+<name>Maximum Rotation Event ID</name>
+<description>Receiving this event ID will rotate the servo to its maximum configured point.</description>
+</eventid>
+<int size='2'>
+<name>Servo Minimum Stop Point Percentage</name>
+<description>Low-end stop point of the servo, as a percentage: generally 0-100. May be under/over-driven by setting a percentage value of -99 to 200, respectively.</description>
+<min>-99</min>
+<max>200</max>
+<default>0</default>
+</int>
+<int size='2'>
+<name>Servo Maximum Stop Point Percentage</name>
+<description>High-end stop point of the servo, as a percentage: generally 0-100. May be under/over-driven by setting a percentage value of -99 to 200, respectively.</description>
+<min>-99</min>
+<max>200</max>
+<default>100</default>
+</int>
+</group>
+</segment>
+)xmlpayload"
+#endif // CONFIG_OLCB_ENABLE_PWM
+R"xmlpayload(
 <segment space='253'>
 <name>Version information</name>
 <int size='1'>
@@ -569,7 +635,13 @@ Formally, the parameter tells how many times of tries, each 30 msec apart, the i
         828, 836, 860, 868, 892, 900, 924, 932, 963, 971, 1002, 1010, 1041,
         1049, 1080, 1088, 1119, 1127, 1158, 1166, 1197, 1205, 1236, 1244,
         1275, 1283, 1314, 1322, 1353, 1361, 1392, 1400, 1431, 1439, 1470, 1478,
+#if CONFIG_OLCB_ENABLE_PWM
+        1502, 1510, 1538, 1546, 1574, 1582, 1610, 1618, 1646, 1654, 1682, 1690,
+        1718, 1726, 1754, 1762, 1790, 1798, 1826, 1834, 1862, 1870, 1898, 1906,
+        1934, 1942, 1970, 1978, 2006, 2014, 2042, 2050,
+#endif // CONFIG_OLCB_ENABLE_PWM
         0
     };
+
 
 }

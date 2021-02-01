@@ -132,15 +132,14 @@ The ESP32 OpenLCB IO Board can be extended by using the pcb-ext daughter board
 files as a basis for creating a compatible extension PCB. This PCB sits on top
 of the base board.
 
-### Servo controller and 2x5 IDC extension
+### 16 Channel PWM generator expansion
 
-A great example of extending the functionality of the base board would be to
-control turnouts via servos and relays (for frog polarity). Below is an example
-of one such approach to this using an I2C connected PCA9685 to control up to 16
-servos while keeping all other pins available for controlling relays. Design
-files are not available for this at this time.
+The first expansion board is the 16 Channel PWM generator board, this is usable
+for Servo or LED control. This expansion board utilizes a PCA9685 to generate
+16 PWM signals which are routed to a three pin header (GND, 5V and PWM) for
+each output.
 
-![Extension PCB as Servo controller](pcb-ext/pcb-ext-servo-2x5.png)
+![Extension PCB as Servo controller](pcb-servo/pcb-servo.png)
 
 ### Single character display example
 
