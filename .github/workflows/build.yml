@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        target: [ESP32OlcbIO, ESP32OlcbIO-WiFiOff]
+        target: [ESP32OlcbIO, ESP32OlcbIO-WiFiOff, ESP32OlcbIO-PWM]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -22,6 +22,14 @@ jobs:
           path: firmware/sdkconfig.defaults
           contents: |
             CONFIG_WIFI_MODE_OFF=y
+          write-mode: append
+      - name: Update config For PWM
+        if: ${{ matrix.target == 'ESP32OlcbIO-PWM' }}
+        uses: DamianReeves/write-file-action@master
+        with:
+          path: firmware/sdkconfig.defaults
+          contents: |
+            CONFIG_OLCB_ENABLE_PWM=y
           write-mode: append
       - name: Build
         uses: atanisoft/esp-idf-ci-action@master
