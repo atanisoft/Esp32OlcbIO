@@ -4,15 +4,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ESP32 OpenLCB Hub Configuration Portal</title>
+    <title>ESP32 OpenLCB IO Configuration Portal</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%20%20width%3D%2214px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2014%2014%22%20style%3D%22enable-background%3Anew%200%200%2014%2014%3B%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpath%20d%3D%22M13.621%2C5.904l-1.036-0.259c-0.168-0.042-0.303-0.168-0.355-0.332c-0.092-0.284-0.205-0.559-0.339-0.82%20c-0.079-0.153-0.073-0.337%2C0.017-0.486l0.549-0.915c0.118-0.196%2C0.088-0.448-0.075-0.61l-0.862-0.863%20c-0.162-0.163-0.414-0.193-0.611-0.075l-0.916%2C0.55C9.844%2C2.182%2C9.659%2C2.188%2C9.506%2C2.109C9.244%2C1.975%2C8.97%2C1.861%2C8.686%2C1.77%20c-0.165-0.052-0.29-0.187-0.332-0.354L8.095%2C0.379C8.039%2C0.156%2C7.839%2C0%2C7.609%2C0H6.391c-0.229%2C0-0.43%2C0.156-0.485%2C0.379L5.646%2C1.415%20C5.604%2C1.582%2C5.479%2C1.718%2C5.313%2C1.77c-0.284%2C0.092-0.559%2C0.206-0.82%2C0.34C4.339%2C2.188%2C4.155%2C2.182%2C4.007%2C2.093L3.092%2C1.544%20c-0.196-0.118-0.448-0.087-0.61%2C0.075L1.619%2C2.481C1.457%2C2.644%2C1.426%2C2.896%2C1.544%2C3.093l0.549%2C0.914%20c0.089%2C0.148%2C0.095%2C0.332%2C0.017%2C0.486C1.975%2C4.755%2C1.861%2C5.029%2C1.77%2C5.314c-0.053%2C0.164-0.188%2C0.29-0.354%2C0.332L0.379%2C5.905%20C0.156%2C5.961%2C0%2C6.161%2C0%2C6.391v1.219c0%2C0.229%2C0.156%2C0.43%2C0.379%2C0.485l1.036%2C0.26C1.582%2C8.396%2C1.717%2C8.521%2C1.77%2C8.687%20c0.092%2C0.284%2C0.205%2C0.559%2C0.34%2C0.82C2.188%2C9.66%2C2.182%2C9.844%2C2.093%2C9.993l-0.549%2C0.915c-0.118%2C0.195-0.087%2C0.448%2C0.075%2C0.61%20l0.862%2C0.862c0.162%2C0.163%2C0.414%2C0.193%2C0.61%2C0.075l0.915-0.549c0.148-0.089%2C0.332-0.095%2C0.486-0.017%20c0.262%2C0.135%2C0.536%2C0.248%2C0.82%2C0.34c0.165%2C0.053%2C0.291%2C0.187%2C0.332%2C0.354l0.259%2C1.036C5.96%2C13.844%2C6.16%2C14%2C6.39%2C14h1.22%20c0.229%2C0%2C0.43-0.156%2C0.485-0.379l0.259-1.036c0.042-0.167%2C0.168-0.302%2C0.333-0.354c0.284-0.092%2C0.559-0.205%2C0.82-0.34%20c0.154-0.078%2C0.338-0.072%2C0.486%2C0.017l0.914%2C0.549c0.197%2C0.118%2C0.449%2C0.088%2C0.611-0.074l0.862-0.863%20c0.163-0.162%2C0.193-0.415%2C0.075-0.611l-0.549-0.915c-0.089-0.148-0.096-0.332-0.017-0.485c0.134-0.263%2C0.248-0.536%2C0.339-0.82%20c0.053-0.165%2C0.188-0.291%2C0.355-0.333l1.036-0.259C13.844%2C8.039%2C14%2C7.839%2C14%2C7.609V6.39C14%2C6.16%2C13.844%2C5.96%2C13.621%2C5.904z%20M7%2C10%20c-1.657%2C0-3-1.343-3-3s1.343-3%2C3-3s3%2C1.343%2C3%2C3S8.657%2C10%2C7%2C10z%22%2F%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3C%2Fsvg%3E"
         sizes="any">
-    <!--https://cdnjs.cloudflare.com/ajax/libs/cash/8.1.0/cash.min.js-->
     <script src="/cash.min.js"></script>
-    <!--https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css-->
     <link rel="stylesheet" href="/normalize.min.css">
-    <!--https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css-->
     <link rel="stylesheet" href="/milligram.min.css">
     <style>
         .navbar {
@@ -220,12 +217,15 @@
                 <a href="#" class="button" id="configtab-config_wifi">WiFi</a>
                 <a href="#" class="button" id="configtab-config_gpi">Inputs</a>
                 <a href="#" class="button" id="configtab-config_gpio">Input/Outputs</a>
+                <a href="#" class="button" id="configtab-config_pwm" style="display:none;">PWM</a>
             </div>
             <div class="well" id="config_wifi">
             </div>
             <div class="well" id="config_gpi" style="display:none;">
             </div>
             <div class="well" id="config_gpio" style="display:none;">
+            </div>
+            <div class="well" id="config_pwm" style="display:none;">
             </div>
             <div class="row">
                 <div class="column column-25"><button href="#" onclick="refresh_all_fields()">Refresh All</button></div>
@@ -237,6 +237,7 @@
         var cdi_segment_loader = [];
         var ws_pending_send = [];
         var webSocket;
+        var has_pwm = false;
         function ws_send(text) {
             // if the socket is not in an open state, defer the send until we have connected
             if (webSocket.readyState != WebSocket.OPEN) {
@@ -268,12 +269,12 @@
                 messages.forEach(msg => {
                     if (msg.length > 0) {
                         var json = JSON.parse(msg);
-                        if (!json.hasOwnProperty('resp_type')) {
-                            console.error('Invalid JSON payload (missing resp_type):', msg);
-                        } else if (json.resp_type === 'error') {
+                        if (!json.hasOwnProperty('res')) {
+                            console.error('Invalid JSON payload (missing res):', msg);
+                        } else if (json.res === 'error') {
                             console.error('ERROR:', json.error);
                             alert(json.error);
-                        } else if (json.resp_type === 'info') {
+                        } else if (json.res === 'info') {
                             $('#node_id').val(pad_hex(json.node_id, 12));
                             hide_spinner('node_id');
                             $('#sw_version').text(json.snip_sw);
@@ -281,16 +282,16 @@
                             $('[id^=navtab-]').each(function (i, e) {
                                 $(e).attr('href', '#');
                             });
-                        } else if (json.resp_type === 'field-saved') {
+                        } else if (json.res === 'field-saved') {
                             hide_spinner(json.target);
-                        } else if (json.resp_type === 'field-value') {
+                        } else if (json.res === 'field-value') {
                             if (json.type === 'eventid') {
                                 $('#' + json.target).val(pad_hex(json.value, 16));
                             } else {
                                 $('#' + json.target).val(json.value);
                             }
                             hide_spinner(json.target);
-                        } else if (json.resp_type === 'set-nodeid') {
+                        } else if (json.res === 'set-nodeid') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
                             $('#h1-reboot').hide();
@@ -298,7 +299,7 @@
                             $('#h1-nodeidreset').show();
                             $('#loading').show();
                             setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'factory-reset') {
+                        } else if (json.res === 'factory-reset') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
                             $('#h1-reboot').hide();
@@ -306,8 +307,14 @@
                             $('#h1-factoryreset').show();
                             $('#loading').show();
                             setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'reset-events') {
+                        } else if (json.res === 'reset-events') {
                             refresh_all_fields();
+                        } else if (json.res === 'firmware') {
+                            has_pwm = json.pwm;
+                            if (has_pwm) {
+                                $('#configtab-config_pwm').show();
+                            }
+                            fetch('/cdi.xml').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
                         }
                     }
                 });
@@ -316,7 +323,7 @@
         function save_node_id() {
             show_spinner('node_id');
             disable_button('node_id');
-            ws_send(JSON.stringify({req_type:'set-nodeid', value:$('#node_id').val()}));
+            ws_send(JSON.stringify({req:'set-nodeid', value:$('#node_id').val()}));
         }
         function refresh_all_fields() {
             $('[id^=cdi_]').each(function (i, e) {
@@ -324,19 +331,19 @@
             });
         }
         function update_complete() {
-            ws_send(JSON.stringify({req_type:'update-complete'}));
+            ws_send(JSON.stringify({req:'update-complete'}));
         }
         function refresh_field(field) {
             var offset = parseInt($('#' + field).attr('data-offset'));
             var size = parseInt($('#' + field).attr('data-size'));
             var type = $('#' + field).attr('data-type');
             show_spinner(field);
-            ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:field}));
+            ws_send(JSON.stringify({req:'cdi-get', offs:offset, size:size, type:type, target:field}));
             disable_button('save-' + field);
         }
         function test_event(field) {
             var event = $('#' + field).val();
-            ws_send(JSON.stringify({req_type:'event-test', value:event}));
+            ws_send(JSON.stringify({req:'event-test', value:event}));
         }
         function hide_spinner(target) {
             $('#spinner-' + target).hide();
@@ -356,12 +363,12 @@
         }
         function factory_reset() {
             if (confirm('Are you sure you want to perform a Factory Reset?')) {
-                ws_send(JSON.stringify({req_type:'factory-reset'}));
+                ws_send(JSON.stringify({req:'factory-reset'}));
             }
         }
         function reset_events() {
             if (confirm('Are you sure you want to reset all event IDs?')) {
-                ws_send(JSON.stringify({req_type:'reset-events'}));
+                ws_send(JSON.stringify({req:'reset-events'}));
             }
         }
         function upload_ota() {
@@ -411,7 +418,7 @@
             registerStringFormat();
             connectWebSocket();
             console.log('Downloading cdi.xml to generate config dialogs');
-            fetch('/cdi.xml').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
+            ws_send(JSON.stringify({req:'firmware'}));
             add_tab_events('navtab');
             add_tab_events('configtab');
         });
@@ -500,7 +507,7 @@
                 content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
                 content += '</div>';
                 content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                cdi_segment_loader.push(JSON.stringify({req:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
                 console.groupEnd();
             } else if (node_data_type === 'group') {
                 if ($.isNumeric(parseInt($(group).attr('offset'))) && node_name === '') {
@@ -543,7 +550,7 @@
                 content += String.format('<div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
                 content += '</div>';
                 content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description)
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                cdi_segment_loader.push(JSON.stringify({req:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
             }
             return [content, size];
         }
@@ -616,7 +623,10 @@
             cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
-            cdi_segment_loader.push('{"req_type":"info"}');
+            if (has_pwm) {
+                cdi_dynamic_group(doc, 253, 'PWM', '#config_pwm', offsets_253);
+            }
+            cdi_segment_loader.push(JSON.stringify({req:'info'}));
             cdi_segment_loader.forEach(elem => ws_send(elem));
             cdi_segment_loader.splice(0, cdi_segment_loader.length);
             $('#node_info').show();
@@ -629,7 +639,7 @@
                     var size = parseInt($('#' + cdi_field).attr('data-size'));
                     var type = $('#' + cdi_field).attr('data-type');
                     var value = $('#' + cdi_field).val();
-                    ws_send(JSON.stringify({req_type:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
+                    ws_send(JSON.stringify({req:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
                     disable_button('save-' + cdi_field);
                 });
             });

@@ -235,7 +235,7 @@ private:
             }
             response =
                 StringPrintf(
-                    R"!^!({"resp_type":"error","error":"Request failed: %d"})!^!"
+                    R"!^!({"res":"error","error":"Request failed: %d"})!^!"
                   , b->data()->resultCode);
         }
         else if (value_.empty())
@@ -246,7 +246,7 @@ private:
             {
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"string"})!^!"
+                        R"!^!({"res":"field-value","target":"%s","value":"%s","type":"string"})!^!"
                       , target_.c_str(), b->data()->payload.c_str());
             }
             else if (type_ == "int")
@@ -266,7 +266,7 @@ private:
                 }
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%d","type":"int"})!^!"
+                        R"!^!({"res":"field-value","target":"%s","value":"%d","type":"int"})!^!"
                     , target_.c_str(), data);
             }
             else if (type_ == "eventid")
@@ -275,7 +275,7 @@ private:
                 memcpy(&event_id, b->data()->payload.data(), sizeof(uint64_t));
                 response =
                     StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"eventid"})!^!"
+                        R"!^!({"res":"field-value","target":"%s","value":"%s","type":"eventid"})!^!"
                     , target_.c_str()
                     , uint64_to_string_hex(be64toh(event_id)).c_str());
             }
@@ -283,7 +283,7 @@ private:
         else
         {
             response =
-                StringPrintf(R"!^!({"resp_type":"field-saved","target":"%s"})!^!"
+                StringPrintf(R"!^!({"res":"field-saved","target":"%s"})!^!"
                            , target_.c_str());
         }
         response += "\n";
@@ -302,10 +302,10 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
 {
     if (event == http::WebSocketEvent::WS_EVENT_TEXT)
     {
-        string response = R"!^!({"resp_type":"error","error":"Request not understood"})!^!";
+        string response = R"!^!({"res":"error","error":"Request not understood"})!^!";
         string req = string((char *)data, len);
         cJSON *root = cJSON_Parse(req.c_str());
-        cJSON *req_type = cJSON_GetObjectItem(root, "req_type");
+        cJSON *req_type = cJSON_GetObjectItem(root, "req");
         if (req_type == NULL)
         {
             // NO OP, the websocket is outbound only to trigger events on the client side.
@@ -321,19 +321,35 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 LOG(INFO, "[Web] Node ID updated to: %s, reboot pending"
                 , uint64_to_string_hex(new_node_id).c_str());
                 Singleton<esp32io::DelayRebootHelper>::instance()->start();
-                response = R"!^!({"resp_type":"set-nodeid"})!^!";
+                response = R"!^!({"res":"set-nodeid"})!^!";
             }
             else
             {
-                response = R"!^!({"resp_type":"error","error":"Failed to update node-id"})!^!";
+                response = R"!^!({"res":"error","error":"Failed to update node-id"})!^!";
             }
+        }
+        else if (!strcmp(req_type->valuestring, "firmware"))
+        {
+            response =
+                StringPrintf(R"!^!({"res":"firmware","twai":%s,"pwm":%s})!^!"
+#if CONFIG_OLCB_ENABLE_TWAI
+                  , "true"
+#else
+                  , "false"
+#endif // CONFIG_OLCB_ENABLE_TWAI
+#if CONFIG_OLCB_ENABLE_PWM
+                  , "true"
+#else
+                  , "false"
+#endif // CONFIG_OLCB_ENABLE_PWM
+                );
         }
         else if (!strcmp(req_type->valuestring, "info"))
         {
             const esp_app_desc_t *app_data = esp_ota_get_app_description();
             const esp_partition_t *partition = esp_ota_get_running_partition();
             response =
-                StringPrintf(R"!^!({"resp_type":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
+                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
                     app_data->version, app_data->date
                   , app_data->time, partition->label
                   , openlcb::SNIP_STATIC_DATA.model_name
@@ -357,7 +373,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                                , MemoryConfigClientRequest::UPDATE_COMPLETE
                                , openlcb::NodeHandle(node_id));
             response =
-                StringPrintf(R"!^!({"resp_type":"update-complete","code":%d})!^!"
+                StringPrintf(R"!^!({"res":"update-complete","code":%d})!^!"
                             , b->data()->resultCode);
         }
         else if (!strcmp(req_type->valuestring, "cdi-set"))
@@ -431,20 +447,20 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             if (force_factory_reset())
             {
                 Singleton<esp32io::DelayRebootHelper>::instance()->start();
-                response = R"!^!({"resp_type":"factory-reset"})!^!";
+                response = R"!^!({"res":"factory-reset"})!^!";
             }
         }
         else if (!strcmp(req_type->valuestring, "reset-events"))
         {
             esp32io::factory_reset_events();
-            response = R"!^!({"resp_type":"reset-events"})!^!";
+            response = R"!^!({"res":"reset-events"})!^!";
         }
         else if (!strcmp(req_type->valuestring, "event-test"))
         {
             string value = cJSON_GetObjectItem(root, "value")->valuestring;
             uint64_t eventID = string_to_uint64(value);
             Singleton<esp32io::EventBroadcastHelper>::instance()->send_event(eventID);
-            response = R"!^!({"resp_type":"event-test"})!^!";
+            response = R"!^!({"res":"event-test"})!^!";
         }
         else
         {
