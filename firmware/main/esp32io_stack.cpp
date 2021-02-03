@@ -351,7 +351,7 @@ namespace openlcb
 #if CONFIG_OLCB_ENABLE_PWM
 R"xmlpayload(<model>Esp32OlcbIO + PWM</model>)xmlpayload"
 #else
-R"xmlpayload(<model>Esp32OlcbIO + PWM</model>)xmlpayload"
+R"xmlpayload(<model>Esp32OlcbIO</model>)xmlpayload"
 #endif
 R"xmlpayload(<hardwareVersion>)xmlpayload" SNIP_HW_VERSION R"xmlpayload(</hardwareVersion>
 <softwareVersion>)xmlpayload" SNIP_SW_VERSION R"xmlpayload(</softwareVersion>
@@ -580,7 +580,6 @@ Formally, the parameter tells how many times of tries, each 30 msec apart, the i
 </eventid>
 </group>
 </group>
-</segment>
 )xmlpayload"
 #if CONFIG_OLCB_ENABLE_PWM
 R"xmlpayload(
@@ -614,10 +613,10 @@ R"xmlpayload(
 <default>100</default>
 </int>
 </group>
-</segment>
 )xmlpayload"
 #endif // CONFIG_OLCB_ENABLE_PWM
 R"xmlpayload(
+</segment>
 <segment space='253'>
 <name>Version information</name>
 <int size='1'>
