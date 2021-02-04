@@ -207,7 +207,7 @@ private:
                                          , MemoryConfigClientRequest::WRITE
                                          , nodeHandle_
                                          , MemoryConfigDefs::SPACE_CONFIG
-                                         , offs_, value_);
+                                         , offs_, http::url_decode(value_));
         }
         LOG(VERBOSE, "[CDI:%s] Requesting %zu bytes from offset %zu"
           , target_.c_str(), size_, offs_);
@@ -247,7 +247,8 @@ private:
                 response =
                     StringPrintf(
                         R"!^!({"res":"field-value","target":"%s","value":"%s","type":"string"})!^!"
-                      , target_.c_str(), b->data()->payload.c_str());
+                      , target_.c_str()
+                      , http::url_encode(b->data()->payload).c_str());
             }
             else if (type_ == "int")
             {

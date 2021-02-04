@@ -287,6 +287,8 @@
                         } else if (json.res === 'field-value') {
                             if (json.type === 'eventid') {
                                 $('#' + json.target).val(pad_hex(json.value, 16));
+                            } else if (json.type === 'string') {
+                                $('#' + json.target).val(decodeURIComponent(json.value));
                             } else {
                                 $('#' + json.target).val(json.value);
                             }
@@ -614,6 +616,11 @@
             }
             console.groupEnd();
         }
+        function url_encode(str) {
+            return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+                return '%' + c.charCodeAt(0).toString(16);
+            });
+        }
         function build_cdi_dom(cdi) {
             var parser = new window.DOMParser();
             var doc = parser.parseFromString(cdi, "text/xml");
@@ -639,6 +646,9 @@
                     var size = parseInt($('#' + cdi_field).attr('data-size'));
                     var type = $('#' + cdi_field).attr('data-type');
                     var value = $('#' + cdi_field).val();
+                    if (type === 'string') {
+                        value = url_encode(value);
+                    }
                     ws_send(JSON.stringify({req:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
                     disable_button('save-' + cdi_field);
                 });
