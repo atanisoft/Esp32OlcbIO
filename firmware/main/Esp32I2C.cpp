@@ -136,6 +136,9 @@ int Esp32I2C::ioctl(int fd, int cmd, va_list args)
                     errno = ETIMEDOUT;
                     return -1;
                 }
+                LOG(VERBOSE
+                  , "[I2C fd:%d, addr:%d] I2C transaction success: %s", fd
+                  , data->msgs[idx].addr, esp_err_to_name(ret));
             }
         break;
     }
@@ -155,10 +158,12 @@ ssize_t Esp32I2C::write(int fd, const void *buf, size_t size)
         i2c_cmd_link_delete(cmd);
         if (ret == ESP_OK)
         {
+            LOG(VERBOSE, "[I2C fd:%d, addr:%d] I2C transaction success: %s", fd
+              , addr_[fd], esp_err_to_name(ret));
             return 1;
         }
-        LOG_ERROR("[I2C fd:%d] I2C transaction failure: %s", fd
-                , esp_err_to_name(ret));
+        LOG_ERROR("[I2C fd:%d, addr:%d] I2C transaction failure: %s", fd
+                , addr_[fd], esp_err_to_name(ret));
         errno = ETIMEDOUT;
     }
     else
@@ -186,6 +191,8 @@ ssize_t Esp32I2C::read(int fd, void *buf, size_t size)
         i2c_cmd_link_delete(cmd);
         if (ret == ESP_OK)
         {
+            LOG(VERBOSE, "[I2C fd:%d, addr:%d] I2C transaction success: %s", fd
+              , addr_[fd], esp_err_to_name(ret));
             return size;
         }
         LOG_ERROR("[I2C fd:%d] I2C transaction failure: %s", fd

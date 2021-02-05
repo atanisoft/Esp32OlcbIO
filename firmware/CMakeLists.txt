@@ -95,21 +95,13 @@ set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz PROPE
 set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz")
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz
-    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz
+    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css
     VERBATIM)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz PROPERTIES GENERATED TRUE)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz PROPERTIES GENERATED TRUE)
 set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz")
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz
-    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css
-    VERBATIM)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz PROPERTIES GENERATED TRUE)
-set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz")
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz")
 
 ###############################################################################
 # Add web content to the binary
@@ -117,8 +109,7 @@ set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CL
 
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.gz" BINARY)
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz" BINARY)
-target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz" BINARY)
-target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz" BINARY)
+target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz" BINARY)
 
 ###############################################################################
 # Configuration validations

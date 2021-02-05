@@ -238,7 +238,7 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     {
         wifi_manager->enable_verbose_logging();
     }
-    init_webserver(memory_client.get_mutable(), config->node_id);
+    init_webserver(memory_client.get_mutable(), stack->service(), config->node_id);
     factory_reset_helper.emplace();
     event_helper.emplace();
     delayed_reboot.emplace(stack->service());
