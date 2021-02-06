@@ -55,13 +55,13 @@
     <div class="container">
         <ul class="tab tab-block">
             <li class="tab-item">
-                <a href="#" onclick="showTab('#tab-node_info', this);">Node Information</a>
+                <a href="#" onclick="showTab('node_info', this, 'tab-');">Node Information</a>
             </li>
             <li class="tab-item">
-                <a href="#" onclick="showTab('#tab-firmware_upload', this);">Firmware Update</a>
+                <a href="#" onclick="showTab('firmware_upload', this, 'tab-');">Firmware Update</a>
             </li>
             <li class="tab-item">
-                <a href="#" onclick="showTab('#tab-config', this);">Node Configuration</a>
+                <a href="#" onclick="showTab('config', this, 'tab-');">Node Configuration</a>
             </li>
         </ul>
         <div class="container" id="tab-node_info">
@@ -111,16 +111,16 @@
         <div class="container" style="display:none;" id="tab-config">
             <ul class="tab tab-block">
                 <li class="tab-item">
-                    <a href="#" onclick="showCDISection('wifi',this);">WiFi Configuration</a>
+                    <a href="#" onclick="showTab('wifi', this, 'cdi_tab_');">WiFi Configuration</a>
                 </li>
                 <li class="tab-item">
-                    <a href="#" onclick="showCDISection('gpi',this);">Inputs</a>
+                    <a href="#" onclick="showTab('gpi', this, 'cdi_tab_');">Inputs</a>
                 </li>
                 <li class="tab-item">
-                    <a href="#" onclick="showCDISection('gpio',this);">Inputs/Outputs</a>
+                    <a href="#" onclick="showTab('gpio', this, 'cdi_tab_');">Inputs/Outputs</a>
                 </li>
                 <li class="tab-item" id="cfg_pwm" style="display:none;">
-                    <a href="#" onclick="showCDISection('pwm',this);">PWM</a>
+                    <a href="#" onclick="showTab('pwm', this, 'cdi_tab_');">PWM</a>
                 </li>
             </ul>
             <div class="container" id="cdi_tab_wifi">
@@ -177,15 +177,15 @@
             }
             return response;
         }
-        function showTab(target, button) {
-            $('[id^=tab-]').hide();
-            $(button).parent().parent().children().removeClass('active');
-            $(button).parent().addClass('active');
-            if (target === '#tab-config') {
-                $(button).toggleClass('loading');
-                refreshCDI(button);
+        function showTab(target, link, tab_prefix) {
+            $(String.format('[id^={0}]', tab_prefix)).hide();
+            $(link).parent().parent().children().removeClass('active');
+            $(link).parent().addClass('active');
+            if (tab_prefix === 'tab-' && target === 'config') {
+                $(link).toggleClass('loading');
+                refreshCDI(link);
             } else {
-                $(target).show();
+                $(String.format('#{0}{1}', tab_prefix, target)).show();
             }
         }
         function showErrorDialog(text, error) {
@@ -199,19 +199,18 @@
             setTimeout(function () { location.reload(); }, page_reload_delay_ms);
         }
         function ws_cleanup() {
+            clearInterval(ws_ping_interval_timer_id);
+            clearTimeout(ws_ping_timer_id);
             if (ws) {
                 ws.removeEventListener('open', ws_opened);
                 ws.removeEventListener('message', ws_rx);
                 ws.removeEventListener('error', ws_closed);
                 ws.removeEventListener('close', ws_closed);
-                clearTimeout(ws_ping_timer_id);
                 ws.close();
             }
         }
         function ws_dead() {
-            if (ws) {
-                ws.close();
-            }
+            ws_cleanup();
             connectWebSocket();
         }
         function ws_ping() {
@@ -238,12 +237,10 @@
                         $('#btn-save_node_id').removeClass('loading');
                         if (json.twai === false) {
                             $('#bootloader').hide();
+                        } else {
+                            $('#bootloader').show();
                         }
-                        if (json.pwm) {
-                            $('#cfg_pwm').show();
-                            has_pwm = true;
-                        }
-                        ws_ping_interval_timer_id = setInterval(ws_ping, ws_ping_interval_ms);
+                        has_pwm = json.pwm;
                     } else if (json.res === 'saved') {
                         reset_cdi_buttons(json.tgt);
                     } else if (json.res === 'field') {
@@ -282,8 +279,11 @@
             while (ws_pending_send.length) {
                 ws.send(ws_pending_send.pop());
             }
+            ws_ping_interval_timer_id = setInterval(ws_ping, ws_ping_interval_ms);
         }
         function ws_closed(event) {
+            clearTimeout(ws_ping_timer_id);
+            clearInterval(ws_ping_interval_timer_id);
             console.warn('WS closed, reconnecting. Reason:', event.reason);
             $('#ws-status').addClass('text-dark');
             $('#ws-status').removeClass('text-success');
@@ -305,7 +305,7 @@
                 ws.addEventListener('error', ws_closed);
                 ws.addEventListener('close', ws_closed);
             } catch (e) {
-                console.error('Failed to connect to the command station, will retry');
+                console.error('Connection failed, will retry');
                 $('#ws-status').addClass('text-dark');
                 $('#ws-status').removeClass('flash text-success');
                 setTimeout(connectWebSocket, ws_retry_connection_timeout_ms);
@@ -337,10 +337,6 @@
                 refresh_cdi_field(e);
             });
         }
-        function showCDISection(section) {
-            $('[id^=cdi_tab_]').hide();
-            $(String.format('#cdi_tab_{0}', section)).show();
-        }
         function refreshCDI(button) {
             if (!cdi_loaded) {
                 fetchWithTimeout("/cdi.xml").then(res => res.text()).then(cdi => build_cdi_dom(cdi, button));
@@ -371,6 +367,9 @@
             cdi_dynamic_group(doc, 253, 'Input Output Pins', '#cdi_tab_gpio', offsets_253);
             if (has_pwm) {
                 cdi_dynamic_group(doc, 253, 'PWM', '#cdi_tab_pwm', offsets_253);
+                $('#cfg_pwm').show();
+            } else {
+                $('#cfg_pwm').hide();
             }
             cdi_loaders.forEach(elem => ws_tx(elem));
             cdi_loaders.splice(0, cdi_loaders.length);
@@ -660,18 +659,13 @@
                 $(target_selector).append(group_tabs);
                 $(target_selector).append(group_content);
                 $(String.format('[id^={0}-]', group_id)).on('click', function (evt) {
+                    $(String.format('[id^=rep-{0}-]', group_id)).hide();
                     var selected_tab = $(evt.target).attr('id');
                     var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
-                    $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') != $(evt.target).attr('id'); }).each(function (i, other_tab) {
-                        $('#' + $(other_tab).attr('id')).hide();
-                        $(other_tab).removeClass('active');
-                        $(other_tab).addClass('inactive');
-                        return true;
-                    });
                     var tab_content = String.format('#rep-{0}', selected_tab);
                     $(tab_content).show();
-                    $(evt.target).addClass('active');
-                    $(evt.target).removeClass('inactive');
+                    $(evt.target).parent().children().removeClass('active');
+                    $(evt.target).parent().addClass('active');
                 });
             }
             console.groupEnd();
