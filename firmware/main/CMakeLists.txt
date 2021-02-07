@@ -11,7 +11,7 @@ set(deps
     json
 )
 
-idf_component_register(SRCS esp32io.cpp esp32io_stack.cpp esp32io_bootloader.cpp fs.cpp nvs_config.cpp web_server.cpp Esp32I2C.cpp
+idf_component_register(SRCS esp32io.cpp esp32io_stack.cpp esp32io_bootloader.cpp fs.cpp nvs_config.cpp web_server.cpp Esp32PCA9685PWM.cpp
                        REQUIRES "${deps}")
 
 # export the project version as a define for the SNIP data, note it must be

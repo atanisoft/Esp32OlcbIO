@@ -35,6 +35,7 @@
 #include "sdkconfig.h"
 #include "cdi.hxx"
 #include "DelayRebootHelper.hxx"
+#include "Esp32PCA9685PWM.hxx"
 #include "EventBroadcastHelper.hxx"
 #include "FactoryResetHelper.hxx"
 #include "fs.hxx"
@@ -43,9 +44,7 @@
 #include "NodeRebootHelper.hxx"
 #include "nvs_config.hxx"
 #include "web_server.hxx"
-#include "Esp32I2C.hxx"
 
-#include <freertos_drivers/arduino/PCA9685PWM.hxx>
 #include <freertos_drivers/esp32/Esp32HardwareTwai.hxx>
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
 #include <openlcb/MemoryConfigClient.hxx>
@@ -89,9 +88,8 @@ std::unique_ptr<openlcb::RefreshLoop> refresh_loop;
 Esp32HardwareTwai twai(CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
 #endif // CONFIG_OLCB_ENABLE_TWAI
 #if CONFIG_OLCB_ENABLE_PWM
-Esp32I2C i2c_dev(CONFIG_SDA_PIN, CONFIG_SCL_PIN);
-uninitialized<PCA9685PWM> pca9685;
-uninitialized<PCA9685PWMBit> pca9685PWM[16];
+Esp32PCA9685PWM pca9685(CONFIG_SDA_PIN, CONFIG_SCL_PIN, PCA9685_ADDR, 1000);
+uninitialized<Esp32PCA9685PWMBit> pca9685PWM[16];
 uninitialized<openlcb::ServoConsumer> servos[16];
 #endif // CONFIG_OLCB_ENABLE_PWM
 
@@ -274,15 +272,12 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
 #endif // CONFIG_OLCB_ENABLE_TWAI
 
 #if CONFIG_OLCB_ENABLE_PWM
-    LOG(VERBOSE, "Initializing I2C");
-    i2c_dev.init();
     LOG(VERBOSE, "Initializing PCA9685");
-    pca9685.emplace();
-    pca9685->init("/dev/i2c/pca9685", PCA9685_ADDR);
+    pca9685.hw_init("pca9685");
     for (size_t idx = 0; idx < 16; idx++)
     {
         LOG(VERBOSE, "Creating ServoConsumer(%zu)", idx);
-        pca9685PWM[idx].emplace(pca9685.get_mutable(), idx);
+        pca9685PWM[idx].emplace(&pca9685, idx);
         servos[idx].emplace(stack->node(), cfg.seg().pwm().entry(idx)
                           , CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000ULL
                           , pca9685PWM[idx].get_mutable());
