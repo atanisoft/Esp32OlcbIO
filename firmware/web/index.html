@@ -137,7 +137,7 @@
                 </div>
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="reset_events();">Reset
                         Events</button></div>
-                <div class="column"><button class="btn btn-primary btn-sm" onclick="refresh_all_fields()">Refresh
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="refresh_all_cdi_fields()">Refresh
                         All</button></div>
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="update_complete();">Update
                         Complete</button></div>
@@ -253,7 +253,7 @@
                     } else if (json.res === 'nodeid' || json.res === 'factory-reset') {
                         reload_page();
                     } else if (json.res === 'reset-events') {
-                        refresh_all_fields();
+                        refresh_all_cdi_fields();
                     } else if (json.res === 'pong') {
                         clearTimeout(ws_ping_timer_id);
                     }
