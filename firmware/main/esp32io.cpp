@@ -123,8 +123,8 @@ void start_bootloader_stack(uint64_t node_id);
 void die_with(bool wifi, bool activity, unsigned period = 1000
             , bool toggle_both = false)
 {
-    LED_WIFI_Pin::set(wifi);
-    LED_ACTIVITY_Pin::set(activity);
+    LED_WIFI_Pin::instance()->write(wifi);
+    LED_ACTIVITY_Pin::instance()->write(activity);
 
     while(true)
     {
