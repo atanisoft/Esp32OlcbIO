@@ -1,0 +1,93 @@
+/** \copyright
+ * Copyright (c) 2021, Mike Dunston
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are  permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * \file config.h
+ *
+ * Config representation for ESP32OlcbIO (minimal).
+ *
+ * @author Mike Dunston
+ * @date 7 May 2021
+ */
+
+#ifndef CONFIG_H_
+#define CONFIG_H_
+
+#include <freertos_drivers/esp32/Esp32WiFiConfiguration.hxx>
+#include <openlcb/ConfigRepresentation.hxx>
+#include <openlcb/ConfiguredProducer.hxx>
+#include <openlcb/ConfiguredConsumer.hxx>
+#include <openlcb/MultiConfiguredConsumer.hxx>
+
+namespace esp32olcbio
+{
+
+using INPUT_PINS = openlcb::RepeatedGroup<openlcb::ProducerConfig, 10>;
+using OUTPUT_PINS = openlcb::RepeatedGroup<openlcb::ConsumerConfig, 8>;
+
+/// Defines the main segment in the configuration CDI. This is laid out at
+/// origin 128 to give space for the ACDI user data at the beginning.
+CDI_GROUP(IoBoard, Segment(openlcb::MemoryConfigDefs::SPACE_CONFIG),
+          Offset(128));
+/// Each entry declares the name of the current entry, then the type and then
+/// optional arguments list.
+CDI_GROUP_ENTRY(internal_config, openlcb::InternalConfigData);
+CDI_GROUP_ENTRY(wifi, WiFiConfiguration, Name("WiFi Configuration"));
+CDI_GROUP_ENTRY(gpi, INPUT_PINS, Name("Input Pins"),
+                RepName("Input"));
+CDI_GROUP_ENTRY(gpo, OUTPUT_PINS, Name("Output Pins"),
+                RepName("Output"));
+CDI_GROUP_END();
+
+/// This segment is only needed temporarily until there is program code to set
+/// the ACDI user data version byte.
+CDI_GROUP(VersionSeg, Segment(openlcb::MemoryConfigDefs::SPACE_CONFIG),
+    Name("Version information"));
+CDI_GROUP_ENTRY(acdi_user_version, openlcb::Uint8ConfigEntry,
+    Name("ACDI User Data version"), Description("Set to 2 and do not change."));
+CDI_GROUP_END();
+
+/// The main structure of the CDI. ConfigDef is the symbol we use in main.cxx
+/// to refer to the configuration defined here.
+CDI_GROUP(ConfigDef, MainCdi());
+/// Adds the <identification> tag with the values from SNIP_STATIC_DATA above.
+CDI_GROUP_ENTRY(ident, openlcb::Identification);
+/// Adds an <acdi> tag.
+CDI_GROUP_ENTRY(acdi, openlcb::Acdi);
+/// Adds a segment for changing the values in the ACDI user-defined
+/// space. UserInfoSegment is defined in the system header.
+CDI_GROUP_ENTRY(userinfo, openlcb::UserInfoSegment);
+/// Adds the main configuration segment.
+CDI_GROUP_ENTRY(seg, IoBoard);
+/// Adds the versioning segment.
+CDI_GROUP_ENTRY(version, VersionSeg);
+CDI_GROUP_END();
+
+// CDI Version number.
+const uint16_t CANONICAL_VERSION = 0x0100;
+
+} // namespace esp32olcbio
+
+#endif // CONFIG_H_
