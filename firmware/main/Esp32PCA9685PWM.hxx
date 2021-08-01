@@ -40,14 +40,14 @@
 
 class Esp32PCA9685PWMBit;
 
-/// Agragate of 16 PWM channels for a PCA9685PWM
+/// Aggregate of 16 PWM channels for a PCA9685 I2C connected device.
 class Esp32PCA9685PWM : public OSThread, private Atomic
 {
 public:
-    /// maximum number of PWM channels supported by the PCA9685
+    /// Maximum number of PWM channels supported by the PCA9685.
     static constexpr size_t NUM_CHANNELS = 16;
 
-    /// maximum number of PWM counts supported by the PCA9685
+    /// Maximum number of PWM counts supported by the PCA9685.
     static constexpr size_t MAX_PWM_COUNTS = 4096;
 
     /// Constructor.
@@ -82,12 +82,12 @@ private:
     /// Set the pwm duty cycle
     /// @param channel channel index (0 through 15)
     /// @param counts counts for PWM duty cycle
-    void set_pwm_duty(unsigned channel, uint16_t counts);
+    void set_pwm_duty(size_t channel, uint16_t counts);
 
     /// Get the pwm duty cycle
     /// @param channel channel index (0 through 15)
     /// @return counts for PWM duty cycle
-    uint16_t get_pwm_duty(unsigned channel)
+    uint16_t get_pwm_duty(size_t channel)
     {
         HASSERT(channel < NUM_CHANNELS);
         return duty_[channel];
@@ -96,12 +96,36 @@ private:
     /// Set the pwm duty cycle
     /// @param channel channel index (0 through 15)
     /// @param counts counts for PWM duty cycle
-    void write_pwm_duty(unsigned channel, uint16_t counts);
+    void write_pwm_duty(size_t channel, uint16_t counts);
 
+    /// Reads a single register from the PCA9685.
+    /// @param reg register address to read.
+    /// @param value value of the register upon successful read.
+    /// @return true if the register was read successfully, false otherwise.
     bool read_register(uint8_t reg, uint8_t *value);
+    
+    /// Writes an 8-bit value to a single register to the PCA9685.
+    /// @param reg register address to write.
+    /// @param value value to write to the register.
+    /// @return true if the register was written successfully, false otherwise.
     bool write_one_register(uint8_t reg, uint8_t value);
+
+    /// Writes a 16-bit value to a single register to the PCA9685 spanning two
+    /// consequetive register addresses.
+    /// @param reg register address to write.
+    /// @param value value to write to the register.
+    /// @return true if the register was written successfully, false otherwise.
     bool write_one_register(uint8_t reg, uint16_t value);
-    bool write_two_registers(uint8_t reg_base, uint16_t reg1_value, uint16_t reg2_value);
+
+    /// Writes two 16-bit values to a two register to the PCA9685 spanning two
+    /// consequetive register addresses.
+    /// @param reg_base first register to write to, second will be immediately
+    /// after this one.
+    /// @param reg1_value value to write to the first register.
+    /// @param reg2_value value to write to the second register.
+    /// @return true if the register was written successfully, false otherwise.
+    bool write_two_registers(uint8_t reg_base, uint16_t reg1_value,
+                             uint16_t reg2_value);
 
     /// Allow access to private members
     friend Esp32PCA9685PWMBit;
@@ -117,23 +141,46 @@ private:
 
     /// I2C address of the device
     const uint8_t i2cAddress_;
+    /// SDA pin to use for I2C communication.
     const gpio_num_t sda_;
+    /// SCL pin to use for I2C communication.
     const gpio_num_t scl_;
+
+    /// Desired PWM frequency.
     const uint16_t frequency_;
 
+    /// Mode1 register bit mapping to the reset operation.
     static constexpr uint8_t MODE1_RESET = 0x80;
+
+    /// Mode1 register bit mapping to the sleep operation.
     static constexpr uint8_t MODE1_SLEEP = 0x10;
+
+    /// Mode1 register bit mapping to the auto-increment setting.
     static constexpr uint8_t MODE1_AUTO_INCREMENT = 0xA0;
 
+    /// Mode1 register address.
     static constexpr uint8_t MODE1_REG = 0x00;
+
+    /// Mode2 register address.
     static constexpr uint8_t MODE2_REG = 0x01;
+
+    /// Base register address for the first PWM output. Each subsequent PWM
+    /// output is offset by four bytes from this base address.
     static constexpr uint8_t LED_0_REG_ON = 0x06;
-    static constexpr uint8_t LED_ALL_REG_ON = 0xFA;
-    static constexpr uint8_t LED_ALL_REG_OFF = 0xFC;
+
+    /// Prescaler register address.
     static constexpr uint8_t PRESCALE_REG = 0xFE;
+
+    /// PCA9685 default clock frequency.
     static constexpr float CLOCK_FREQUENCY = 25000000.0;
+
+    /// Maximum number of ticks to wait for an I2C transaction to complete.
     static constexpr TickType_t MAX_I2C_WAIT_TICKS = pdMS_TO_TICKS(100);
+
+    /// I2C port to use.
     static constexpr i2c_port_t I2C_PORT = I2C_NUM_0;
+
+    /// I2C Bus speed.
     static constexpr uint32_t I2C_BUS_SPEED = 100000;
 
     DISALLOW_COPY_AND_ASSIGN(Esp32PCA9685PWM);
@@ -146,7 +193,7 @@ public:
     /// Constructor.
     /// @param instance reference to the chip
     /// @param index channel index on the chip (0 through 15) 
-    Esp32PCA9685PWMBit(Esp32PCA9685PWM *instance, unsigned index)
+    Esp32PCA9685PWMBit(Esp32PCA9685PWM *instance, size_t index)
         : PWM()
         , instance_(instance)
         , index_(index)
@@ -206,7 +253,7 @@ private:
     Esp32PCA9685PWM *instance_;
 
     /// bit index within PCA9685
-    unsigned index_;
+    size_t index_;
 
     DISALLOW_COPY_AND_ASSIGN(Esp32PCA9685PWMBit);
 };

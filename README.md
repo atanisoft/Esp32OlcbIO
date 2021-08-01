@@ -141,11 +141,3 @@ each output.
 
 ![Extension PCB as Servo controller](pcb-servo/pcb-servo.png)
 
-### Single character display example
-
-While not entirely practical for most use cases, this shows one example of
-creating a single character display using a 5x7 grid of WS2812 (or similar)
-addressable LEDs connected in series to a single IO pin on the base board.
-Design files are not available for this at this time.
-
-![Extension PCB as Digit](pcb-ext/pcb-ext.png)

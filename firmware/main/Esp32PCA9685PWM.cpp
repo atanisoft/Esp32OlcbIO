@@ -79,6 +79,7 @@ void *Esp32PCA9685PWM::entry()
     write_one_register(MODE1_REG, MODE1_RESET);
     // allow time for the device to reset
     vTaskDelay(pdMS_TO_TICKS(50));
+
     LOG(INFO, "[PCA9685] Enabling PCA9685 Auto Increment mode");
     write_one_register(MODE1_REG, MODE1_AUTO_INCREMENT);
 
@@ -92,7 +93,7 @@ void *Esp32PCA9685PWM::entry()
             dirty_ = 0;
         }
 
-        for (unsigned i = 0; i < NUM_CHANNELS; ++i)
+        for (size_t i = 0; i < NUM_CHANNELS; ++i)
         {
             if (dirty_shadow & (0x1 << i))
             {
@@ -105,7 +106,7 @@ void *Esp32PCA9685PWM::entry()
     return NULL;
 }
 
-void Esp32PCA9685PWM::set_pwm_duty(unsigned channel, uint16_t counts)
+void Esp32PCA9685PWM::set_pwm_duty(size_t channel, uint16_t counts)
 {
     HASSERT(channel < NUM_CHANNELS);
     duty_[channel] = counts;
@@ -118,7 +119,7 @@ void Esp32PCA9685PWM::set_pwm_duty(unsigned channel, uint16_t counts)
     sem_.post();
 }
 
-void Esp32PCA9685PWM::write_pwm_duty(unsigned channel, uint16_t counts)
+void Esp32PCA9685PWM::write_pwm_duty(size_t channel, uint16_t counts)
 {
     uint8_t reg_base = LED_0_REG_ON + (channel * 4);
     if (counts > MAX_PWM_COUNTS)
