@@ -182,7 +182,7 @@
             <div class="row">
                 <div class="column"><b>Node ID:</b></div>
                 <div class="column column-50"><input type="text" id="node_id" value="PENDING"
-                    oninput="enable_button('node_id')"></input></div>
+                        oninput="enable_button('node_id')"></input></div>
                 <div class="column">
                     <button class="button-small" id="btn-node_id" href="#" disabled
                         onclick="save_node_id()">Save</button>
@@ -212,7 +212,8 @@
             <div class="row">&nbsp;<div id="spinner-firmware" class="spinner" style="display:none;"></div><span
                     id="firmware_upload_results"></span></div>
             <div class="row">
-                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button></div>
+                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button>
+                </div>
             </div>
         </section>
         <section class="container" id="config" style="display:none;">
@@ -229,7 +230,8 @@
             </div>
             <div class="row">
                 <div class="column column-25"><button href="#" onclick="refresh_all_fields()">Refresh All</button></div>
-                <div class="column column-25"><button href="#" onclick="update_complete()">Update Complete</button></div>
+                <div class="column column-25"><button href="#" onclick="update_complete()">Update Complete</button>
+                </div>
             </div>
         </section>
     </section>
@@ -268,12 +270,12 @@
                 messages.forEach(msg => {
                     if (msg.length > 0) {
                         var json = JSON.parse(msg);
-                        if (!json.hasOwnProperty('resp_type')) {
+                        if (!json.hasOwnProperty('res')) {
                             console.error('Invalid JSON payload (missing resp_type):', msg);
-                        } else if (json.resp_type === 'error') {
+                        } else if (json.res === 'error') {
                             console.error('ERROR:', json.error);
                             alert(json.error);
-                        } else if (json.resp_type === 'info') {
+                        } else if (json.res === 'info') {
                             $('#node_id').val(pad_hex(json.node_id, 12));
                             hide_spinner('node_id');
                             $('#sw_version').text(json.snip_sw);
@@ -281,16 +283,16 @@
                             $('[id^=navtab-]').each(function (i, e) {
                                 $(e).attr('href', '#');
                             });
-                        } else if (json.resp_type === 'field-saved') {
+                        } else if (json.res === 'field-saved') {
                             hide_spinner(json.target);
-                        } else if (json.resp_type === 'field-value') {
+                        } else if (json.res === 'field') {
                             if (json.type === 'eventid') {
                                 $('#' + json.target).val(pad_hex(json.value, 16));
                             } else {
                                 $('#' + json.target).val(json.value);
                             }
                             hide_spinner(json.target);
-                        } else if (json.resp_type === 'set-nodeid') {
+                        } else if (json.res === 'set-nodeid') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
                             $('#h1-reboot').hide();
@@ -298,7 +300,7 @@
                             $('#h1-nodeidreset').show();
                             $('#loading').show();
                             setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'factory-reset') {
+                        } else if (json.res === 'factory-reset') {
                             $('#node_info').hide();
                             $('#h1-loading').hide();
                             $('#h1-reboot').hide();
@@ -306,7 +308,7 @@
                             $('#h1-factoryreset').show();
                             $('#loading').show();
                             setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'reset-events') {
+                        } else if (json.res === 'reset-events') {
                             refresh_all_fields();
                         }
                     }
@@ -316,7 +318,7 @@
         function save_node_id() {
             show_spinner('node_id');
             disable_button('node_id');
-            ws_send(JSON.stringify({req_type:'set-nodeid', value:$('#node_id').val()}));
+            ws_send(JSON.stringify({ req: 'set-nodeid', value: $('#node_id').val() }));
         }
         function refresh_all_fields() {
             $('[id^=cdi_]').each(function (i, e) {
@@ -324,19 +326,19 @@
             });
         }
         function update_complete() {
-            ws_send(JSON.stringify({req_type:'update-complete'}));
+            ws_send(JSON.stringify({ req: 'update-complete' }));
         }
         function refresh_field(field) {
             var offset = parseInt($('#' + field).attr('data-offset'));
             var size = parseInt($('#' + field).attr('data-size'));
             var type = $('#' + field).attr('data-type');
             show_spinner(field);
-            ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:field}));
+            ws_send(JSON.stringify({ req: 'cdi', ofs: offset, sz: size, type: type, tgt: field }));
             disable_button('save-' + field);
         }
         function test_event(field) {
             var event = $('#' + field).val();
-            ws_send(JSON.stringify({req_type:'event-test', value:event}));
+            ws_send(JSON.stringify({ req: 'event', value: event }));
         }
         function hide_spinner(target) {
             $('#spinner-' + target).hide();
@@ -356,12 +358,12 @@
         }
         function factory_reset() {
             if (confirm('Are you sure you want to perform a Factory Reset?')) {
-                ws_send(JSON.stringify({req_type:'factory-reset'}));
+                ws_send(JSON.stringify({ req: 'factory-reset' }));
             }
         }
         function reset_events() {
             if (confirm('Are you sure you want to reset all event IDs?')) {
-                ws_send(JSON.stringify({req_type:'reset-events'}));
+                ws_send(JSON.stringify({ req: 'reset-events' }));
             }
         }
         function upload_ota() {
@@ -411,7 +413,7 @@
             registerStringFormat();
             connectWebSocket();
             console.log('Downloading cdi.xml to generate config dialogs');
-            fetch('/cdi.xml').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
+            fetch('/fs?path=cdi.xml&remove_nulls=true').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
             add_tab_events('navtab');
             add_tab_events('configtab');
         });
@@ -488,19 +490,25 @@
             if (is_mapped) {
                 size = parseInt($(group).attr('size'));
                 console.groupCollapsed('Mapped:', node_name, 'offset:', offset, 'size:', size, 'description:', node_description);
-                content += '<div class="row">';
+                content += '<div class="columns">';
                 content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
-                content += String.format('<div class="column column-50"><select id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')">', node_alias, offset, node_data_type, size);
+                content += String.format('<div class="column column-6"><select id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')">', node_alias, offset, node_data_type, size);
                 $(mapped.children).each(function (i, e) {
                     console.log($(e).find('value').text(), '=>', $(e).find('property').text());
                     content += String.format('<option value="{0}">{1}</option>', $(e).find('property').text(), $(e).find('value').text());
                 });
                 content += '</select></div>';
-                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
-                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
-                content += '</div>';
-                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                content += String.format('<div class="column"><div class="btn-group"><button class="btn btn-primary btn-sm" id="btn-save-{0}" disabled onclick="save_cdi_field(this);">Save</button>', node_alias);
+                content += String.format('<button class="btn btn-primary btn-sm loading" id="btn-refresh-{0}" onclick="refresh_cdi_field(this);">Refresh</button></div>', node_alias);
+                content += '</div></div>';
+                content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description);
+                cdi_loaders.push(JSON.stringify({
+                    req: 'cdi',
+                    ofs: offset,
+                    sz: size,
+                    type: node_data_type,
+                    tgt: node_alias
+                }));
                 console.groupEnd();
             } else if (node_data_type === 'group') {
                 if ($.isNumeric(parseInt($(group).attr('offset'))) && node_name === '') {
@@ -508,42 +516,48 @@
                     node_name = 'hidden'
                 }
                 if (group.children.length > 0) {
-                    if (node_name !== '') {
+                    if (node_name != '') {
                         content += String.format('<fieldset><legend>{0}:</legend>', node_name);
                         console.groupCollapsed(node_name);
                     } else {
                         console.groupCollapsed('unnamed group');
                     }
-                    content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
+                    content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description);
                     $(group.children).each(function (i, e) {
                         var res = generate_cdi_dynamic_content(space, e, offset + size);
                         content += res[0];
                         size += res[1];
                     });
                     console.groupEnd();
-                    if (node_name !== '') {
+                    if (node_name != '') {
                         content += '</fieldset>';
                     }
                 }
             } else if (node_name !== '') {
                 if (node_data_type === 'eventid') {
                     size = 8; // events are always 8 bytes
+                    node_data_type = 'evt';
                 } else {
+                    if (node_data_type === 'string') {
+                        node_data_type = 'str';
+                    }
                     size = parseInt($(group).attr('size'));
                 }
                 console.log('Entry:', node_name, 'offset:', offset, 'size:', size, 'datatype:', node_data_type, 'description:', node_description);
-                content += '<div class="row">';
-                content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
-                content += String.format('<div class="column column-50"><input type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
-                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
-                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button>', node_alias);
-                if (node_data_type === 'eventid') {
-                    content += String.format('<button class="button-small" id="btn-test-{0}">Test</button>', node_alias);
-                }
-                content += String.format('<div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
-                content += '</div>';
-                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description)
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                content += '<div class="columns">';
+                content += String.format('<div class="column"><label class="form-label" for="{0}">{1}:</label></div>', node_alias, node_name);
+                content += String.format('<div class="column column-6"><input class="form-input" type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
+                content += String.format('<div class="column"><div class="btn-group"><button class="btn btn-primary btn-sm" id="btn-save-{0}" disabled onclick="save_cdi_field(this);">Save</button>', node_alias);
+                content += String.format('<button class="btn btn-primary btn-sm loading" id="btn-refresh-{0}" onclick="refresh_cdi_field(this);">Refresh</button></div>', node_alias);
+                content += '</div></div>';
+                content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description)
+                cdi_loaders.push(JSON.stringify({
+                    req: 'cdi',
+                    ofs: offset,
+                    sz: size,
+                    type: node_data_type,
+                    tgt: node_alias
+                }));
             }
             return [content, size];
         }
@@ -565,19 +579,14 @@
                     offs += rendered[1];
                 });
             } else {
-                var group_tabs = '<div class="row tabs">';
+                var group_tabs = '<ul class="tab tab-block">';
                 var group_content = '';
                 var alias = $(node).find('repname').text();
                 var group_id = group.replace(/ /g, '_');
                 for (replica = 1; replica <= offsets[group].replicas; replica++) {
                     console.groupCollapsed(alias, replica);
-                    group_tabs += String.format('<a href="#" class="button" id="{0}-{1}">{2} {1}</a>', group_id, replica, alias);
-                    if (replica == 8 && replica < offsets[group].replicas) {
-                        // after eight tabs we run out of room for one row, add a break
-                        // to shift the content down one row
-                        group_tabs += '</div><div class="row tabs">';
-                    }
-                    group_content += String.format('<div class="well" id="rep-{0}-{1}" style="display: {3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
+                    group_tabs += String.format('<li class="tab-item"><a href="#" class="btn btn-primary" id="{0}-{1}">{2} {1}</a></li>', group_id, replica, alias);
+                    group_content += String.format('<div class="container" id="rep-{0}-{1}" style="display:{3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
                     $(node).children().each(function (i, e) {
                         var rendered = generate_cdi_dynamic_content(space, e, offs);
                         group_content += rendered[0];
@@ -586,23 +595,22 @@
                     group_content += '</fieldset></div>';
                     console.groupEnd();
                 }
+                group_tabs += "</ul>";
                 $(target_selector).append(group_tabs);
                 $(target_selector).append(group_content);
-                $(String.format('[id^={0}-]', group_id)).each(function (i, tab) {
-                    $(tab).on('click', function (e) {
-                        var selected_tab = $(tab).attr('id');
-                        var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
-                        $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
-                            $('#' + $(other_tab).attr('id')).hide();
-                            $(other_tab).removeClass('active');
-                            $(other_tab).addClass('inactive');
-                            return true;
-                        });
-                        var tab_content = String.format('#rep-{0}', selected_tab);
-                        $(tab_content).show();
-                        $(tab).addClass('active');
-                        $(tab).removeClass('inactive');
-                    })
+                $(String.format('[id^={0}-]', group_id)).on('click', function (evt) {
+                    var selected_tab = $(evt.target).attr('id');
+                    var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
+                    $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') != $(evt.target).attr('id'); }).each(function (i, other_tab) {
+                        $('#' + $(other_tab).attr('id')).hide();
+                        $(other_tab).removeClass('active');
+                        $(other_tab).addClass('inactive');
+                        return true;
+                    });
+                    var tab_content = String.format('#rep-{0}', selected_tab);
+                    $(tab_content).show();
+                    $(evt.target).addClass('active');
+                    $(evt.target).removeClass('inactive');
                 });
             }
             console.groupEnd();
@@ -616,7 +624,7 @@
             cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
             cdi_dynamic_group(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
-            cdi_segment_loader.push('{"req_type":"info"}');
+            cdi_segment_loader.push('{"req":"info"}');
             cdi_segment_loader.forEach(elem => ws_send(elem));
             cdi_segment_loader.splice(0, cdi_segment_loader.length);
             $('#node_info').show();
@@ -629,7 +637,7 @@
                     var size = parseInt($('#' + cdi_field).attr('data-size'));
                     var type = $('#' + cdi_field).attr('data-type');
                     var value = $('#' + cdi_field).val();
-                    ws_send(JSON.stringify({req_type:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
+                    ws_send(JSON.stringify({ req: 'cdi', offs: offset, sz: size, type: type, tgt: cdi_field, val: value }));
                     disable_button('save-' + cdi_field);
                 });
             });

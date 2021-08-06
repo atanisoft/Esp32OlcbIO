@@ -24,14 +24,14 @@ jobs:
             CONFIG_WIFI_MODE_OFF=y
           write-mode: append
       - name: Build
-        uses: atanisoft/esp-idf-ci-action@master
+        uses: espressif/esp-idf-ci-action@branch-release-v4.3
         with:
           path: firmware
       - name: Prepare Binaries
         run: |
           mkdir -p binaries
           cp .github/firmwarereadme.txt binaries/readme.txt
-          cp firmware/build/ESP32OlcbIO.bin binaries
+          cp firmware/build/Esp32OlcbIO.bin binaries
           cp firmware/build/partition_table/partition-table.bin binaries
           cp firmware/build/ota_data_initial.bin binaries
           cp firmware/build/bootloader/bootloader.bin binaries

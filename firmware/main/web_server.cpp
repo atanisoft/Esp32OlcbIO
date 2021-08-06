@@ -33,6 +33,7 @@
  */
 
 #include "sdkconfig.h"
+#include "CDIClient.hxx"
 #include "DelayRebootHelper.hxx"
 #include "EventBroadcastHelper.hxx"
 #include "nvs_config.hxx"
@@ -52,9 +53,11 @@
 #include <utils/logging.h>
 
 static std::unique_ptr<http::Httpd> http_server;
+static std::unique_ptr<CDIClient> cdi_client;
 static openlcb::MemoryConfigClient *memory_client;
 static MDNS mdns;
 static uint64_t node_id;
+static openlcb::NodeHandle node_handle;
 
 /// Statically embedded index.html start location.
 extern const uint8_t indexHtmlGz[] asm("_binary_index_html_gz_start");
@@ -93,7 +96,6 @@ static constexpr const char * const CAPTIVE_PORTAL_HTML = R"!^!(
   <p>If this dialog does not automatically close, please click <a href="/captiveauth">here</a>.</p>
  </body>
 </html>)!^!";
-
 
 esp_ota_handle_t otaHandle;
 esp_partition_t *ota_partition = nullptr;
@@ -152,160 +154,21 @@ uint64_t string_to_uint64(std::string value)
     return std::stoull(value, nullptr, 16);
 }
 
-#if CONFIG_EXTERNAL_HTTP_EXECUTOR
-static void http_exec_task(void *param)
-{
-    LOG(INFO, "[Httpd] Executor starting...");
-    http_executor.thread_body();
-    LOG(INFO, "[Httpd] Executor stopped...");
-    vTaskDelete(nullptr);
-}
-#endif // CONFIG_EXTERNAL_HTTP_EXECUTOR
-
-using openlcb::MemoryConfigClientRequest;
-using openlcb::MemoryConfigDefs;
-using openlcb::NodeHandle;
-
 namespace esp32io
 {
 void factory_reset_events();
 } // namespace esp32io
 
-class CDIRequestProcessor : public StateFlowBase
-{
-public:
-    CDIRequestProcessor(http::WebSocketFlow *socket, uint64_t node_id
-                      , size_t offs, size_t size, string target, string type
-                      , string value = "")
-                      : StateFlowBase(http_server.get()), socket_(socket)
-                      , client_(memory_client), nodeHandle_(node_id)
-                      , offs_(offs), size_(size), target_(target), type_(type)
-                      , value_(value)
-    {
-        start_flow(STATE(send_request));
-    }
-
-private:
-    uint8_t attempts_{3};
-    http::WebSocketFlow *socket_;
-    openlcb::MemoryConfigClient *client_;
-    NodeHandle nodeHandle_;
-    size_t offs_;
-    size_t size_;
-    string target_;
-    string type_;
-    string value_;
-
-    Action send_request()
-    {
-        if (!value_.empty())
-        {
-            LOG(VERBOSE, "[CDI:%s] Writing %zu bytes from offset %zu"
-              , target_.c_str(), size_, offs_);
-            return invoke_subflow_and_wait(client_
-                                         , STATE(response_received)
-                                         , MemoryConfigClientRequest::WRITE
-                                         , nodeHandle_
-                                         , MemoryConfigDefs::SPACE_CONFIG
-                                         , offs_, value_);
-        }
-        LOG(VERBOSE, "[CDI:%s] Requesting %zu bytes from offset %zu"
-          , target_.c_str(), size_, offs_);
-        return invoke_subflow_and_wait(client_
-                                     , STATE(response_received)
-                                     , MemoryConfigClientRequest::READ_PART
-                                     , nodeHandle_
-                                     , MemoryConfigDefs::SPACE_CONFIG
-                                     , offs_, size_);
-    }
-
-    Action response_received()
-    {
-        auto b = get_buffer_deleter(full_allocation_result(client_));
-        string response;
-        if (b->data()->resultCode)
-        {
-            --attempts_;
-            if (attempts_ > 0)
-            {
-                LOG_ERROR("[CDI:%s] Failed to execute request: %d (%d "
-                          "attempts remaining)"
-                        , target_.c_str(), b->data()->resultCode, attempts_);
-                return yield_and_call(STATE(send_request));
-            }
-            response =
-                StringPrintf(
-                    R"!^!({"resp_type":"error","error":"Request failed: %d"})!^!"
-                  , b->data()->resultCode);
-        }
-        else if (value_.empty())
-        {
-            LOG(VERBOSE, "[CDI:%s] Received %zu bytes from offset %zu"
-              , target_.c_str(), size_, offs_);
-            if (type_ == "string")
-            {
-                response =
-                    StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"string"})!^!"
-                      , target_.c_str(), b->data()->payload.c_str());
-            }
-            else if (type_ == "int")
-            {
-                uint32_t data = b->data()->payload.data()[0];
-                if (size_ == 2)
-                {
-                    uint16_t data16 = 0;
-                    memcpy(&data16, b->data()->payload.data(), sizeof(uint16_t));
-                    data = be16toh(data16);
-                }
-                else if (size_ == 4)
-                {
-                    uint32_t data32 = 0;
-                    memcpy(&data32, b->data()->payload.data(), sizeof(uint32_t));
-                    data = be32toh(data32);
-                }
-                response =
-                    StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%d","type":"int"})!^!"
-                    , target_.c_str(), data);
-            }
-            else if (type_ == "eventid")
-            {
-                uint64_t event_id = 0;
-                memcpy(&event_id, b->data()->payload.data(), sizeof(uint64_t));
-                response =
-                    StringPrintf(
-                        R"!^!({"resp_type":"field-value","target":"%s","value":"%s","type":"eventid"})!^!"
-                    , target_.c_str()
-                    , uint64_to_string_hex(be64toh(event_id)).c_str());
-            }
-        }
-        else
-        {
-            response =
-                StringPrintf(R"!^!({"resp_type":"field-saved","target":"%s"})!^!"
-                           , target_.c_str());
-        }
-        response += "\n";
-        socket_->send_text(response);
-
-        return yield_and_call(STATE(cleanup_request));
-    }
-
-    Action cleanup_request()
-    {
-        return delete_this();
-    }
-};
+static uint32_t WS_REQ_ID = 0;
 
 WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
 {
     if (event == http::WebSocketEvent::WS_EVENT_TEXT)
     {
-        string response = R"!^!({"resp_type":"error","error":"Request not understood"})!^!";
+        string response = R"!^!({"res":"error","error":"Request not understood"})!^!";
         string req = string((char *)data, len);
         cJSON *root = cJSON_Parse(req.c_str());
-        cJSON *req_type = cJSON_GetObjectItem(root, "req_type");
+        cJSON *req_type = cJSON_GetObjectItem(root, "req");
         if (req_type == NULL)
         {
             // NO OP, the websocket is outbound only to trigger events on the client side.
@@ -321,11 +184,11 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 LOG(INFO, "[Web] Node ID updated to: %s, reboot pending"
                 , uint64_to_string_hex(new_node_id).c_str());
                 Singleton<esp32io::DelayRebootHelper>::instance()->start();
-                response = R"!^!({"resp_type":"set-nodeid"})!^!";
+                response = R"!^!({"res":"set-nodeid"})!^!";
             }
             else
             {
-                response = R"!^!({"resp_type":"error","error":"Failed to update node-id"})!^!";
+                response = R"!^!({"res":"error","error":"Failed to update node-id"})!^!";
             }
         }
         else if (!strcmp(req_type->valuestring, "info"))
@@ -333,7 +196,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             const esp_app_desc_t *app_data = esp_ota_get_app_description();
             const esp_partition_t *partition = esp_ota_get_running_partition();
             response =
-                StringPrintf(R"!^!({"resp_type":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
+                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
                     app_data->version, app_data->date
                   , app_data->time, partition->label
                   , openlcb::SNIP_STATIC_DATA.model_name
@@ -341,88 +204,112 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                   , openlcb::SNIP_STATIC_DATA.software_version
                   , uint64_to_string_hex(node_id).c_str());
         }
-        else if (!strcmp(req_type->valuestring, "cdi-get"))
+        else if (!strcmp(req_type->valuestring, "cdi"))
         {
-            new CDIRequestProcessor(socket, node_id
-                                  , cJSON_GetObjectItem(root, "offs")->valueint
-                                  , cJSON_GetObjectItem(root, "size")->valueint
-                                  , cJSON_GetObjectItem(root, "target")->valuestring
-                                  , cJSON_GetObjectItem(root, "type")->valuestring);
-            cJSON_Delete(root);
-            return;
-        }
-        else if (!strcmp(req_type->valuestring, "update-complete"))
-        {
-            auto b = invoke_flow(memory_client
-                               , MemoryConfigClientRequest::UPDATE_COMPLETE
-                               , openlcb::NodeHandle(node_id));
-            response =
-                StringPrintf(R"!^!({"resp_type":"update-complete","code":%d})!^!"
-                            , b->data()->resultCode);
-        }
-        else if (!strcmp(req_type->valuestring, "cdi-set"))
-        {
-            size_t offs = cJSON_GetObjectItem(root, "offs")->valueint;
-            std::string param_type =
-                cJSON_GetObjectItem(root, "type")->valuestring;
-            size_t size = cJSON_GetObjectItem(root, "size")->valueint;
-            string value = cJSON_GetObjectItem(root, "value")->valuestring;
-            string target = cJSON_GetObjectItem(root, "target")->valuestring;
-            if (param_type == "string")
+            if (!cJSON_HasObjectItem(root, "ofs") ||
+                !cJSON_HasObjectItem(root, "type") ||
+                !cJSON_HasObjectItem(root, "sz") ||
+                !cJSON_HasObjectItem(root, "tgt"))
             {
-                // make sure value is null terminated
-                value += '\0';
-                new CDIRequestProcessor(socket, node_id, offs, size, target
-                                      , param_type, value);
+                LOG_ERROR("[WSJSON:%d] One or more required parameters are missing: %s"
+                    , WS_REQ_ID, req.c_str());
+                response =
+                StringPrintf(
+                R"!^!({"res":"error", "error":"request is missing one (or more) required parameters","id":%d})!^!"
+                , WS_REQ_ID);
             }
-            else if (param_type == "int")
+            else
             {
-                if (size == 1)
+                size_t offs = cJSON_GetObjectItem(root, "ofs")->valueint;
+                std::string param_type =
+                    cJSON_GetObjectItem(root, "type")->valuestring;
+                size_t size = cJSON_GetObjectItem(root, "sz")->valueint;
+                string target = cJSON_GetObjectItem(root, "tgt")->valuestring;
+                BufferPtr<CDIClientRequest> b(cdi_client->alloc());
+
+                if (!cJSON_HasObjectItem(root, "val"))
                 {
-                    uint8_t data8 = std::stoi(value);
-                    value.clear();
-                    value.push_back(data8);
-                    new CDIRequestProcessor(socket, node_id, offs, size, target
-                                          , param_type, value);
-                }
-                else if (size == 2)
-                {
-                    uint16_t data16 = std::stoi(value);
-                    value.clear();
-                    value.push_back((data16 >> 8) & 0xFF);
-                    value.push_back(data16 & 0xFF);
-                    new CDIRequestProcessor(socket, node_id, offs, size, target
-                                          , param_type, value);
+                    LOG(VERBOSE,
+                        "[WSJSON:%d] Sending CDI READ: offs:%zu size:%zu type:%s tgt:%s",
+                        WS_REQ_ID, offs, size, param_type.c_str(),
+                        target.c_str());
+                    b->data()->reset(CDIClientRequest::READ, node_handle,
+                                     socket, WS_REQ_ID++, offs, size, target,
+                                     param_type);
                 }
                 else
                 {
-                    uint32_t data32 = std::stoul(value);
-                    value.clear();
-                    value.push_back((data32 >> 24) & 0xFF);
-                    value.push_back((data32 >> 16) & 0xFF);
-                    value.push_back((data32 >> 8) & 0xFF);
-                    value.push_back(data32 & 0xFF);
-                    new CDIRequestProcessor(socket, node_id, offs, size, target
-                                          , param_type, value);
+                    string value = "";
+                    cJSON *raw_value = cJSON_GetObjectItem(root, "val");
+                    if (param_type == "str")
+                    {
+                        // copy of up to the reported size.
+                        value = string(raw_value->valuestring, size);
+                        // ensure value is null terminated
+                        value += '\0';
+                    }
+                    else if (param_type == "int")
+                    {
+                        if (size == 1)
+                        {
+                            uint8_t data8 = std::stoi(raw_value->valuestring);
+                            value.clear();
+                            value.push_back(data8);
+                        }
+                        else if (size == 2)
+                        {
+                            uint16_t data16 = std::stoi(raw_value->valuestring);
+                            value.clear();
+                            value.push_back((data16 >> 8) & 0xFF);
+                            value.push_back(data16 & 0xFF);
+                        }
+                        else
+                        {
+                            uint32_t data32 = std::stoul(raw_value->valuestring);
+                            value.clear();
+                            value.push_back((data32 >> 24) & 0xFF);
+                            value.push_back((data32 >> 16) & 0xFF);
+                            value.push_back((data32 >> 8) & 0xFF);
+                            value.push_back(data32 & 0xFF);
+                        }
+                    }
+                    else if (param_type == "evt")
+                    {
+                        uint64_t data =
+                            string_to_uint64(string(raw_value->valuestring));
+                        value.clear();
+                        value.push_back((data >> 56) & 0xFF);
+                        value.push_back((data >> 48) & 0xFF);
+                        value.push_back((data >> 40) & 0xFF);
+                        value.push_back((data >> 32) & 0xFF);
+                        value.push_back((data >> 24) & 0xFF);
+                        value.push_back((data >> 16) & 0xFF);
+                        value.push_back((data >> 8) & 0xFF);
+                        value.push_back(data & 0xFF);
+                    }
+                    LOG(VERBOSE,
+                        "[WSJSON:%d] Sending CDI WRITE: offs:%zu value:%s tgt:%s",
+                        WS_REQ_ID, offs, raw_value->valuestring,
+                        target.c_str());
+                    b->data()->reset(CDIClientRequest::WRITE, node_handle,
+                                     socket, WS_REQ_ID++, offs, size, target,
+                                     value);
                 }
+                b->data()->done.reset(EmptyNotifiable::DefaultInstance());
+                cdi_client->send(b->ref());
+                cJSON_Delete(root);
+                return;
             }
-            else if (param_type == "eventid")
-            {
-                LOG(VERBOSE, "[Web] CDI EVENT WRITE offs:%d, value: %s", offs
-                  , value.c_str());
-                uint64_t data = string_to_uint64(value);
-                value.clear();
-                value.push_back((data >> 56) & 0xFF);
-                value.push_back((data >> 48) & 0xFF);
-                value.push_back((data >> 40) & 0xFF);
-                value.push_back((data >> 32) & 0xFF);
-                value.push_back((data >> 24) & 0xFF);
-                value.push_back((data >> 16) & 0xFF);
-                value.push_back((data >> 8) & 0xFF);
-                value.push_back(data & 0xFF);
-                new CDIRequestProcessor(socket, node_id, offs, size, target
-                                      , param_type, value);
-            }
+        }
+        else if (!strcmp(req_type->valuestring, "update-complete"))
+        {
+            LOG(VERBOSE, "[WSJSON:%d] Sending UPDATE_COMPLETE to queue",
+                WS_REQ_ID);
+            BufferPtr<CDIClientRequest> b(cdi_client->alloc());
+            b->data()->reset(CDIClientRequest::UPDATE_COMPLETE,
+                             node_handle, socket, WS_REQ_ID++);
+            b->data()->done.reset(EmptyNotifiable::DefaultInstance());
+            cdi_client->send(b->ref());
             cJSON_Delete(root);
             return;
         }
@@ -431,20 +318,20 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             if (force_factory_reset())
             {
                 Singleton<esp32io::DelayRebootHelper>::instance()->start();
-                response = R"!^!({"resp_type":"factory-reset"})!^!";
+                response = R"!^!({"res":"factory-reset"})!^!";
             }
         }
         else if (!strcmp(req_type->valuestring, "reset-events"))
         {
             esp32io::factory_reset_events();
-            response = R"!^!({"resp_type":"reset-events"})!^!";
+            response = R"!^!({"res":"reset-events"})!^!";
         }
         else if (!strcmp(req_type->valuestring, "event-test"))
         {
             string value = cJSON_GetObjectItem(root, "value")->valuestring;
             uint64_t eventID = string_to_uint64(value);
             Singleton<esp32io::EventBroadcastHelper>::instance()->send_event(eventID);
-            response = R"!^!({"resp_type":"event-test"})!^!";
+            response = R"!^!({"res":"event"})!^!";
         }
         else
         {
@@ -488,19 +375,15 @@ HTTP_HANDLER_IMPL(fs_proc, request)
     return nullptr;
 }
 
-namespace openlcb
-{
-extern const char CDI_DATA[];
-extern const size_t CDI_SIZE;
-} // namespace openlcb
-
-void init_webserver(openlcb::MemoryConfigClient *cfg_client, uint64_t id)
+void init_webserver(openlcb::MemoryConfigClient *cfg_client,
+                    openmrn_arduino::Esp32WiFiManager *wifi_mgr, uint64_t id)
 {
     const esp_app_desc_t *app_data = esp_ota_get_app_description();
     memory_client = cfg_client;
     node_id = id;
+    node_handle = openlcb::NodeHandle(id);
     LOG(INFO, "[Httpd] Initializing webserver");
-    http_server.reset(new http::Httpd(&mdns));
+    http_server.reset(new http::Httpd(wifi_mgr, &mdns));
     http_server->redirect_uri("/", "/index.html");
     http_server->static_uri("/index.html", indexHtmlGz, indexHtmlGz_size
                           , http::MIME_TYPE_TEXT_HTML
@@ -515,8 +398,6 @@ void init_webserver(openlcb::MemoryConfigClient *cfg_client, uint64_t id)
     http_server->static_uri("/milligram.min.css", normalizeMinCssGz
                           , normalizeMinCssGz_size, http::MIME_TYPE_TEXT_CSS
                           , http::HTTP_ENCODING_GZIP);
-    http_server->static_uri("/cdi.xml", (const uint8_t *)openlcb::CDI_DATA
-                          , openlcb::CDI_SIZE, http::MIME_TYPE_TEXT_XML);
     http_server->websocket_uri("/ws", websocket_proc);
     http_server->uri("/fs", http::HttpMethod::GET, fs_proc);
     http_server->uri("/ota", http::HttpMethod::POST, nullptr, process_ota);
