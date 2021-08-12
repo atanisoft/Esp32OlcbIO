@@ -71,17 +71,11 @@ extern const uint8_t cashJsGz[] asm("_binary_cash_min_js_gz_start");
 /// Statically embedded cash.js size.
 extern const size_t cashJsGz_size asm("cash_min_js_gz_length");
 
-/// Statically embedded milligram.min.css start location.
-extern const uint8_t milligramMinCssGz[] asm("_binary_milligram_min_css_gz_start");
+/// Statically embedded spectre.min.css start location.
+extern const uint8_t spectreMinCssGz[] asm("_binary_spectre_min_css_gz_start");
 
-/// Statically embedded milligram.min.css size.
-extern const size_t milligramMinCssGz_size asm("milligram_min_css_gz_length");
-
-/// Statically embedded normalize.min.css start location.
-extern const uint8_t normalizeMinCssGz[] asm("_binary_normalize_min_css_gz_start");
-
-/// Statically embedded normalize.min.css size.
-extern const size_t normalizeMinCssGz_size asm("normalize_min_css_gz_length");
+/// Statically embedded spectre.min.css size.
+extern const size_t spectreMinCssGz_size asm("spectre_min_css_gz_length");
 
 /// Cative portal landing page.
 static constexpr const char * const CAPTIVE_PORTAL_HTML = R"!^!(
@@ -392,11 +386,8 @@ void init_webserver(openlcb::MemoryConfigClient *cfg_client,
     http_server->static_uri("/cash.min.js", cashJsGz, cashJsGz_size
                           , http::MIME_TYPE_TEXT_JAVASCRIPT
                           , http::HTTP_ENCODING_GZIP);
-    http_server->static_uri("/normalize.min.css", milligramMinCssGz
-                          , milligramMinCssGz_size, http::MIME_TYPE_TEXT_CSS
-                          , http::HTTP_ENCODING_GZIP);
-    http_server->static_uri("/milligram.min.css", normalizeMinCssGz
-                          , normalizeMinCssGz_size, http::MIME_TYPE_TEXT_CSS
+    http_server->static_uri("/spectre.min.css", spectreMinCssGz
+                          , spectreMinCssGz_size, http::MIME_TYPE_TEXT_CSS
                           , http::HTTP_ENCODING_GZIP);
     http_server->websocket_uri("/ws", websocket_proc);
     http_server->uri("/fs", http::HttpMethod::GET, fs_proc);
