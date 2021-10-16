@@ -131,22 +131,3 @@ The following parts have compatible alternatives:
 The ESP32 OpenLCB IO Board can be extended by using the pcb-ext daughter board
 files as a basis for creating a compatible extension PCB. This PCB sits on top
 of the base board.
-
-### Servo controller and 2x5 IDC extension
-
-A great example of extending the functionality of the base board would be to
-control turnouts via servos and relays (for frog polarity). Below is an example
-of one such approach to this using an I2C connected PCA9685 to control up to 16
-servos while keeping all other pins available for controlling relays. Design
-files are not available for this at this time.
-
-![Extension PCB as Servo controller](pcb-ext/pcb-ext-servo-2x5.png)
-
-### Single character display example
-
-While not entirely practical for most use cases, this shows one example of
-creating a single character display using a 5x7 grid of WS2812 (or similar)
-addressable LEDs connected in series to a single IO pin on the base board.
-Design files are not available for this at this time.
-
-![Extension PCB as Digit](pcb-ext/pcb-ext.png)

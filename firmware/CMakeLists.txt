@@ -13,7 +13,7 @@ if (IDF_VERSION_MAJOR EQUAL 4 AND IDF_VERSION_MINOR LESS 2)
 endif()
 
 set(SUPPORTED_TARGETS esp32)
-project(ESP32OlcbIO)
+project(Esp32OlcbIO)
 
 ###############################################################################
 # Switch from GNU++11 to GNU++14
@@ -60,20 +60,12 @@ endif()
 # Verify submodules were checked out correctly
 ###############################################################################
 
-if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/CMakeLists.txt)
-    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
-endif()
-
-if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/src/littlefs/lfs.c)
-    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs/src/littelfs does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}/components/esp_littlefs")
-endif()
-
 if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/HttpServer/CMakeLists.txt)
     message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/HttpServer does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNLite/CMakeLists.txt)
-    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNLite does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNIDF/CMakeLists.txt)
+    message(FATAL_ERROR "${CMAKE_CURRENT_SOURCE_DIR}/components/OpenMRNIDF does not appear to have been checked out, please run 'git submodule update --init' from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
 ###############################################################################
@@ -95,21 +87,13 @@ set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz PROPE
 set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz")
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz
-    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz
+    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css
     VERBATIM)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz PROPERTIES GENERATED TRUE)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz PROPERTIES GENERATED TRUE)
 set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz")
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz
-    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css
-    VERBATIM)
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz PROPERTIES GENERATED TRUE)
-set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
-    "${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz")
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz")
 
 ###############################################################################
 # Add web content to the binary
@@ -117,8 +101,7 @@ set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CL
 
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.gz" BINARY)
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz" BINARY)
-target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/milligram.min.css.gz" BINARY)
-target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/normalize.min.css.gz" BINARY)
+target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz" BINARY)
 
 ###############################################################################
 # Configuration validations

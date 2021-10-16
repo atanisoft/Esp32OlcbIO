@@ -4,10 +4,9 @@ set(deps
     nvs_flash
     vfs
     app_update
-    esp_littlefs
     spiffs
     HttpServer
-    OpenMRNLite
+    OpenMRNIDF
     json
 )
 

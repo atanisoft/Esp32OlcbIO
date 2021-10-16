@@ -36,7 +36,7 @@
 #include "hardware.hxx"
 
 #include <bootloader_hal.h>
-#include "Esp32BootloaderHal.hxx"
+#include <freertos_drivers/esp32/Esp32BootloaderHal.hxx>
 
 extern "C"
 {
@@ -48,7 +48,6 @@ void bootloader_hw_set_to_safe(void)
     LED_WIFI_Pin::hw_init();
     LED_ACTIVITY_Pin::hw_init();
 }
-
 
 /// Verifies that the bootloader has been requested.
 ///

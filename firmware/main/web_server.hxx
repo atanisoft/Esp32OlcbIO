@@ -41,9 +41,15 @@ namespace openlcb
     class MemoryConfigClient;
 }
 
+namespace openmrn_arduino
+{
+    class Esp32WiFiManager;
+}
+
 class Service;
 
-void init_webserver(openlcb::MemoryConfigClient *cfg_client, uint64_t id);
+void init_webserver(openlcb::MemoryConfigClient *cfg_client,
+                    openmrn_arduino::Esp32WiFiManager *wifi_mgr, uint64_t id);
 void shutdown_webserver();
 
 #endif // WEB_SERVER_HXX_

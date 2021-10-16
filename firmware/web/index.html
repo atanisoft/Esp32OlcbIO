@@ -4,345 +4,213 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ESP32 OpenLCB Hub Configuration Portal</title>
+    <title>ESP32 OpenLCB IO Configuration Portal</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml;charset=US-ASCII,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22iso-8859-1%22%3F%3E%3C!DOCTYPE%20svg%20PUBLIC%20%22-%2F%2FW3C%2F%2FDTD%20SVG%201.1%2F%2FEN%22%20%22http%3A%2F%2Fwww.w3.org%2FGraphics%2FSVG%2F1.1%2FDTD%2Fsvg11.dtd%22%3E%3Csvg%20version%3D%221.1%22%20id%3D%22Layer_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%20%20width%3D%2214px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2014%2014%22%20style%3D%22enable-background%3Anew%200%200%2014%2014%3B%22%20xml%3Aspace%3D%22preserve%22%3E%3Cpath%20d%3D%22M13.621%2C5.904l-1.036-0.259c-0.168-0.042-0.303-0.168-0.355-0.332c-0.092-0.284-0.205-0.559-0.339-0.82%20c-0.079-0.153-0.073-0.337%2C0.017-0.486l0.549-0.915c0.118-0.196%2C0.088-0.448-0.075-0.61l-0.862-0.863%20c-0.162-0.163-0.414-0.193-0.611-0.075l-0.916%2C0.55C9.844%2C2.182%2C9.659%2C2.188%2C9.506%2C2.109C9.244%2C1.975%2C8.97%2C1.861%2C8.686%2C1.77%20c-0.165-0.052-0.29-0.187-0.332-0.354L8.095%2C0.379C8.039%2C0.156%2C7.839%2C0%2C7.609%2C0H6.391c-0.229%2C0-0.43%2C0.156-0.485%2C0.379L5.646%2C1.415%20C5.604%2C1.582%2C5.479%2C1.718%2C5.313%2C1.77c-0.284%2C0.092-0.559%2C0.206-0.82%2C0.34C4.339%2C2.188%2C4.155%2C2.182%2C4.007%2C2.093L3.092%2C1.544%20c-0.196-0.118-0.448-0.087-0.61%2C0.075L1.619%2C2.481C1.457%2C2.644%2C1.426%2C2.896%2C1.544%2C3.093l0.549%2C0.914%20c0.089%2C0.148%2C0.095%2C0.332%2C0.017%2C0.486C1.975%2C4.755%2C1.861%2C5.029%2C1.77%2C5.314c-0.053%2C0.164-0.188%2C0.29-0.354%2C0.332L0.379%2C5.905%20C0.156%2C5.961%2C0%2C6.161%2C0%2C6.391v1.219c0%2C0.229%2C0.156%2C0.43%2C0.379%2C0.485l1.036%2C0.26C1.582%2C8.396%2C1.717%2C8.521%2C1.77%2C8.687%20c0.092%2C0.284%2C0.205%2C0.559%2C0.34%2C0.82C2.188%2C9.66%2C2.182%2C9.844%2C2.093%2C9.993l-0.549%2C0.915c-0.118%2C0.195-0.087%2C0.448%2C0.075%2C0.61%20l0.862%2C0.862c0.162%2C0.163%2C0.414%2C0.193%2C0.61%2C0.075l0.915-0.549c0.148-0.089%2C0.332-0.095%2C0.486-0.017%20c0.262%2C0.135%2C0.536%2C0.248%2C0.82%2C0.34c0.165%2C0.053%2C0.291%2C0.187%2C0.332%2C0.354l0.259%2C1.036C5.96%2C13.844%2C6.16%2C14%2C6.39%2C14h1.22%20c0.229%2C0%2C0.43-0.156%2C0.485-0.379l0.259-1.036c0.042-0.167%2C0.168-0.302%2C0.333-0.354c0.284-0.092%2C0.559-0.205%2C0.82-0.34%20c0.154-0.078%2C0.338-0.072%2C0.486%2C0.017l0.914%2C0.549c0.197%2C0.118%2C0.449%2C0.088%2C0.611-0.074l0.862-0.863%20c0.163-0.162%2C0.193-0.415%2C0.075-0.611l-0.549-0.915c-0.089-0.148-0.096-0.332-0.017-0.485c0.134-0.263%2C0.248-0.536%2C0.339-0.82%20c0.053-0.165%2C0.188-0.291%2C0.355-0.333l1.036-0.259C13.844%2C8.039%2C14%2C7.839%2C14%2C7.609V6.39C14%2C6.16%2C13.844%2C5.96%2C13.621%2C5.904z%20M7%2C10%20c-1.657%2C0-3-1.343-3-3s1.343-3%2C3-3s3%2C1.343%2C3%2C3S8.657%2C10%2C7%2C10z%22%2F%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3Cg%3E%3C%2Fg%3E%3C%2Fsvg%3E"
         sizes="any">
-    <!--https://cdnjs.cloudflare.com/ajax/libs/cash/8.1.0/cash.min.js-->
-    <script src="/cash.min.js"></script>
-    <!--https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css-->
-    <link rel="stylesheet" href="/normalize.min.css">
-    <!--https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css-->
-    <link rel="stylesheet" href="/milligram.min.css">
+    <script src="cash.min.js"></script>
+    <link rel="stylesheet" href="spectre.min.css">
     <style>
-        .navbar {
-            margin-bottom: 10px;
-        }
-
-        .navbar ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #606c76;
-        }
-
-        .navbar li {
-            float: left;
-            margin-bottom: 0;
-        }
-
-        .navbar li a {
-            display: block;
-            color: white;
-            text-align: center;
-            padding: 14px 16px;
-            text-decoration: none;
-        }
-
-        .navbar li a:hover {
-            background-color: #606c76;
-        }
-
-        .navbar li .active {
-            text-emphasis: bold;
-            background-color: #9b4dca;
-        }
-
-        .navbar li .inactive {
-            text-emphasis: bold;
-            background-color: #606c76;
-        }
-
-        .well {
-            background: #f4f5f6;
-            padding: 1.5rem 2.5rem;
-        }
-
-        .tabs>.button {
-            margin: 0.1rem;
-            float: left;
-            border-bottom-left-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .tabs .well {
-            clear: both;
-        }
-
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            border-bottom: 1px dotted black;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 120px;
-            background-color: black;
-            color: #fff;
-            text-align: center;
-            padding: 5px 0;
-            border-radius: 6px;
-
-            position: absolute;
-            z-index: 1;
-        }
-
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 5rem;
-            height: 5rem;
-            position: relative;
-        }
-
-        .spinner:after {
-            content: " ";
-            display: block;
-            width: 10rem;
-            height: 10rem;
-            margin: 1rem;
-            border-radius: 50%;
-            border: 1rem solid #9b4dca;
-            border-color: #9b4dca transparent #9b4dca transparent;
-            animation: spinner 1.5s linear infinite;
-        }
-
-        .small-spinner {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            position: relative;
-        }
-
-        .small-spinner:after {
-            content: " ";
-            display: block;
-            width: 1.5rem;
-            height: 1.5rem;
-            margin: .25rem;
-            border-radius: 50%;
-            border: .25rem solid #9b4dca;
-            border-color: #9b4dca transparent #9b4dca transparent;
-            animation: spinner 1.5s linear infinite;
-        }
-
-        @keyframes spinner {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .button-small {
-            font-size: 1rem;
-            height: 2.8rem;
-            line-height: 2.8rem;
-            padding: 0 1.5rem
-        }
-
         fieldset {
-            border-style: solid;
-            border-width: 0.1rem;
-            border-color: #606c76;
-            border-radius: 0.5rem;
+          border-style: solid;
+          border-width: 0.1rem;
+          border-color: #606c76;
+          border-radius: 0.5rem;
         }
     </style>
 </head>
 
-<body>
-    <header class="header">
-        <section class="container">
-            <h3>ESP32 IO Board Configuration</h3>
-            <div class='navbar'>
-                <ul>
-                    <li><a id="navtab-node_info">Node Information</a></li>
-                    <li><a id="navtab-firmware_upload">Firmware Update</a></li>
-                    <li><a id="navtab-config">Node Configuration</a></li>
-                </ul>
-            </div>
+<body class="bg-dark">
+    <div class="hero hero-sm">
+        <div class="hero-body">
+            <h1>ESP32 IO Board Configuration</h1>
+        </div>
+    </div>
+    <header class="navbar">
+        <section class="navbar-section btn-group">
+          <button class="btn btn-primary" onclick="showTab('#tab-nodeinfo', this);">Node Information</button>
+          <button class="btn btn-primary" onclick="showTab('#tab-olcbconfig', this);">OpenLCB Configuration</button>
+          <button class="btn btn-primary" onclick="showTab('#tab-ota', this);">Firmware Update</button>
         </section>
     </header>
-    <section class="container">
-        <section class="container" id="loading">
-            <h1 id="h1-loading">Loading...</h1>
-            <h1 id="h1-reboot" style="display:none;">Node rebooting...</h1>
-            <h1 id="h1-factoryreset" style="display:none;">Factory Reset in progress...</h1>
-            <h1 id="h1-nodeidreset" style="display:none;">Node ID updated, factory reset in progress...</h1>
-            <div class="spinner"></div>
-        </section>
-        <section class="container" style="display:none;" id="node_info">
-            <div class="row">
-                <div class="column"><b>Node ID:</b></div>
-                <div class="column column-50"><input type="text" id="node_id" value="PENDING"
-                    oninput="enable_button('node_id')"></input></div>
-                <div class="column">
-                    <button class="button-small" id="btn-node_id" href="#" disabled
-                        onclick="save_node_id()">Save</button>
-                    <div id="spinner-node_id" class="small-spinner" style="display:none;"></div>
+    <div class="container">
+        <div class="container" id="tab-nodeinfo">
+            <div class="columns">
+                <div class="column"><label class="form-label" for="node_id">Node ID:</label></div>
+                <div class="column column-6"><input class="form-input" id="node_id" value="PENDING" oninput="enable_button('save_node_id');">
                 </div>
+                <div class="column"><button class="btn btn-primary btn-sm" id="btn-save_node_id" disabled
+                    onclick="save_node_id(this);">Save</button></div>
+              </div>
+              <div class="columns">
+                <div class="column"><label class="form-label" for="sw_version">Software Version:</label></div>
+                <div class="column column-6" id="sw_version">PENDING</div>
+                <div class="column"></div>
+              </div>
+              <div class="columns">
+                <div class="column"><label class="form-label" for="hw_version">Hardware Version:</label></div>
+                <div class="column column-6" id="hw_version">PENDING</div>
+                <div class="column"></div>
+              </div>
+              <div id="node_info_dynamic"></div>
+        </div>
+        <div class="container" style="display:none;" id="tab-olcbconfig">
+            <ul class="tab tab-block">
+                <li class="tab-item">
+                    <a href="#" onclick="showCDISection('wifi',this);">WiFi Configuration</a>
+                </li>
+                <li class="tab-item">
+                    <a href="#" onclick="showCDISection('gpi',this);">Inputs</a>
+                </li>
+                <li class="tab-item">
+                    <a href="#" onclick="showCDISection('gpio',this);">Input/Outputs</a>
+                </li>
+            </ul>
+            <div id="cdi_tab_wifi"></div>
+            <div id="cdi_tab_gpi" style="display:none;"></div>
+            <div id="cdi_tab_gpio" style="display:none;"></div>
+            <div class="columns">
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="refresh_all_cdi_fields()">Refresh All</button></div>
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="factory_reset();">Factory Reset</button></div>
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="request_bootloader();">Enter Bootloader</button></div>
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="reset_events();">Reset Events</button></div>
+                <div class="column"><button class="btn btn-primary btn-sm" onclick="update_complete();">Update Complete</button></div>
             </div>
-            <div class="row" style="height: 3.8rem;">
-                <div class="column"><b>Software Version:</b></div>
-                <div class="column column-75" id="sw_version">PENDING</div>
+        </div>
+        <div class="container" style="display:none;" id="tab-ota">
+            <div class="columns">
+              <form id="cs-ota-form" class="form-horizontal">
+                <div class="input-group">
+                  <span class="input-group-addon addon-lg text-light bg-dark">Firmware:</span>
+                  <input class="form-input input-lg" type="file" name="firmware_file"
+                    placeholder="Esp32OlcbIO.bin" />
+                  <button class="btn btn-primary input-group-btn btn-lg" id="btn-firmware_upload" onclick="upload_ota()">Upload</button>
+                </div>
+              </form>
             </div>
-            <div class="row" style="height: 3.8rem;">
-                <div class="column"><b>Hardware Version:</b></div>
-                <div class="column column-75" id="hw_version">PENDING</div>
-            </div>
-            <div id="node_info_dynamic"></div>
-            <div class="row">&nbsp;</div>
-            <div class="row">
-                <div class="column column-25"><button href="#" onclick="factory_reset()">Factory Reset</button></div>
-                <div class="column column-25"><button href="#" onclick="reset_events()">Reset Event IDs</button></div>
-            </div>
-        </section>
-        <section class="container" style="display:none;" id="firmware_upload">
-            <div class="row">
-                <div class="column column-25"><label for="firmware_file">Firmware:</label></div>
-                <div class="column column-75"><input type="file" id="firmware_file" accept=".bin" /></div>
-            </div>
-            <div class="row">&nbsp;<div id="spinner-firmware" class="spinner" style="display:none;"></div><span
-                    id="firmware_upload_results"></span></div>
-            <div class="row">
-                <div class="column column-25"><button id="btn-firmware_upload" onclick="upload_ota()">Upload</button></div>
-            </div>
-        </section>
-        <section class="container" id="config" style="display:none;">
-            <div class="row tabs">
-                <a href="#" class="button" id="configtab-config_wifi">WiFi</a>
-                <a href="#" class="button" id="configtab-config_gpi">Inputs</a>
-                <a href="#" class="button" id="configtab-config_gpio">Input/Outputs</a>
-            </div>
-            <div class="well" id="config_wifi">
-            </div>
-            <div class="well" id="config_gpi" style="display:none;">
-            </div>
-            <div class="well" id="config_gpio" style="display:none;">
-            </div>
-            <div class="row">
-                <div class="column column-25"><button href="#" onclick="refresh_all_fields()">Refresh All</button></div>
-                <div class="column column-25"><button href="#" onclick="update_complete()">Update Complete</button></div>
-            </div>
-        </section>
-    </section>
+        </div>
+    </div>
     <script>
-        var cdi_segment_loader = [];
-        var ws_pending_send = [];
-        var webSocket;
-        function ws_send(text) {
+        var cdi_loaders = [];
+        var ws_pending = [];
+        var ws;
+        const ws_retry_connection_timeout_ms = 500;
+        const page_reload_delay_ms = 7500;
+        function showTab(target, button) {
+            $('[id^=tab-]').hide();
+            $(button).parent().children().removeClass('active');
+            $(button).parent().children().addClass('inactive');
+            $(button).toggleClass('active');
+            $(button).toggleClass('inactive');
+            $(target).show();
+        }
+        function showCDISection(section) {
+            $('[id^=cdi_tab_]').hide();
+            $(String.format('#cdi_tab_{0}', section)).show();
+        }
+        function showErrorDialog(text, error) {
+            error = typeof error !== 'undefined' ? error : "";
+            console.error(text, error);
+            alert(text);
+        }
+        function reload_page() {
+            ws_cleanup();
+            setTimeout(function () { location.reload(); }, page_reload_delay_ms);
+        }
+        function ws_cleanup() {
+            if (ws) {
+                ws.removeEventListener('open', ws_opened);
+                ws.removeEventListener('message', ws_rx);
+                ws.removeEventListener('error', ws_closed);
+                ws.removeEventListener('close', ws_closed);
+                ws.close();
+            }
+        }
+        function ws_opened(event) {
+            while (ws_pending.length) {
+                ws.send(ws_pending.pop());
+            }
+        }
+        function ws_closed(event) {
+            console.warn('WS closed, reconnecting. Reason:', event.reason);
+        }
+        function connectWebSocket() {
+            if (!window.location.host.length) {
+                while (ws_pending.length) {
+                    console.log('WS-OFFLINE:', ws_pending.pop());
+                }
+                return;
+            }
+            var socketUrl = String.format('ws://{0}:{1}/ws', window.location.host, window.location.port);
+            try {
+                ws = new WebSocket(socketUrl);
+                ws.addEventListener('open', ws_opened);
+                ws.addEventListener('message', ws_rx);
+                ws.addEventListener('error', ws_closed);
+                ws.addEventListener('close', ws_closed);
+            } catch (e) {
+                console.error('Failed to connect to the command station, will retry');
+                setTimeout(connectWebSocket, ws_retry_connection_timeout_ms);
+            }
+        }
+        function ws_rx(event) {
+            var messages = event.data.split(/[\r\n]+/);
+            messages.forEach(msg => {
+                if (msg.length > 0) {
+                    console.debug('WS-RX:', msg);
+                    var json = JSON.parse(msg);
+                    if (!json.hasOwnProperty('res')) {
+                        console.error('Invalid JSON payload (missing res element):', msg);
+                    } else if (json.res === 'error') {
+                        showErrorDialog(json.error);
+                    } else if (json.res === 'info') {
+                        $('#node_id').val(pad_hex(json.node_id, 12));
+                        $('#sw_version').text(json.snip_sw);
+                        $('#hw_version').text(json.snip_hw);
+                        $('#btn-save_node_id').removeClass('loading');
+                        fetch("/fs?path=/fs/cdi.xml&remove_nulls=true").then(res => res.text()).then(cdi => build_cdi_dom(cdi));
+                    } else if (json.res === 'saved') {
+                        reset_cdi_buttons(json.tgt);
+                    } else if (json.res === 'field') {
+                        if (json.type === 'evt') {
+                            $('#' + json.tgt).val(pad_hex(json.val, 16));
+                        } else {
+                            $('#' + json.tgt).val(json.val);
+                        }
+                        reset_cdi_buttons(json.tgt);
+                    } else if (json.res === 'nodeid' || json.res === 'factory-reset') {
+                        reload_page();
+                    } else if (json.res === 'reset-events') {
+                        refresh_all_cdi_fields();
+                    } else if (json.res === 'event') {
+                        $('#' + json.tgt).toggleClass('loading');
+                    }
+                }
+            });
+        }
+        function ws_tx(msg) {
             // if the socket is not in an open state, defer the send until we have connected
-            if (webSocket.readyState != WebSocket.OPEN) {
-                ws_pending_send.push(text);
+            if (!ws || ws.readyState != WebSocket.OPEN) {
+                ws_pending.push(msg);
                 // if we are not already trying to connect try and connect now
-                if (webSocket.readyState != WebSocket.CONNECTING) {
+                if (!ws || ws.readyState != WebSocket.CONNECTING) {
                     connectWebSocket();
                 }
                 return;
             }
-            webSocket.send(text);
+            console.debug('WS-TX:', msg);
+            ws.send(msg);
         }
-        function connectWebSocket() {
-            var socketUrl = String.format('ws://{0}:{1}/ws', window.location.host, window.location.port);
-            webSocket = new WebSocket(socketUrl);
-            webSocket.addEventListener('open', (event) => {
-                while (ws_pending_send.length) {
-                    webSocket.send(ws_pending_send.pop());
-                }
-            });
-            webSocket.addEventListener('error', (event) => {
-                console.error('WS:', event);
-            });
-            webSocket.addEventListener('close', (event) => {
-                console.warn('WS:', event);
-            });
-            webSocket.addEventListener('message', (incoming_messages) => {
-                var messages = incoming_messages.data.split(/[\r\n]+/);
-                messages.forEach(msg => {
-                    if (msg.length > 0) {
-                        var json = JSON.parse(msg);
-                        if (!json.hasOwnProperty('resp_type')) {
-                            console.error('Invalid JSON payload (missing resp_type):', msg);
-                        } else if (json.resp_type === 'error') {
-                            console.error('ERROR:', json.error);
-                            alert(json.error);
-                        } else if (json.resp_type === 'info') {
-                            $('#node_id').val(pad_hex(json.node_id, 12));
-                            hide_spinner('node_id');
-                            $('#sw_version').text(json.snip_sw);
-                            $('#hw_version').text(json.snip_hw);
-                            $('[id^=navtab-]').each(function (i, e) {
-                                $(e).attr('href', '#');
-                            });
-                        } else if (json.resp_type === 'field-saved') {
-                            hide_spinner(json.target);
-                        } else if (json.resp_type === 'field-value') {
-                            if (json.type === 'eventid') {
-                                $('#' + json.target).val(pad_hex(json.value, 16));
-                            } else {
-                                $('#' + json.target).val(json.value);
-                            }
-                            hide_spinner(json.target);
-                        } else if (json.resp_type === 'set-nodeid') {
-                            $('#node_info').hide();
-                            $('#h1-loading').hide();
-                            $('#h1-reboot').hide();
-                            $('#h1-factoryreset').hide();
-                            $('#h1-nodeidreset').show();
-                            $('#loading').show();
-                            setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'factory-reset') {
-                            $('#node_info').hide();
-                            $('#h1-loading').hide();
-                            $('#h1-reboot').hide();
-                            $('#h1-nodeidreset').hide();
-                            $('#h1-factoryreset').show();
-                            $('#loading').show();
-                            setTimeout(function () { location.reload(); }, 7500);
-                        } else if (json.resp_type === 'reset-events') {
-                            refresh_all_fields();
-                        }
-                    }
-                });
-            });
-        }
-        function save_node_id() {
-            show_spinner('node_id');
-            disable_button('node_id');
-            ws_send(JSON.stringify({req_type:'set-nodeid', value:$('#node_id').val()}));
-        }
-        function refresh_all_fields() {
-            $('[id^=cdi_]').each(function (i, e) {
-                refresh_field($(e).attr('id'));
-            });
+        function save_node_id(button) {
+            $(button).addClass('loading');
+            disable_button('save_node_id');
+            ws_tx(JSON.stringify({
+                req: 'nodeid',
+                val: $('#node_id').val()
+            }));
         }
         function update_complete() {
-            ws_send(JSON.stringify({req_type:'update-complete'}));
-        }
-        function refresh_field(field) {
-            var offset = parseInt($('#' + field).attr('data-offset'));
-            var size = parseInt($('#' + field).attr('data-size'));
-            var type = $('#' + field).attr('data-type');
-            show_spinner(field);
-            ws_send(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:type, target:field}));
-            disable_button('save-' + field);
-        }
-        function test_event(field) {
-            var event = $('#' + field).val();
-            ws_send(JSON.stringify({req_type:'event-test', value:event}));
-        }
-        function hide_spinner(target) {
-            $('#spinner-' + target).hide();
-        }
-        function show_spinner(target) {
-            $('#spinner-' + target).show();
+            ws_tx(JSON.stringify({ req: 'update-complete' }));
         }
         function pad_hex(str, length) {
             var hex = new Array(length + 1).join('0') + str;
@@ -356,66 +224,68 @@
         }
         function factory_reset() {
             if (confirm('Are you sure you want to perform a Factory Reset?')) {
-                ws_send(JSON.stringify({req_type:'factory-reset'}));
+                ws_tx(JSON.stringify({ req: 'factory-reset' }));
             }
         }
         function reset_events() {
             if (confirm('Are you sure you want to reset all event IDs?')) {
-                ws_send(JSON.stringify({req_type:'reset-events'}));
+                ws_tx(JSON.stringify({ req: 'reset-events' }));
             }
         }
         function upload_ota() {
             var xhr = new XMLHttpRequest();
             var file = $('#firmware_file')[0].files[0];
             if (file.size > (1024 * 1024 * 1.5)) {
-                $('#firmware_upload_results').append("<p>Firmware is too large for upload, aborting!</p>");
+                showErrorDialog("Firmware is too large for upload, aborting!");
                 return;
             }
             var data = new FormData();
             data.append('firmware', file);
             $('#btn-firmware_upload').hide();
-            show_spinner('firmware');
             $('#firmware_upload_results').empty();
             fetch('/ota', { method: 'POST', body: data })
                 .then(response => response.text())
                 .then(text => {
-                    hide_spinner('firmware');
-                    $('#firmware_upload_results').append("<p>Firmware upload complete, node will restart and this window will refresh.</p>");
-                    setTimeout(function () { location.reload(); }, 15000);
-                    $('#btn-firmware_upload').show();
+                    reload_page();
                 })
                 .catch((error) => {
-                    console.error(error);
-                    $('#firmware_upload_results').append("<p>Firmware upload failed.</p>");
-                    hide_spinner('firmware');
+                    showErrorDialog("Firmware upload failed.", error);
                     $('#btn-firmware_upload').show();
                 });
         }
-        function add_tab_events(tab_key) {
-            $(String.format('[id^={0}-]', tab_key)).each(function (i, tab) {
-                $(tab).on('click', function () {
-                    $(String.format('[id^={0}-]', tab_key)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
-                        var other_tab_content = $(other_tab).attr('id').replace(String.format('{0}-', tab_key), '#');
-                        $(other_tab_content).hide();
-                        $(other_tab).removeClass('active');
-                        $(other_tab).addClass('inactive');
-                    });
-                    var tab_content = $(tab).attr('id').replace(String.format('{0}-', tab_key), '#');
-                    $(tab_content).show();
-                    $(tab).addClass('active');
-                    $(tab).removeClass('inactive');
-                })
-            });
-        }
         $(function () {
-            registerStringFormat();
-            connectWebSocket();
-            console.log('Downloading cdi.xml to generate config dialogs');
-            fetch('/cdi.xml').then(res => res.text()).then(cdi => build_cdi_dom(cdi));
-            add_tab_events('navtab');
-            add_tab_events('configtab');
+            if (!String.format) {
+                String.format = function (format) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    return format.replace(/{(\d+)}/g, function (match, number) {
+                        return typeof args[number] != 'undefined'
+                            ? args[number]
+                            : match
+                            ;
+                    });
+                };
+            }
+            ws_tx(JSON.stringify({ req: 'info' }));
+            window.addEventListener('beforeunload', ws_cleanup);
         });
-        function process_group(group) {
+
+        /* CDI DOM parser */
+        function build_cdi_dom(cdi) {
+            cdi_loaders.splice(0, cdi_loaders.length);
+            var parser = new window.DOMParser();
+            var doc = parser.parseFromString(cdi, "text/xml");
+            var offsets_251 = calculate_group_offsets(doc, 251);
+            var offsets_253 = calculate_group_offsets(doc, 253);
+            create_cdi_dynamic_group_elements(doc, 251, 'node_info', '#node_info_dynamic', offsets_251, '//segment[@space="251"]');
+            create_cdi_dynamic_group_elements(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
+            create_cdi_dynamic_group_elements(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
+            create_cdi_dynamic_group_elements(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
+            cdi_loaders.forEach(elem => ws_tx(elem));
+            cdi_loaders.splice(0, cdi_loaders.length);
+        }
+
+        /* CDI loader functions */
+        function calculate_group_size(group) {
             var groupsize = 0;
             if (group.nodeName == 'int' || group.nodeName == 'string') {
                 groupsize += parseInt($(group).attr('size'));
@@ -426,12 +296,12 @@
                     groupsize += parseInt($(group).attr('offset'));
                 }
                 $(group).children().each(function (i, c) {
-                    groupsize += process_group(c);
+                    groupsize += calculate_group_size(c);
                 });
             }
             return groupsize;
         }
-        function calculate_offsets(cdi, space) {
+        function calculate_group_offsets(cdi, space) {
             var offsets = {};
             var segment = $(cdi).find('segment').filter(
                 function (i, e) {
@@ -455,7 +325,7 @@
                 }
                 var groupsize = 0;
                 $(e.children).each(function (i, c) {
-                    groupsize += process_group(c);
+                    groupsize += calculate_group_size(c);
                 });
                 offsets[group_name] = { size: groupsize, replicas: replica_count, offset: offs };
                 offs += (groupsize * replica_count);
@@ -488,19 +358,25 @@
             if (is_mapped) {
                 size = parseInt($(group).attr('size'));
                 console.groupCollapsed('Mapped:', node_name, 'offset:', offset, 'size:', size, 'description:', node_description);
-                content += '<div class="row">';
+                content += '<div class="columns">';
                 content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
-                content += String.format('<div class="column column-50"><select id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')">', node_alias, offset, node_data_type, size);
+                content += String.format('<div class="column column-6"><select id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')">', node_alias, offset, node_data_type, size);
                 $(mapped.children).each(function (i, e) {
                     console.log($(e).find('value').text(), '=>', $(e).find('property').text());
                     content += String.format('<option value="{0}">{1}</option>', $(e).find('property').text(), $(e).find('value').text());
                 });
                 content += '</select></div>';
-                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
-                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button><div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
-                content += '</div>';
-                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                content += String.format('<div class="column"><div class="btn-group"><button class="btn btn-primary btn-sm" id="btn-save-{0}" disabled onclick="save_cdi_field(this);">Save</button>', node_alias);
+                content += String.format('<button class="btn btn-primary btn-sm loading" id="btn-refresh-{0}" onclick="refresh_cdi_field(this);">Refresh</button></div>', node_alias);
+                content += '</div></div>';
+                content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description);
+                cdi_loaders.push(JSON.stringify({
+                    req: 'cdi',
+                    ofs: offset,
+                    sz: size,
+                    type: node_data_type,
+                    tgt: node_alias
+                }));
                 console.groupEnd();
             } else if (node_data_type === 'group') {
                 if ($.isNumeric(parseInt($(group).attr('offset'))) && node_name === '') {
@@ -508,46 +384,55 @@
                     node_name = 'hidden'
                 }
                 if (group.children.length > 0) {
-                    if (node_name !== '') {
+                    if (node_name != '') {
                         content += String.format('<fieldset><legend>{0}:</legend>', node_name);
                         console.groupCollapsed(node_name);
                     } else {
                         console.groupCollapsed('unnamed group');
                     }
-                    content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description);
+                    content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description);
                     $(group.children).each(function (i, e) {
                         var res = generate_cdi_dynamic_content(space, e, offset + size);
                         content += res[0];
                         size += res[1];
                     });
                     console.groupEnd();
-                    if (node_name !== '') {
+                    if (node_name != '') {
                         content += '</fieldset>';
                     }
                 }
             } else if (node_name !== '') {
                 if (node_data_type === 'eventid') {
                     size = 8; // events are always 8 bytes
+                    node_data_type = 'evt';
                 } else {
+                    if (node_data_type === 'string') {
+                        node_data_type = 'str';
+                    }
                     size = parseInt($(group).attr('size'));
                 }
                 console.log('Entry:', node_name, 'offset:', offset, 'size:', size, 'datatype:', node_data_type, 'description:', node_description);
-                content += '<div class="row">';
-                content += String.format('<div class="column"><label for="{0}">{1}:</label></div>', node_alias, node_name);
-                content += String.format('<div class="column column-50"><input type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
-                content += String.format('<div class="column"><button class="button-small" id="btn-save-{0}" disabled>Save</button>', node_alias);
-                content += String.format('<button class="button-small" id="btn-refresh-{0}">Refresh</button>', node_alias);
-                if (node_data_type === 'eventid') {
-                    content += String.format('<button class="button-small" id="btn-test-{0}">Test</button>', node_alias);
+                content += '<div class="columns">';
+                content += String.format('<div class="column"><label class="form-label" for="{0}">{1}:</label></div>', node_alias, node_name);
+                content += String.format('<div class="column column-6"><input class="form-input" type="text" id="{0}" data-offset="{1}" data-type="{2}" data-size="{3}" oninput="enable_button(\'save-{0}\')"></div>', node_alias, offset, node_data_type, size);
+                content += String.format('<div class="column"><div class="btn-group"><button class="btn btn-primary btn-sm" id="btn-save-{0}" disabled onclick="save_cdi_field(this);">Save</button>', node_alias);
+                content += String.format('<button class="btn btn-primary btn-sm loading" id="btn-refresh-{0}" onclick="refresh_cdi_field(this);">Refresh</button></div>', node_alias);
+                if (node_data_type === 'evt') {
+                    content += String.format('<button class="btn btn-primary btn-sm" id="btn-test-{0}" onclick="cdi_send_event(this);">Test</button></div>', node_alias);
                 }
-                content += String.format('<div id="spinner-{0}" class="small-spinner"></div></div>', node_alias);
-                content += '</div>';
-                content += String.format('<div class="row"><div class="column column-100"><small>{0}</small></div></div>', node_description)
-                cdi_segment_loader.push(JSON.stringify({req_type:'cdi-get', offs:offset, size:size, type:node_data_type, target:node_alias}));
+                content += '</div></div>';
+                content += String.format('<div class="columns"><div class="column"><small>{0}</small></div></div>', node_description)
+                cdi_loaders.push(JSON.stringify({
+                    req: 'cdi',
+                    ofs: offset,
+                    sz: size,
+                    type: node_data_type,
+                    tgt: node_alias
+                }));
             }
             return [content, size];
         }
-        function cdi_dynamic_group(cdi, space, group, target_selector, offsets, xpath = String.format("//segment[@space='{0}']/group[name[text()='{1}']]", space, group)) {
+        function create_cdi_dynamic_group_elements(cdi, space, group, target_selector, offsets, xpath = String.format("//segment[@space='{0}']/group[name[text()='{1}']]", space, group)) {
             var nodes = cdi.evaluate(xpath, cdi);
             var node = nodes.iterateNext();
             var offs = offsets[group].offset;
@@ -565,19 +450,14 @@
                     offs += rendered[1];
                 });
             } else {
-                var group_tabs = '<div class="row tabs">';
+                var group_tabs = '<ul class="tab tab-block">';
                 var group_content = '';
                 var alias = $(node).find('repname').text();
                 var group_id = group.replace(/ /g, '_');
                 for (replica = 1; replica <= offsets[group].replicas; replica++) {
                     console.groupCollapsed(alias, replica);
-                    group_tabs += String.format('<a href="#" class="button" id="{0}-{1}">{2} {1}</a>', group_id, replica, alias);
-                    if (replica == 8 && replica < offsets[group].replicas) {
-                        // after eight tabs we run out of room for one row, add a break
-                        // to shift the content down one row
-                        group_tabs += '</div><div class="row tabs">';
-                    }
-                    group_content += String.format('<div class="well" id="rep-{0}-{1}" style="display: {3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
+                    group_tabs += String.format('<li class="tab-item"><a href="#" class="btn btn-primary" id="{0}-{1}">{2} {1}</a></li>', group_id, replica, alias);
+                    group_content += String.format('<div class="container" id="rep-{0}-{1}" style="display:{3};"><fieldset><legend>{2} {1}</legend>', group_id, replica, alias, replica > 1 ? 'none' : 'block');
                     $(node).children().each(function (i, e) {
                         var rendered = generate_cdi_dynamic_content(space, e, offs);
                         group_content += rendered[0];
@@ -586,88 +466,68 @@
                     group_content += '</fieldset></div>';
                     console.groupEnd();
                 }
+                group_tabs += "</ul>";
                 $(target_selector).append(group_tabs);
                 $(target_selector).append(group_content);
-                $(String.format('[id^={0}-]', group_id)).each(function (i, tab) {
-                    $(tab).on('click', function (e) {
-                        var selected_tab = $(tab).attr('id');
-                        var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
-                        $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') !== $(tab).attr('id'); }).each(function (i, other_tab) {
-                            $('#' + $(other_tab).attr('id')).hide();
-                            $(other_tab).removeClass('active');
-                            $(other_tab).addClass('inactive');
-                            return true;
-                        });
-                        var tab_content = String.format('#rep-{0}', selected_tab);
-                        $(tab_content).show();
-                        $(tab).addClass('active');
-                        $(tab).removeClass('inactive');
-                    })
+                $(String.format('[id^={0}-]', group_id)).on('click', function (evt) {
+                    var selected_tab = $(evt.target).attr('id');
+                    var tab_group = selected_tab.substring(0, selected_tab.lastIndexOf('-'));
+                    $(String.format('[id^=rep-{0}', tab_group)).filter(function (i, e) { return $(e).attr('id') != $(evt.target).attr('id'); }).each(function (i, other_tab) {
+                        $('#' + $(other_tab).attr('id')).hide();
+                        $(other_tab).removeClass('active');
+                        $(other_tab).addClass('inactive');
+                        return true;
+                    });
+                    var tab_content = String.format('#rep-{0}', selected_tab);
+                    $(tab_content).show();
+                    $(evt.target).addClass('active');
+                    $(evt.target).removeClass('inactive');
                 });
             }
             console.groupEnd();
         }
-        function build_cdi_dom(cdi) {
-            var parser = new window.DOMParser();
-            var doc = parser.parseFromString(cdi, "text/xml");
-            var offsets_251 = calculate_offsets(doc, 251);
-            var offsets_253 = calculate_offsets(doc, 253);
-            cdi_dynamic_group(doc, 251, 'node_info', '#node_info_dynamic', offsets_251, '//segment[@space="251"]');
-            cdi_dynamic_group(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
-            cdi_dynamic_group(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
-            cdi_dynamic_group(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
-            cdi_segment_loader.push('{"req_type":"info"}');
-            cdi_segment_loader.forEach(elem => ws_send(elem));
-            cdi_segment_loader.splice(0, cdi_segment_loader.length);
-            $('#node_info').show();
-            $('#loading').hide();
-            $('[id^=btn-save-]').each(function (i, e) {
-                $(e).on('click', function () {
-                    var cdi_field = $(e).attr('id').replace('btn-save-', '');
-                    show_spinner(cdi_field);
-                    var offset = parseInt($('#' + cdi_field).attr('data-offset'));
-                    var size = parseInt($('#' + cdi_field).attr('data-size'));
-                    var type = $('#' + cdi_field).attr('data-type');
-                    var value = $('#' + cdi_field).val();
-                    ws_send(JSON.stringify({req_type:'cdi-set', offs:offset, size:size, type:type, target:cdi_field, value:value}));
-                    disable_button('save-' + cdi_field);
-                });
-            });
-            $('[id^=btn-refresh-]').each(function (i, e) {
-                $(e).on('click', function () {
-                    refresh_field($(e).attr('id').replace('btn-refresh-', ''));
-                });
-            });
-            $('[id^=btn-test-]').each(function (i, e) {
-                $(e).on('click', function () {
-                    test_event($(e).attr('id').replace('btn-test-', ''));
-                });
-            });
-        }
-        function registerStringFormat() {
-            if (!String.format) {
-                String.format = function (format) {
-                    var args = Array.prototype.slice.call(arguments, 1);
-                    return format.replace(/{(\d+)}/g, function (match, number) {
-                        return typeof args[number] != 'undefined'
-                            ? args[number]
-                            : match
-                            ;
-                    });
-                };
+        function save_cdi_field(field) {
+            var target = $(field).attr('id').substr(9);
+            $(field).toggleClass('loading');
+            var size = parseInt($('#' + target).data('size'));
+            var type = $('#' + target).data('type');
+            var value = $('#' + target).val()
+            if (type === 'str') {
+                if (value.length < size) {
+                    size = value.length;
+                } else {
+                    value = value.substr(0, size);
+                }
             }
+            ws_tx(JSON.stringify({
+                req: 'cdi',
+                ofs: parseInt($('#' + target).data('offset')),
+                sz: size,
+                type: type,
+                tgt: target,
+                val: value
+            }));
         }
-        // these should really be inside cash.js but are not exposed
-        function isHidden(ele) {
-            return computeStyle(ele, 'display') === 'none';
+        function refresh_cdi_field(field) {
+            var target = $(field).attr('id').substr(12);
+            $(field).toggleClass('loading');
+            ws_tx(JSON.stringify({
+                req: 'cdi',
+                ofs: $('#' + target).data('offset'),
+                sz: $('#' + target).data('size'),
+                type: $('#' + target).data('type'),
+                tgt: target
+            }));
         }
-        function computeStyle(ele, prop, isVariable) {
-            if (!isElement(ele)) return;
-            var style = win.getComputedStyle(ele, null);
-            return isVariable ? style.getPropertyValue(prop) || undefined : style[prop] || ele.style[prop];
+        function cdi_send_event(field) {
+            var event = $('#' + field).val();
+            $(field).toggleClass('loading');
+            ws_tx(JSON.stringify({ req: 'event', value: event, tgt: $(field).attr('id') }));
         }
-        function isElement(x) {
-            return !!x && x.nodeType === 1;
+        function refresh_all_cdi_fields() {
+            $('[id^=btn-refresh-]').each(function (i, e) {
+                refresh_cdi_field(e);
+            });
         }
     </script>
 </body>
