@@ -19,20 +19,20 @@ jobs:
         if: ${{ matrix.target == 'ESP32OlcbIO-WiFiOff' }}
         uses: DamianReeves/write-file-action@master
         with:
-          path: firmware/sdkconfig.defaults
+          path: firmware/sdkconfig
           contents: |
             CONFIG_WIFI_MODE_OFF=y
-          write-mode: append
+          write-mode: overwrite
       - name: Update config For PWM
         if: ${{ matrix.target == 'ESP32OlcbIO-PWM' }}
         uses: DamianReeves/write-file-action@master
         with:
-          path: firmware/sdkconfig.defaults
+          path: firmware/sdkconfig
           contents: |
             CONFIG_OLCB_ENABLE_PWM=y
-          write-mode: append
+          write-mode: overwrite
       - name: Build
-        uses: espressif/esp-idf-ci-action@branch-release-v4.3
+        uses: espressif/esp-idf-ci-action@branch-release-v4.4
         with:
           path: firmware
       - name: Prepare Binaries
