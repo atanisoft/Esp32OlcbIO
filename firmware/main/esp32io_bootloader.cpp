@@ -86,8 +86,6 @@ void bootloader_led(enum BootloaderLed led, bool value)
     else if (led == LED_REQUEST)
     {
         LOG(INFO, "[Bootloader] Preparing to receive firmware");
-        LOG(INFO, "[Bootloader] Current partition: %s", current->label);
-        LOG(INFO, "[Bootloader] Target partition: %s", target->label);
     }
 }
 

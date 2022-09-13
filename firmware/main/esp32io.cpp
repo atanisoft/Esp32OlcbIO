@@ -47,6 +47,7 @@
 #include <esp_task_wdt.h>
 #include <esp32/rom/rtc.h>
 #include <freertos_includes.h>
+#include <freertos_drivers/esp32/Esp32SocInfo.hxx>
 #include <openlcb/SimpleStack.hxx>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -54,28 +55,31 @@
 ///////////////////////////////////////////////////////////////////////////////
 OVERRIDE_CONST_TRUE(gridconnect_tcp_use_select);
 
+#if CONFIG_OLCB_GC_NEWLINES
 ///////////////////////////////////////////////////////////////////////////////
 // This will generate newlines after GridConnect each packet being sent.
 ///////////////////////////////////////////////////////////////////////////////
 OVERRIDE_CONST_TRUE(gc_generate_newlines);
+#endif // CONFIG_OLCB_GC_NEWLINES
 
 ///////////////////////////////////////////////////////////////////////////////
 // Increase the GridConnect buffer size to improve performance by bundling more
 // than one GridConnect packet into the same send() call to the socket.
 ///////////////////////////////////////////////////////////////////////////////
-OVERRIDE_CONST(gridconnect_buffer_size, CONFIG_LWIP_TCP_MSS);
+OVERRIDE_CONST(gridconnect_buffer_size, CONFIG_OLCB_GC_BUFFER_SIZE);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Increase the time for the buffer to fill up before sending it out over the
 // socket connection.
 ///////////////////////////////////////////////////////////////////////////////
-OVERRIDE_CONST(gridconnect_buffer_delay_usec, 1500);
+OVERRIDE_CONST(gridconnect_buffer_delay_usec, CONFIG_OLCB_GC_BUFFER_DELAY_USEC);
 
 ///////////////////////////////////////////////////////////////////////////////
 // This limits the number of outbound GridConnect packets which limits the
 // memory used by the BufferPort.
 ///////////////////////////////////////////////////////////////////////////////
-OVERRIDE_CONST(gridconnect_bridge_max_outgoing_packets, 10);
+OVERRIDE_CONST(gridconnect_bridge_max_outgoing_packets,
+               CONFIG_OLCB_GC_OUTBOUND_PACKET_LIMIT);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Increase the listener backlog to improve concurrency.
@@ -86,7 +90,8 @@ OVERRIDE_CONST(socket_listener_backlog, 2);
 // Increase the CAN RX frame buffer size to reduce overruns when there is high
 // traffic load (ie: large datagram transport).
 ///////////////////////////////////////////////////////////////////////////////
-OVERRIDE_CONST(can_rx_buffer_size, 64);
+OVERRIDE_CONST(can_rx_buffer_size, CONFIG_OLCB_TWAI_RX_BUFFER_SIZE);
+OVERRIDE_CONST(can_tx_buffer_size, CONFIG_OLCB_TWAI_TX_BUFFER_SIZE);
 
 /// Number of seconds to hold the Factory Reset button to force clear all
 /// stored configuration data.
@@ -105,31 +110,6 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
 } // namespace esp32io
 
 void start_bootloader_stack(uint64_t node_id);
-
-/// Halts execution with a specific blink pattern for the two LEDs that are on
-/// the IO base board.
-///
-/// @param wifi Sets the initial state of the WiFi LED.
-/// @param activity Sets the initial state of the Activity LED.
-/// @param period Sets the delay between blinking the LED(s).
-/// @param toggle_both Controls if both LEDs will blink or if only the activity
-/// LED will blink.
-void die_with(bool wifi, bool activity, unsigned period = 1000
-            , bool toggle_both = false)
-{
-    LED_WIFI_Pin::set(wifi);
-    LED_ACTIVITY_Pin::set(activity);
-
-    while(true)
-    {
-        if (toggle_both)
-        {
-            LED_WIFI_Pin::toggle();
-        }
-        LED_ACTIVITY_Pin::toggle();
-        usleep(period);
-    }
-}
 
 extern "C"
 {
@@ -175,46 +155,17 @@ static const char * const reset_reasons[] =
 void app_main()
 {
     // capture the reason for the CPU reset
-    uint8_t reset_reason = rtc_get_reset_reason(PRO_CPU_NUM);
-    uint8_t orig_reset_reason = reset_reason;
-    // Ensure the reset reason it within bounds.
-    if (reset_reason > ARRAYSIZE(reset_reasons))
-    {
-        reset_reason = 0;
-    }
+    uint8_t reset_reason = Esp32SocInfo::print_soc_info();
+    const esp_app_desc_t *app_data = esp_ota_get_app_description();
+    LOG(INFO, "%s uses the OpenMRN library\n"
+              "Copyright (c) 2019-2022, OpenMRN\n"
+              "All rights reserved.", app_data->project_name);
+
     // silence all but error messages by default
     esp_log_level_set("*", ESP_LOG_ERROR);
 
     GpioInit::hw_init();
 
-    const esp_app_desc_t *app_data = esp_ota_get_app_description();
-    esp_chip_info_t chip_info;
-    esp_chip_info(&chip_info);
-    LOG(INFO, "\n\n%s %s starting up (%d:%s)...", app_data->project_name
-      , app_data->version, reset_reason, reset_reasons[reset_reason]);
-    LOG(INFO
-      , "[SoC] model:%s, rev:%d, cores:%d, flash:%s, WiFi:%s, BLE:%s, BT:%s"
-      , chip_info.model == CHIP_ESP32 ? "ESP32" :
-        chip_info.model == CHIP_ESP32S2 ? "ESP32-S2" : "unknown"
-      , chip_info.revision, chip_info.cores
-      , chip_info.features & CHIP_FEATURE_EMB_FLASH ? "Yes" : "No"
-      , chip_info.features & CHIP_FEATURE_WIFI_BGN ? "Yes" : "No"
-      , chip_info.features & CHIP_FEATURE_BLE ? "Yes" : "No"
-      , chip_info.features & CHIP_FEATURE_BT ? "Yes" : "No");
-    LOG(INFO, "[SoC] Heap: %.2fkB / %.2fKb"
-      , heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f
-      , heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f);
-    LOG(INFO, "Compiled on %s %s using ESP-IDF %s", app_data->date
-      , app_data->time, app_data->idf_ver);
-    LOG(INFO, "Running from: %s", esp_ota_get_running_partition()->label);
-    LOG(INFO, "%s uses the OpenMRN library\n"
-              "Copyright (c) 2019-2020, OpenMRN\n"
-              "All rights reserved.", app_data->project_name);
-    if (reset_reason != orig_reset_reason)
-    {
-        LOG(WARNING, "Reset reason mismatch: %d vs %d", reset_reason
-          , orig_reset_reason);
-    }
     nvs_init();
 
     // load non-CDI based config from NVS.
@@ -320,6 +271,7 @@ void app_main()
         cleanup_config_tree = true;
         config.force_reset = false;
         save_config(&config);
+        unlink(openlcb::CONFIG_FILENAME);
     }
 
     if (config.bootloader_req)
@@ -339,9 +291,9 @@ void app_main()
     else
     {
         mount_fs(cleanup_config_tree);
-        esp32io::start_openlcb_stack(&config, reset_events
-                                   , reset_reason == RTCWDT_BROWN_OUT_RESET
-                                   , wifi_verbose);
+        esp32io::start_openlcb_stack(&config, reset_events,
+                                     reset_reason == RTCWDT_BROWN_OUT_RESET,
+                                     wifi_verbose);
     }
 
     // At this point the OpenMRN stack is running in it's own task and we can

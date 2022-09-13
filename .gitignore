@@ -1,5 +1,6 @@
 firmware/build
 firmware/sdkconfig
-sdkconfigfirmware/.old
+firmware/sdkconfig.old
 firmware/web/*.gz
-pcb/*.*-bak
+pcb/**/*.*-bak
+pcb/**/*-backups

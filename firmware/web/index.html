@@ -65,14 +65,18 @@
                 <li class="tab-item">
                     <a href="#" onclick="showCDISection('gpio',this);">Input/Outputs</a>
                 </li>
+                <li class="tab-item" id='pwm-cfg-tab'>
+                    <a href="#" onclick="showCDISection('pwm',this);">PWM</a>
+                </li>
             </ul>
             <div id="cdi_tab_wifi"></div>
             <div id="cdi_tab_gpi" style="display:none;"></div>
             <div id="cdi_tab_gpio" style="display:none;"></div>
+            <div id="cdi_tab_pwm" style="display:none;"></div>
             <div class="columns">
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="refresh_all_cdi_fields()">Refresh All</button></div>
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="factory_reset();">Factory Reset</button></div>
-                <div class="column"><button class="btn btn-primary btn-sm" onclick="request_bootloader();">Enter Bootloader</button></div>
+                <div class="column"><button id='bootloader' class="btn btn-primary btn-sm" onclick="request_bootloader();">Enter Bootloader</button></div>
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="reset_events();">Reset Events</button></div>
                 <div class="column"><button class="btn btn-primary btn-sm" onclick="update_complete();">Update Complete</button></div>
             </div>
@@ -94,6 +98,7 @@
         var cdi_loaders = [];
         var ws_pending = [];
         var ws;
+        var has_pwm = false;
         const ws_retry_connection_timeout_ms = 500;
         const page_reload_delay_ms = 7500;
         function showTab(target, button) {
@@ -168,6 +173,17 @@
                         $('#sw_version').text(json.snip_sw);
                         $('#hw_version').text(json.snip_hw);
                         $('#btn-save_node_id').removeClass('loading');
+                        if (json.twai === false) {
+                            $('#bootloader').hide();
+                        } else {
+                            $('#bootloader').show();
+                        }
+                        if (json.pwm === false) {
+                            $('#pwm-cfg-tab').hide();
+                        } else {
+                            $('#pwm-cfg-tab').show();
+                            has_pwm = true;
+                        }
                         fetch("/fs?path=/fs/cdi.xml&remove_nulls=true").then(res => res.text()).then(cdi => build_cdi_dom(cdi));
                     } else if (json.res === 'saved') {
                         reset_cdi_buttons(json.tgt);
@@ -280,6 +296,9 @@
             create_cdi_dynamic_group_elements(doc, 253, 'WiFi Configuration', '#config_wifi', offsets_253);
             create_cdi_dynamic_group_elements(doc, 253, 'Input Only Pins', '#config_gpi', offsets_253);
             create_cdi_dynamic_group_elements(doc, 253, 'Input Output Pins', '#config_gpio', offsets_253);
+            if (has_pwm) {
+                cdi_dynamic_group(doc, 253, 'PWM', '#cdi_tab_pwm', offsets_253);
+            }
             cdi_loaders.forEach(elem => ws_tx(elem));
             cdi_loaders.splice(0, cdi_loaders.length);
         }

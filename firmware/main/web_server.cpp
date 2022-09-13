@@ -190,13 +190,23 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             const esp_app_desc_t *app_data = esp_ota_get_app_description();
             const esp_partition_t *partition = esp_ota_get_running_partition();
             response =
-                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
-                    app_data->version, app_data->date
-                  , app_data->time, partition->label
-                  , openlcb::SNIP_STATIC_DATA.model_name
-                  , openlcb::SNIP_STATIC_DATA.hardware_version
-                  , openlcb::SNIP_STATIC_DATA.software_version
-                  , uint64_to_string_hex(node_id).c_str());
+                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s","twai":%s,"pwm":%s})!^!",
+                    app_data->version, app_data->date, app_data->time,
+                    partition->label, openlcb::SNIP_STATIC_DATA.model_name,
+                    openlcb::SNIP_STATIC_DATA.hardware_version,
+                    openlcb::SNIP_STATIC_DATA.software_version,
+                    uint64_to_string_hex(node_id).c_str(),
+#if CONFIG_OLCB_ENABLE_TWAI
+                    "true",
+#else
+                    "false",
+#endif // CONFIG_OLCB_ENABLE_TWAI
+#if CONFIG_OLCB_ENABLE_PWM
+                    "true"
+#else
+                    "false"
+#endif // CONFIG_OLCB_ENABLE_PWM
+            );
         }
         else if (!strcmp(req_type->valuestring, "cdi"))
         {

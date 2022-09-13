@@ -40,26 +40,34 @@
 #include <os/Gpio.hxx>
 #include <utils/GpioInitializer.hxx>
 
+#include "sdkconfig.h"
+
+#if CONFIG_IOPIN_PULL_UP_ENABLED
+#define DEFAULT_PIN_MODE GpioInputPU
+#else
+#define DEFAULT_PIN_MODE GpioInputNP
+#endif // CONFIG_IOPIN_PULL_UP_ENABLED
+
 /// Configurable IO Pin 1.
-GPIO_PIN(IO1, GpioInputNP, GPIO_NUM_18);
+GPIO_PIN(IO1, DEFAULT_PIN_MODE, GPIO_NUM_18);
 
 /// Configurable IO Pin 2.
-GPIO_PIN(IO2, GpioInputNP, GPIO_NUM_17);
+GPIO_PIN(IO2, DEFAULT_PIN_MODE, GPIO_NUM_17);
 
 /// Configurable IO Pin 3.
-GPIO_PIN(IO3, GpioInputNP, GPIO_NUM_16);
+GPIO_PIN(IO3, DEFAULT_PIN_MODE, GPIO_NUM_16);
 
 /// Configurable IO Pin 4.
 // ADC2_CHANNEL_0
-GPIO_PIN(IO4, GpioInputNP, GPIO_NUM_0);
+GPIO_PIN(IO4, DEFAULT_PIN_MODE, GPIO_NUM_0);
 
 /// Configurable IO Pin 5.
 // ADC2_CHANNEL_2
-GPIO_PIN(IO5, GpioInputNP, GPIO_NUM_2);
+GPIO_PIN(IO5, DEFAULT_PIN_MODE, GPIO_NUM_2);
 
 /// Configurable IO Pin 6.
 // ADC2_CHANNEL_3
-GPIO_PIN(IO6, GpioInputNP, GPIO_NUM_15);
+GPIO_PIN(IO6, GpioInputPU, GPIO_NUM_15);
 
 /// Configurable IO Pin 7.
 // ADC2_CHANNEL_5
@@ -67,7 +75,7 @@ GPIO_PIN(IO7, GpioInputNP, GPIO_NUM_12);
 
 /// Configurable IO Pin 8.
 // ADC2_CHANNEL_4
-GPIO_PIN(IO8, GpioInputNP, GPIO_NUM_13);
+GPIO_PIN(IO8, DEFAULT_PIN_MODE, GPIO_NUM_13);
 
 /// Input only pin 9. Pull-Up enabled by default.
 // ADC1_CHANNEL_6
@@ -79,27 +87,27 @@ GPIO_PIN(IO10, GpioInputPU, GPIO_NUM_35);
 
 /// Configurable IO Pin 11.
 // ADC1_CHANNEL_4
-GPIO_PIN(IO11, GpioInputNP, GPIO_NUM_32);
+GPIO_PIN(IO11, DEFAULT_PIN_MODE, GPIO_NUM_32);
 
 /// Configurable IO Pin 12.
 // ADC1_CHANNEL_5
-GPIO_PIN(IO12, GpioInputNP, GPIO_NUM_33);
+GPIO_PIN(IO12, DEFAULT_PIN_MODE, GPIO_NUM_33);
 
 /// Configurable IO Pin 13.
 // ADC2_CHANNEL_8
-GPIO_PIN(IO13, GpioInputNP, GPIO_NUM_25);
+GPIO_PIN(IO13, DEFAULT_PIN_MODE, GPIO_NUM_25);
 
 /// Configurable IO Pin 14.
 // ADC2_CHANNEL_9
-GPIO_PIN(IO14, GpioInputNP, GPIO_NUM_26);
+GPIO_PIN(IO14, DEFAULT_PIN_MODE, GPIO_NUM_26);
 
 /// Configurable IO Pin 15.
 // ADC2_CHANNEL_7
-GPIO_PIN(IO15, GpioInputNP, GPIO_NUM_27);
+GPIO_PIN(IO15, DEFAULT_PIN_MODE, GPIO_NUM_27);
 
 /// Configurable IO Pin 16.
 // ADC2_CHANNEL_6
-GPIO_PIN(IO16, GpioInputNP, GPIO_NUM_14);
+GPIO_PIN(IO16, DEFAULT_PIN_MODE, GPIO_NUM_14);
 
 /// Node Activity indicator LED. Active (ON) Low.
 GPIO_PIN(LED_ACTIVITY, GpioOutputSafeHighInvert, GPIO_NUM_22);
@@ -126,11 +134,11 @@ typedef GpioInitializer<IO1_Pin,  IO2_Pin,  IO3_Pin,  IO4_Pin,
 /// Configurable IO pins.
 constexpr const Gpio *const CONFIGURABLE_GPIO[] =
 {
-    IO1_Pin::instance(),  IO2_Pin::instance(),  IO3_Pin::instance()
-  , IO4_Pin::instance(),  IO5_Pin::instance(),  IO6_Pin::instance()
-  , IO7_Pin::instance(),  IO8_Pin::instance()
-  , IO11_Pin::instance(), IO12_Pin::instance(), IO13_Pin::instance()
-  , IO14_Pin::instance(), IO15_Pin::instance(), IO16_Pin::instance()
+    IO1_Pin::instance(),  IO2_Pin::instance(),  IO3_Pin::instance(),
+    IO4_Pin::instance(),  IO5_Pin::instance(),  IO6_Pin::instance(),
+    IO7_Pin::instance(),  IO8_Pin::instance(),
+    IO11_Pin::instance(), IO12_Pin::instance(), IO13_Pin::instance(),
+    IO14_Pin::instance(), IO15_Pin::instance(), IO16_Pin::instance()
 };
 
 /// Configurable IO pin names.
@@ -143,8 +151,8 @@ constexpr const char *const CONFIGURABLE_GPIO_NAMES[] =
 /// Input only pins.
 constexpr const Gpio *const INPUT_ONLY_GPIO[] =
 {
-    FACTORY_RESET_Pin::instance(), USER_BUTTON_Pin::instance()
-  , IO9_Pin::instance(),           IO10_Pin::instance()
+    FACTORY_RESET_Pin::instance(), USER_BUTTON_Pin::instance(),
+    IO9_Pin::instance(),           IO10_Pin::instance()
 };
 
 /// Input only pin names.
@@ -165,5 +173,8 @@ static constexpr gpio_num_t CONFIG_SDA_PIN = GPIO_NUM_19;
 
 /// GPIO Pin used for I2C SCL.
 static constexpr gpio_num_t CONFIG_SCL_PIN = GPIO_NUM_21;
+
+/// Default address for the PCA9685 PWM IC (all address pins to GND).
+static constexpr uint8_t PCA9685_ADDR = 0x40;
 
 #endif // HARDWARE_HXX_
