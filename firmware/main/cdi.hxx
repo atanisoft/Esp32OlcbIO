@@ -64,7 +64,7 @@ CDI_GROUP_ENTRY(gpio, CONFIGURABLE_GPIO_PINS, Name("Input Output Pins"),
                 RepName("IO"));
 CDI_GROUP_ENTRY(pwm, PWM_PINS, Name("PWM"), RepName("PWM")
 #if !CONFIG_OLCB_ENABLE_PWM
-             , Hidden(true)
+              , Hidden(true)
 #endif // !CONFIG_OLCB_ENABLE_PWM
 );
 CDI_GROUP_END();
@@ -89,16 +89,16 @@ CDI_GROUP_ENTRY(acdi, openlcb::Acdi);
 CDI_GROUP_ENTRY(userinfo, openlcb::UserInfoSegment, Name("User Info"));
 /// Adds the main configuration segment.
 CDI_GROUP_ENTRY(seg, IoBoard, Name("Settings"));
-/// Adds the versioning segment.
-CDI_GROUP_ENTRY(version, VersionSeg);
 CDI_GROUP_END();
 
-} // namespace esp32olcbhub
+} // namespace esp32io
 
-namespace openlcb {
+
+namespace openlcb
+{
     extern const char CDI_DATA[];
     // This is a C++11 raw string.
-    const char CDI_DATA[] = R"xmlpayload(<?xml version="1.0"?>
+    const char CDI_DATA[] = R"xmlpayload(<?xml version="1.0" encoding="utf-8"?>
 <cdi xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://openlcb.org/schema/cdi/1/1/cdi.xsd">
 <identification>
 <manufacturer>)xmlpayload" SNIP_PROJECT_PAGE R"xmlpayload(</manufacturer>
@@ -111,11 +111,11 @@ namespace openlcb {
 <name>User Info</name>
 <string size='63'>
 <name>User Name</name>
-<description>This name will appear in network browsers for the current node.</description>
+<description>This name will appear in network browsers for this device.</description>
 </string>
 <string size='64'>
 <name>User Description</name>
-<description>This description will appear in network browsers for the current node.</description>
+<description>This description will appear in network browsers for this device.</description>
 </string>
 </segment>
 <segment space='253' origin='128'>
@@ -133,86 +133,26 @@ namespace openlcb {
 <group>
 <name>WiFi Configuration</name>
 <int size='1'>
-<name>WiFi mode</name>
-<description>Configures the WiFi operating mode.</description>
-<min>0</min>
-<max>3</max>
-<default>2</default>
-<map><relation><property>0</property><value>Off</value></relation><relation><property>1</property><value>Station Only</value></relation><relation><property>2</property><value>SoftAP Only</value></relation><relation><property>3</property><value>SoftAP and Station</value></relation></map>
-</int>
-<string size='21'>
-<name>Hostname prefix</name>
-<description>Configures the hostname prefix used by the node.
-Note: the node ID will be appended to this value.</description>
-</string>
-<string size='32'>
-<name>SSID</name>
-<description>Configures the SSID that the ESP32 will connect to.</description>
-</string>
-<string size='128'>
-<name>Password</name>
-<description>Configures the SSID that the ESP32 will connect to.</description>
-</string>
-<string size='32'>
-<name>SSID</name>
-<description>Configures the SSID that the ESP32 will use for the SoftAP.</description>
-</string>
-<string size='128'>
-<name>Password</name>
-<description>Configures the SSID that the ESP32 will use for the SoftAP.</description>
-</string>
-<int size='1'>
-<name>Authentication Mode</name>
-<description>Configures the authentication mode of the SoftAP.</description>
-<min>0</min>
-<max>7</max>
-<default>3</default>
-<map><relation><property>0</property><value>Open</value></relation><relation><property>1</property><value>WEP</value></relation><relation><property>2</property><value>WPA</value></relation><relation><property>3</property><value>WPA2</value></relation><relation><property>4</property><value>WPA/WPA2</value></relation><relation><property>6</property><value>WPA3</value></relation><relation><property>7</property><value>WPA2/WPA3</value></relation></map>
-</int>
-<int size='1'>
-<name>WiFi Channel</name>
-<description>Configures the WiFi channel to use for the SoftAP.
-Note: Some channels overlap eachother and may not provide optimal performance.Recommended channels are: 1, 6, 11 since these do not overlap.</description>
-<min>1</min>
-<max>14</max>
-<default>1</default>
-</int>
-<int size='1'>
-<name>Enable SNTP</name>
-<description>Enabling this option will allow the ESP32 to poll an SNTP server at regular intervals to obtain the current time. The refresh interval roughly once per hour.</description>
+<name>WiFi Power Savings Mode</name>
+<description>When enabled this allows the ESP32 WiFi radio to use power savings mode which puts the radio to sleep except to receive beacon updates from the connected SSID. This should generally not need to be enabled unless you are powering the ESP32 from a battery.</description>
 <min>0</min>
 <max>1</max>
 <default>0</default>
-<map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Enabled</value></relation></map>
+<map><relation><property>0</property><value>No</value></relation><relation><property>1</property><value>Yes</value></relation></map>
 </int>
-<string size='64'>
-<name>SNTP Server</name>
-<description>Enter the SNTP Server address. Example: pool.ntp.org
-Most of the time this does not need to be changed.</description>
-</string>
-<string size='64'>
-<name>TimeZone</name>
-<description>This is the timezone that the ESP32 should use, note it must be in POSIX notation. Note: The timezone is only configured when SNTP is also enabled.
-A few common values:
-PST8PDT,M3.2.0,M11.1.0 -- UTC-8 with automatic DST adjustment
-MST7MDT,M3.2.0,M11.1.0 -- UTC-7 with automatic DST adjustment
-CST6CDT,M3.2.0,M11.1.0 -- UTC-6 with automatic DST adjustment
-EST5EDT,M3.2.0,M11.1.0 -- UTC-5 with automatic DST adjustment
-A complete list can be seen here in the second column:
-https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv</description>
-</string>
+<int size='1'>
+<name>Connection Mode</name>
+<description>Defines whether to allow accepting connections (according to the Hub configuration), making a connection (according to the Uplink configuration), or both.
+This setting can be set to Disabled if the ESP32 will be using the TWAI (CAN) driver instead for the connection to other nodes.
+Note: it is not recommended to enable the Hub functionality on single-core ESP32 models.</description>
+<min>0</min>
+<max>3</max>
+<default>1</default>
+<map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Uplink Only</value></relation><relation><property>2</property><value>Hub Only</value></relation><relation><property>3</property><value>Hub+Uplink</value></relation></map>
+</int>
 <group>
 <name>Hub Configuration</name>
 <description>Configuration settings for an OpenLCB Hub</description>
-<int size='1'>
-<name>Enable</name>
-<description>Configures this node as an OpenLCB hub which can accept connections from other nodes.
-NOTE: This may cause some instability as the number of connected nodes increases.</description>
-<min>0</min>
-<max>1</max>
-<default>0</default>
-<map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Enabled</value></relation></map>
-</int>
 <int size='2'>
 <name>Hub Listener Port</name>
 <description>Defines the TCP/IP listener port this node will use when operating as a hub. Most of the time this does not need to be changed.</description>
@@ -220,31 +160,29 @@ NOTE: This may cause some instability as the number of connected nodes increases
 <max>65535</max>
 <default>12021</default>
 </int>
-<string size='64'>
+<string size='48'>
 <name>mDNS Service</name>
 <description>mDNS or Bonjour service name, such as _openlcb-can._tcp</description>
 </string>
 <group offset='6'/>
 </group>
 <group>
-<name>Uplink Configuration</name>
+<name>Node Uplink Configuration</name>
 <description>Configures how this node will connect to other nodes.</description>
 <int size='1'>
-<name>Enable</name>
-<description>Enables connecting to an OpenLCB Hub. In some cases it may be desirable to disable the uplink, such as a CAN only configuration.</description>
+<name>Search Mode</name>
+<description>Defines the order of how to locate the server to connect to. 'auto' uses the mDNS protocol to find the IP address automatically. 'manual' uses the IP address entered in this settings.</description>
 <min>0</min>
-<max>1</max>
-<default>1</default>
-<map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Enabled</value></relation></map>
+<max>3</max>
+<default>0</default>
+<map><relation><property>0</property><value>Auto, Manual</value></relation><relation><property>1</property><value>Manual, Auto</value></relation><relation><property>2</property><value>Auto Only</value></relation><relation><property>3</property><value>Manual Only</value></relation></map>
 </int>
-<string size='64'>
-<name>mDNS Service</name>
-<description>mDNS or Bonjour service name, such as _openlcb-can._tcp</description>
-</string>
-<string size='64'>
+<group>
+<name>Manual Address</name>
+<description>Set IP address here if auto-detection does not work.</description>
+<string size='32'>
 <name>IP Address</name>
-<description>Enter the server IP address. Example: 192.168.0.55
-Note: This will be used as a fallback when mDNS lookup is not successful.</description>
+<description>Enter the server IP address. Example: 192.168.0.55</description>
 </string>
 <int size='2'>
 <name>Port Number</name>
@@ -254,31 +192,29 @@ Note: This will be used as a fallback when mDNS lookup is not successful.</descr
 <default>12021</default>
 </int>
 </group>
+<group>
+<name>Auto Address</name>
+<description>Advanced settings for the server IP address auto-detection (mDNS).</description>
+<string size='48'>
+<name>mDNS Service</name>
+<description>mDNS or Bonjour service name, such as _openlcb-can._tcp</description>
+</string>
+<string size='48'>
+<name>Only Hostname</name>
+<description>Use when multiple servers provide the same service on the network. If set, selects this specific host name; the connection will fail if none of the servers have this hostname (use correct capitalization!). Example: My JMRI Railroad</description>
+</string>
+</group>
 <int size='1'>
-<name>WiFi Power Savings Mode</name>
-<description>When enabled this allows the ESP32 WiFi radio to use power savings mode which puts the radio to sleep except to receive beacon updates from the connected SSID. This should generally not need to be enabled unless you are powering the ESP32 from a battery.</description>
-<min>0</min>
-<max>1</max>
-<default>0</default>
-<map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Enabled</value></relation></map>
-</int>
-<int size='1'>
-<name>WiFi Transmit Power</name>
-<description>WiFi Radio transmit power in dBm. This can be used to limit the WiFi range. This option generally does not need to be changed.
-NOTE: Setting this option to a very low value can cause communication failures.</description>
-<min>8</min>
-<max>78</max>
-<default>78</default>
-<map><relation><property>8</property><value>2 dBm</value></relation><relation><property>20</property><value>5 dBm</value></relation><relation><property>28</property><value>7 dBm</value></relation><relation><property>34</property><value>8 dBm</value></relation><relation><property>44</property><value>11 dBm</value></relation><relation><property>52</property><value>13 dBm</value></relation><relation><property>56</property><value>14 dBm</value></relation><relation><property>60</property><value>15 dBm</value></relation><relation><property>66</property><value>16 dBm</value></relation><relation><property>72</property><value>18 dBm</value></relation><relation><property>78</property><value>20 dBm</value></relation></map>
-</int>
-<int size='1'>
-<name>Wait for successful SSID connection</name>
-<description>Enabling this option will cause the node to restart when there is a failure (or timeout) during the SSID connection process.</description>
+<name>Reconnect</name>
+<description>If enabled, tries the last known good IP address before searching for the server.</description>
 <min>0</min>
 <max>1</max>
 <default>1</default>
 <map><relation><property>0</property><value>Disabled</value></relation><relation><property>1</property><value>Enabled</value></relation></map>
 </int>
+<group offset='34'/>
+</group>
+<group offset='6'/>
 </group>
 <group replication='4'>
 <name>Input Only Pins</name>
@@ -367,59 +303,50 @@ R"xmlpayload(<group replication='16'>
 R"xmlpayload(<group offset='576'/>)xmlpayload"
 #endif // CONFIG_OLCB_ENABLE_PWM
 R"xmlpayload(</segment>
-<segment space='253'>
-<name>Version information</name>
-<int size='1'>
-<name>ACDI User Data version</name>
-<description>Set to 2 and do not change.</description>
-</int>
-</segment>
-</cdi>
-)xmlpayload";
+</cdi>)xmlpayload";
     extern const size_t CDI_SIZE;
     const size_t CDI_SIZE = sizeof(CDI_DATA);
 
     extern const uint16_t CDI_EVENT_OFFSETS[] =
     {
-    
-    828, 836,  // input 1
-    860, 868,  // input 2
-    892, 900,  // input 3
-    924, 932,  // input 4
-    
-    963, 971,  // IO 1
-    1002, 1010, // IO 2
-    1041, 1049, // IO 3
-    1080, 1088, // IO 4
-    1119, 1127, // IO 5
-    1158, 1166, // IO 6
-    1197, 1205, // IO 7
-    1236, 1244, // IO 8
-    1275, 1283, // IO 9
-    1314, 1322, // IO 10
-    1353, 1361, // IO 11
-    1392, 1400, // IO 12
-    1431, 1439, // IO 13
-    1470, 1478, // IO 14
-#if CONFIG_OLCB_ENABLE_PWM
-    1502, 1510, // SERVO 1
-    1538, 1546, // SERVO 2
-    1574, 1582, // SERVO 3
-    1610, 1618, // SERVO 4
-    1646, 1654, // SERVO 5
-    1682, 1690, // SERVO 6
-    1718, 1726, // SERVO 7
-    1754, 1762, // SERVO 8
-    1790, 1798, // SERVO 9
-    1826, 1834, // SERVO 10
-    1862, 1870, // SERVO 11
-    1898, 1906, // SERVO 12
-    1934, 1942, // SERVO 13
-    1970, 1978, // SERVO 14
-    2006, 2014, // SERVO 15
-    2042, 2050, // SERVO 16
-#endif // CONFIG_OLCB_ENABLE_PWM
-    0 // end marker
+        378, 386,   // input 1
+        410, 418,   // input 2
+        442, 450,   // input 3
+        474, 482,   // input 4
+
+        513, 521,   // IO 1
+        552, 560,   // IO 2
+        591, 599,   // IO 3
+        630, 638,   // IO 4
+        669, 677,   // IO 5
+        708, 716,   // IO 6
+        747, 755,   // IO 7
+        786, 794,   // IO 8
+        825, 833,   // IO 9
+        864, 872,   // IO 10
+        903, 911,   // IO 11
+        942, 950,   // IO 12
+        981, 989,   // IO 13
+        1020, 1028, // IO 14
+
+        1052, 1060, // SERVO 1
+        1088, 1096, // SERVO 2
+        1124, 1132, // SERVO 3
+        1160, 1168, // SERVO 4
+        1196, 1204, // SERVO 5
+        1232, 1240, // SERVO 6
+        1268, 1276, // SERVO 7
+        1304, 1312, // SERVO 8
+        1340, 1348, // SERVO 9
+        1376, 1384, // SERVO 10
+        1412, 1420, // SERVO 11
+        1448, 1456, // SERVO 12
+        1484, 1492, // SERVO 13
+        1520, 1528, // SERVO 14
+        1556, 1564, // SERVO 15
+        1592, 1600, // SERVO 16
+        
+        0           // end marker
     };
 }  // namespace openlcb
 

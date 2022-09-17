@@ -239,6 +239,16 @@ void FactoryResetHelper::factory_reset(int fd)
     {
         config_io.entry(idx).pc().description().write(fd, CONFIGURABLE_GPIO_NAMES[idx]);
     }
+
+#if !CONFIG_OLCB_ENABLE_PWM
+    auto config_pwm = cfg.seg().pwm();
+    for (size_t idx = 0; idx < 16; idx++)
+    {
+        config_pwm.entry(idx).description().write(fd, "");
+        CDI_FACTORY_RESET(config_pwm.entry(idx).servo_min_percent);
+        CDI_FACTORY_RESET(config_pwm.entry(idx).servo_max_percent);
+    }
+#endif // !CONFIG_OLCB_ENABLE_PWM
 }
 
 #ifndef CONFIG_WIFI_STATION_SSID
@@ -333,17 +343,15 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
 
 #if CONFIG_OLCB_ENABLE_PWM
     LOG(INFO, "Initializing PCA9685");
-    if (pca9685.hw_init() == ESP_OK)
+    pca9685.hw_init();
+    for (size_t idx = 0; idx < PCA9685PWM::NUM_CHANNELS; idx++)
     {
-        for (size_t idx = 0; idx < 16; idx++)
-        {
-            LOG(INFO, "Creating ServoConsumer(%zu)", idx);
-            pca9685PWM[idx].emplace(&pca9685, idx);
-            servos[idx].emplace(stack->node(), cfg.seg().pwm().entry(idx),
-                                CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000ULL,
-                                pca9685PWM[idx].get_mutable());
-        }
+        pca9685PWM[idx].emplace(&pca9685, idx);
+        servos[idx].emplace(stack->node(), cfg.seg().pwm().entry(idx),
+                            CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000ULL,
+                            pca9685PWM[idx].get_mutable());
     }
+#else
 #endif // CONFIG_OLCB_ENABLE_PWM
 
     // Check for presence of configuration file, if it exists check the version

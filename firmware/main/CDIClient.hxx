@@ -36,6 +36,8 @@
 #include <openlcb/MemoryConfigClient.hxx>
 #include <utils/StringPrintf.hxx>
 
+#include "StringUtils.hxx"
+
 struct CDIClientRequest : public CallableFlowRequestBase
 {
   enum ReadCmd
@@ -185,10 +187,11 @@ private:
         , request()->req_id, request()->size, request()->offs);
       if (request()->type == "str")
       {
+        remove_nulls_and_FF(b->data()->payload);
         response =
           StringPrintf(
               R"!^!({"res":"field","tgt":"%s","val":"%s","type":"%s","id":%d})!^!"
-            , request()->target.c_str(), b->data()->payload.c_str()
+            , request()->target.c_str(), base64_encode(b->data()->payload).c_str()
             , request()->type.c_str(), request()->req_id);
       }
       else if (request()->type == "int")

@@ -95,6 +95,14 @@ set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz P
 set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz")
 
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js.gz
+    COMMAND ${GZIP} -fk ${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js
+    VERBATIM)
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js.gz PROPERTIES GENERATED TRUE)
+set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js.gz")
+
 ###############################################################################
 # Add web content to the binary
 ###############################################################################
@@ -102,6 +110,7 @@ set_property(TARGET ${CMAKE_PROJECT_NAME}.elf APPEND PROPERTY ADDITIONAL_MAKE_CL
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.gz" BINARY)
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/cash.min.js.gz" BINARY)
 target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/spectre.min.css.gz" BINARY)
+target_add_binary_data(${CMAKE_PROJECT_NAME}.elf "${CMAKE_CURRENT_SOURCE_DIR}/web/cdi.js.gz" BINARY)
 
 ###############################################################################
 # Configuration validations
