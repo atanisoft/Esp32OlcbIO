@@ -1,5 +1,14 @@
 firmware/build
+firmware/dependencies.lock
+firmware/managed_components
 firmware/sdkconfig
-sdkconfigfirmware/.old
+firmware/sdkconfig.old
 firmware/web/*.gz
-pcb/*.*-bak
+pcb*/*.*-bak
+pcb*/*-backups
+pcb*/Outputs/*.g*
+pcb*/Outputs/*.drl
+pcb*/Outputs/*.csv
+pcb*/Outputs/*.pos
+pcb*/fp-info-cache
+pcb*/*.round-tracks-config

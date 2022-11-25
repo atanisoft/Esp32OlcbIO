@@ -59,6 +59,12 @@ static MDNS mdns;
 static uint64_t node_id;
 static openlcb::NodeHandle node_handle;
 
+namespace openlcb
+{
+    extern const char CDI_DATA[];
+    extern const size_t CDI_SIZE;
+}
+
 /// Statically embedded index.html start location.
 extern const uint8_t indexHtmlGz[] asm("_binary_index_html_gz_start");
 
@@ -70,6 +76,12 @@ extern const uint8_t cashJsGz[] asm("_binary_cash_min_js_gz_start");
 
 /// Statically embedded cash.js size.
 extern const size_t cashJsGz_size asm("cash_min_js_gz_length");
+
+/// Statically embedded cdi.js start location.
+extern const uint8_t cdiJsGz[] asm("_binary_cdi_js_gz_start");
+
+/// Statically embedded cdi.js size.
+extern const size_t cdiJsGz_size asm("cdi_js_gz_length");
 
 /// Statically embedded spectre.min.css start location.
 extern const uint8_t spectreMinCssGz[] asm("_binary_spectre_min_css_gz_start");
@@ -139,22 +151,16 @@ HTTP_STREAM_HANDLER_IMPL(process_ota, request, filename, size, data, length, off
     return nullptr;
 }
 
-// Helper which converts a string to a uint64 value.
-uint64_t string_to_uint64(std::string value)
-{
-    // remove period characters if present
-    value.erase(std::remove(value.begin(), value.end(), '.'), value.end());
-    // convert the string to a uint64_t value
-    return std::stoull(value, nullptr, 16);
-}
-
 namespace esp32io
 {
 void factory_reset_events();
 } // namespace esp32io
 
 static uint32_t WS_REQ_ID = 0;
-
+static constexpr const char * const ERROR_MISSING_PARAMS_RESPONSE =
+    R"!^!({"res":"error", "error":"request is missing one (or more) required parameters"})!^!";
+static constexpr const char * const ERROR_MISSING_PARAMS_LOG =
+    "[WSJSON] One or more required parameters are missing: %s";
 WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
 {
     if (event == http::WebSocketEvent::WS_EVENT_TEXT)
@@ -190,27 +196,35 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
             const esp_app_desc_t *app_data = esp_ota_get_app_description();
             const esp_partition_t *partition = esp_ota_get_running_partition();
             response =
-                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s"})!^!",
-                    app_data->version, app_data->date
-                  , app_data->time, partition->label
-                  , openlcb::SNIP_STATIC_DATA.model_name
-                  , openlcb::SNIP_STATIC_DATA.hardware_version
-                  , openlcb::SNIP_STATIC_DATA.software_version
-                  , uint64_to_string_hex(node_id).c_str());
+                StringPrintf(R"!^!({"res":"info","build":"%s","timestamp":"%s %s","ota":"%s","snip_name":"%s","snip_hw":"%s","snip_sw":"%s","node_id":"%s","twai":%s,"pwm":%s})!^!",
+                    app_data->version, app_data->date, app_data->time,
+                    partition->label, openlcb::SNIP_STATIC_DATA.model_name,
+                    openlcb::SNIP_STATIC_DATA.hardware_version,
+                    openlcb::SNIP_STATIC_DATA.software_version,
+                    uint64_to_string_hex(node_id).c_str(),
+#if CONFIG_OLCB_ENABLE_TWAI
+                    "true",
+#else
+                    "false",
+#endif // CONFIG_OLCB_ENABLE_TWAI
+#if CONFIG_OLCB_ENABLE_PWM
+                    "true"
+#else
+                    "false"
+#endif // CONFIG_OLCB_ENABLE_PWM
+            );
         }
         else if (!strcmp(req_type->valuestring, "cdi"))
         {
             if (!cJSON_HasObjectItem(root, "ofs") ||
                 !cJSON_HasObjectItem(root, "type") ||
                 !cJSON_HasObjectItem(root, "sz") ||
-                !cJSON_HasObjectItem(root, "tgt"))
+                !cJSON_HasObjectItem(root, "tgt") ||
+                !cJSON_HasObjectItem(root, "spc") ||
+                !cJSON_HasObjectItem(root, "node"))
             {
-                LOG_ERROR("[WSJSON:%d] One or more required parameters are missing: %s"
-                    , WS_REQ_ID, req.c_str());
-                response =
-                StringPrintf(
-                R"!^!({"res":"error", "error":"request is missing one (or more) required parameters","id":%d})!^!"
-                , WS_REQ_ID);
+                LOG_ERROR(ERROR_MISSING_PARAMS_LOG, req.c_str());
+                response = ERROR_MISSING_PARAMS_RESPONSE;
             }
             else
             {
@@ -219,17 +233,20 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                     cJSON_GetObjectItem(root, "type")->valuestring;
                 size_t size = cJSON_GetObjectItem(root, "sz")->valueint;
                 string target = cJSON_GetObjectItem(root, "tgt")->valuestring;
+                string node = cJSON_GetObjectItem(root, "node")->valuestring;
+                uint8_t space = cJSON_GetObjectItem(root, "spc")->valueint;
                 BufferPtr<CDIClientRequest> b(cdi_client->alloc());
+                openlcb::NodeHandle node_handle(string_to_uint64(node));
 
                 if (!cJSON_HasObjectItem(root, "val"))
                 {
                     LOG(VERBOSE,
-                        "[WSJSON:%d] Sending CDI READ: offs:%zu size:%zu type:%s tgt:%s",
-                        WS_REQ_ID, offs, size, param_type.c_str(),
-                        target.c_str());
+                        "[WSJSON:%d] Sending CDI READ: offs:%zu size:%zu "
+                        "type:%s tgt:%s spc:%d", WS_REQ_ID, offs, size,
+                        param_type.c_str(), target.c_str(), space);
                     b->data()->reset(CDIClientRequest::READ, node_handle,
-                                     socket, WS_REQ_ID++, offs, size, target,
-                                     param_type);
+                                        socket, WS_REQ_ID++, offs, size, target,
+                                        param_type /*, space */);
                 }
                 else
                 {
@@ -252,14 +269,16 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                         }
                         else if (size == 2)
                         {
-                            uint16_t data16 = std::stoi(raw_value->valuestring);
+                            uint16_t data16 =
+                                std::stoi(raw_value->valuestring);
                             value.clear();
                             value.push_back((data16 >> 8) & 0xFF);
                             value.push_back(data16 & 0xFF);
                         }
                         else
                         {
-                            uint32_t data32 = std::stoul(raw_value->valuestring);
+                            uint32_t data32 =
+                                std::stoul(raw_value->valuestring);
                             value.clear();
                             value.push_back((data32 >> 24) & 0xFF);
                             value.push_back((data32 >> 16) & 0xFF);
@@ -282,12 +301,12 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                         value.push_back(data & 0xFF);
                     }
                     LOG(VERBOSE,
-                        "[WSJSON:%d] Sending CDI WRITE: offs:%zu value:%s tgt:%s",
-                        WS_REQ_ID, offs, raw_value->valuestring,
-                        target.c_str());
+                        "[WSJSON:%d] Sending CDI WRITE: offs:%zu value:%s "
+                        "tgt:%s spc:%d", WS_REQ_ID, offs,
+                        raw_value->valuestring, target.c_str(), space);
                     b->data()->reset(CDIClientRequest::WRITE, node_handle,
-                                     socket, WS_REQ_ID++, offs, size, target,
-                                     value);
+                                        socket, WS_REQ_ID++, offs, size, target,
+                                        value /*, space */);
                 }
                 b->data()->done.reset(EmptyNotifiable::DefaultInstance());
                 cdi_client->send(b->ref());
@@ -338,37 +357,6 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
     }
 }
 
-HTTP_HANDLER_IMPL(fs_proc, request)
-{
-    string path = request->param("path");
-    LOG(VERBOSE, "[Web] Searching for path: %s", path.c_str());
-    struct stat statbuf;
-    // verify that the requested path exists
-    if (!stat(path.c_str(), &statbuf))
-    {
-        string data = read_file_to_string(path);
-        string mimetype = http::MIME_TYPE_TEXT_PLAIN;
-        if (path.find(".xml") != string::npos)
-        {
-            mimetype = http::MIME_TYPE_TEXT_XML;
-            // CDI xml files have a trailing null, this can cause
-            // issues in browsers parsing/rendering the XML data.
-            if (request->param("remove_nulls", false))
-            {
-                std::replace(data.begin(), data.end(), '\0', ' ');
-            }
-        }
-        else if (path.find(".json") != string::npos)
-        {
-            mimetype = http::MIME_TYPE_APPLICATION_JSON;
-        }
-        return new http::StringResponse(data, mimetype);
-    }
-    LOG(INFO, "[Web] Path not found");
-    request->set_status(http::HttpStatusCode::STATUS_NOT_FOUND);
-    return nullptr;
-}
-
 void init_webserver(openlcb::MemoryConfigClient *cfg_client,
                     openmrn_arduino::Esp32WiFiManager *wifi_mgr, uint64_t id)
 {
@@ -379,23 +367,28 @@ void init_webserver(openlcb::MemoryConfigClient *cfg_client,
     LOG(INFO, "[Httpd] Initializing webserver");
     http_server.reset(new http::Httpd(wifi_mgr, &mdns));
     http_server->redirect_uri("/", "/index.html");
-    http_server->static_uri("/index.html", indexHtmlGz, indexHtmlGz_size
-                          , http::MIME_TYPE_TEXT_HTML
-                          , http::HTTP_ENCODING_GZIP
-                          , false);
-    http_server->static_uri("/cash.min.js", cashJsGz, cashJsGz_size
-                          , http::MIME_TYPE_TEXT_JAVASCRIPT
-                          , http::HTTP_ENCODING_GZIP);
-    http_server->static_uri("/spectre.min.css", spectreMinCssGz
-                          , spectreMinCssGz_size, http::MIME_TYPE_TEXT_CSS
-                          , http::HTTP_ENCODING_GZIP);
+    http_server->static_uri("/index.html", indexHtmlGz, indexHtmlGz_size,
+                            http::MIME_TYPE_TEXT_HTML,
+                            http::HTTP_ENCODING_GZIP,
+                            false);
+    http_server->static_uri("/cash.min.js", cashJsGz, cashJsGz_size,
+                            http::MIME_TYPE_TEXT_JAVASCRIPT,
+                            http::HTTP_ENCODING_GZIP);
+    http_server->static_uri("/cdi.js", cdiJsGz, cdiJsGz_size,
+                            http::MIME_TYPE_TEXT_JAVASCRIPT,
+                            http::HTTP_ENCODING_GZIP);
+    http_server->static_uri("/spectre.min.css", spectreMinCssGz,
+                            spectreMinCssGz_size, http::MIME_TYPE_TEXT_CSS,
+                            http::HTTP_ENCODING_GZIP);
+    http_server->static_uri("/cdi.xml", (const uint8_t *)openlcb::CDI_DATA,
+                            openlcb::CDI_SIZE, http::MIME_TYPE_TEXT_XML);
     http_server->websocket_uri("/ws", websocket_proc);
-    http_server->uri("/fs", http::HttpMethod::GET, fs_proc);
     http_server->uri("/ota", http::HttpMethod::POST, nullptr, process_ota);
     http_server->captive_portal(
-        StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name
-                    , app_data->version, app_data->project_name
-                    , app_data->project_name));
+        StringPrintf(CAPTIVE_PORTAL_HTML, app_data->project_name,
+                     app_data->version, app_data->project_name,
+                     app_data->project_name));
+    cdi_client.reset(new CDIClient(wifi_mgr, cfg_client));
 }
 
 void shutdown_webserver()

@@ -45,3 +45,8 @@ The easiest way to update the firmware on the ESP32 OpenLCB IO Board is to uploa
 it via the JMRI Firmware Upload tool via the TWAI (CAN) interface since you do not
 need to remove the ESP32 OpenLCB IO Board from the train layout. Alternatively,
 the updated firmware can be uploaded via the web interface.
+
+If the ESP32 is not connected to the PCB it will be necessary to add a jumper
+wire between 3v3 and both the Factory Reset button pin (default 39/SVN) and the
+User button pin (default 36/SVP) to prevent the ESP32 from entering bootloader
+mode.

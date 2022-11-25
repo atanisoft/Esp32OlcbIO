@@ -42,6 +42,7 @@
 #include "HealthMonitor.hxx"
 #include "NodeRebootHelper.hxx"
 #include "nvs_config.hxx"
+#include "PCA9685PWM.hxx"
 #include "web_server.hxx"
 
 #include <CDIXMLGenerator.hxx>
@@ -49,6 +50,7 @@
 #include <freertos_drivers/esp32/Esp32WiFiManager.hxx>
 #include <openlcb/MemoryConfigClient.hxx>
 #include <openlcb/RefreshLoop.hxx>
+#include <openlcb/ServoConsumer.hxx>
 #include <openlcb/SimpleStack.hxx>
 #include <utils/constants.hxx>
 #include <utils/format_utils.hxx>
@@ -63,9 +65,6 @@ ConfigDef cfg(0);
 
 namespace openlcb
 {
-    /// Name of CDI.xml to generate dynamically.
-    const char CDI_FILENAME[] = "/fs/cdi.xml";
-
     // Path to where OpenMRN should persist general configuration data.
     const char *const CONFIG_FILENAME = "/fs/config";
 
@@ -95,10 +94,9 @@ namespace openlcb
         4,
         SNIP_PROJECT_PAGE,
         SNIP_PROJECT_NAME,
-        SNIP_HW_VERSION,
+        SNIP_HW_VERSION " " CONFIG_IDF_TARGET,
         SNIP_SW_VERSION
     };
-    const char CDI_DATA[] = "";
 
 } // namespace openlcb
 
@@ -113,6 +111,31 @@ extern "C" void enter_bootloader()
     save_config(&config);
     LOG(INFO, "[Bootloader] Rebooting into bootloader");
     reboot();
+}
+
+/// Halts execution with a specific blink pattern for the two LEDs that are on
+/// the IO base board.
+///
+/// @param wifi Sets the initial state of the WiFi LED.
+/// @param activity Sets the initial state of the Activity LED.
+/// @param period Sets the delay between blinking the LED(s).
+/// @param toggle_both Controls if both LEDs will blink or if only the activity
+/// LED will blink.
+void die_with(bool wifi, bool activity, unsigned period = 1000
+            , bool toggle_both = false)
+{
+    LED_WIFI_Pin::set(wifi);
+    LED_ACTIVITY_Pin::set(activity);
+
+    while(true)
+    {
+        if (toggle_both)
+        {
+            LED_WIFI_Pin::toggle();
+        }
+        LED_ACTIVITY_Pin::toggle();
+        usleep(period);
+    }
 }
 
 namespace esp32io
@@ -132,6 +155,12 @@ std::unique_ptr<openlcb::RefreshLoop> refresh_loop;
 #if CONFIG_OLCB_ENABLE_TWAI
 Esp32HardwareTwai twai(CONFIG_TWAI_RX_PIN, CONFIG_TWAI_TX_PIN);
 #endif // CONFIG_OLCB_ENABLE_TWAI
+
+#if CONFIG_OLCB_ENABLE_PWM
+PCA9685PWM pca9685(CONFIG_SDA_PIN, CONFIG_SCL_PIN, PCA9685_ADDR, 1000);
+uninitialized<PCA9685PWMBit> pca9685PWM[16];
+uninitialized<openlcb::ServoConsumer> servos[16];
+#endif // CONFIG_OLCB_ENABLE_PWM
 
 void factory_reset_events()
 {
@@ -189,7 +218,7 @@ ConfigUpdateListener::UpdateAction FactoryResetHelper::apply_configuration(
 
 void FactoryResetHelper::factory_reset(int fd)
 {
-    LOG(VERBOSE, "[CFG] factory_reset(%d)", fd);
+    LOG(INFO, "[CFG] factory_reset(%d)", fd);
     // set the name of the node to the SNIP model name
     cfg.userinfo().name().write(fd, openlcb::SNIP_STATIC_DATA.model_name);
     string node_id = uint64_to_string_hex(stack->node()->node_id(), 12);
@@ -210,6 +239,16 @@ void FactoryResetHelper::factory_reset(int fd)
     {
         config_io.entry(idx).pc().description().write(fd, CONFIGURABLE_GPIO_NAMES[idx]);
     }
+
+#if !CONFIG_OLCB_ENABLE_PWM
+    auto config_pwm = cfg.seg().pwm();
+    for (size_t idx = 0; idx < 16; idx++)
+    {
+        config_pwm.entry(idx).description().write(fd, "");
+        CDI_FACTORY_RESET(config_pwm.entry(idx).servo_min_percent);
+        CDI_FACTORY_RESET(config_pwm.entry(idx).servo_max_percent);
+    }
+#endif // !CONFIG_OLCB_ENABLE_PWM
 }
 
 #ifndef CONFIG_WIFI_STATION_SSID
@@ -263,7 +302,7 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     wifi_manager.emplace(
         CONFIG_WIFI_STATION_SSID, CONFIG_WIFI_STATION_PASSWORD,
         stack.operator->(), cfg.seg().wifi(), (wifi_mode_t)CONFIG_WIFI_MODE,
-        CONFIG_WIFI_MODE == WIFI_MODE_AP ? 0 : 1, /* uplink / hub mode */
+        CONFIG_OLCB_WIFI_MODE, /* uplink / hub mode */
         CONFIG_WIFI_HOSTNAME_PREFIX, CONFIG_SNTP_SERVER, CONFIG_TIMEZONE, false,
         CONFIG_WIFI_SOFTAP_CHANNEL, WIFI_AUTH_OPEN,
         CONFIG_WIFI_SOFTAP_SSID, CONFIG_WIFI_SOFTAP_PASSWORD);
@@ -293,29 +332,6 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
                                  , inputs[2]->polling(), inputs[3]->polling()
                                  , multi_pc->polling() }));
 
-    // Create / update CDI, if the CDI is out of date a factory reset will be
-    // forced.
-    bool reset_cdi = CDIXMLGenerator::create_config_descriptor_xml(
-        cfg, openlcb::CDI_FILENAME, stack.operator->());
-    if (reset_cdi)
-    {
-        LOG(WARNING, "[CDI] Forcing factory reset due to CDI update");
-        unlink(openlcb::CONFIG_FILENAME);
-    }
-
-    // Create config file and initiate factory reset if it doesn't exist or is
-    // otherwise corrupted.
-    config_fd =
-        stack->create_config_file_if_needed(cfg.seg().internal_config(),
-                                            CDI_VERSION,
-                                            openlcb::CONFIG_FILE_SIZE);
-
-    if (reset_events)
-    {
-        factory_reset_events();
-    }
-
-
 #if CONFIG_OLCB_ENABLE_TWAI
     // Initialize the TWAI driver.
     twai.hw_init();
@@ -323,6 +339,43 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     // Add the TWAI port to the stack.
     stack->add_can_port_select("/dev/twai/twai0");
 #endif // CONFIG_OLCB_ENABLE_TWAI
+
+
+#if CONFIG_OLCB_ENABLE_PWM
+    LOG(INFO, "Initializing PCA9685");
+    pca9685.hw_init();
+    for (size_t idx = 0; idx < PCA9685PWM::NUM_CHANNELS; idx++)
+    {
+        pca9685PWM[idx].emplace(&pca9685, idx);
+        servos[idx].emplace(stack->node(), cfg.seg().pwm().entry(idx),
+                            CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000ULL,
+                            pca9685PWM[idx].get_mutable());
+    }
+#else
+#endif // CONFIG_OLCB_ENABLE_PWM
+
+    // Check for presence of configuration file, if it exists check the version
+    // and force factory reset if required. If it does not exist create it and
+    // initialize the configuration values to defaults.
+    struct stat statbuf;
+    if (!stat(openlcb::CONFIG_FILENAME, &statbuf))
+    {
+        config_fd =
+            stack->check_version_and_factory_reset(
+                cfg.seg().internal_config(), CDI_VERSION, true);
+    }
+    else
+    {
+        config_fd =
+            stack->create_config_file_if_needed(cfg.seg().internal_config(),
+                                                CDI_VERSION,
+                                                openlcb::CONFIG_FILE_SIZE);
+    }
+
+    if (reset_events)
+    {
+        factory_reset_events();
+    }
 
     if (brownout_detected)
     {

@@ -131,3 +131,12 @@ The following parts have compatible alternatives:
 The ESP32 OpenLCB IO Board can be extended by using the pcb-ext daughter board
 files as a basis for creating a compatible extension PCB. This PCB sits on top
 of the base board.
+
+### 16 Channel PWM generator expansion
+
+The first expansion board is the 16 Channel PWM generator board, this is usable
+for Servo or LED control. This expansion board utilizes a PCA9685 to generate
+16 PWM signals which are routed to a three pin header (GND, 5V and PWM) for
+each output.
+
+![Extension PCB as Servo controller](pcb-servo/pcb-servo.png)
