@@ -5,8 +5,6 @@ set(deps
     vfs
     app_update
     spiffs
-    HttpServer
-    OpenMRNIDF
     json
 )
 
