@@ -32,12 +32,75 @@ Pressing the User button will generate a pair of events.
 
 ## Building
 
-The ESP32 OpenLCB IO Board requires ESP-IDF v4.0 or later. When checking out the
-code be sure to checkout recursively as:
-`git clone --recursive git@github.com:atanisoft/esp32olcbio.git`.
-If you receive an error related to littlefs it is likely that the esp_littlefs
-dependencies are not present, to fix this navigate to `components/esp_littlefs`
-and execute `git submodule update --init --recursive`.
+The ESP32 OpenLCB IO Board depends on ESP-IDF v4.4.x and will not build with
+ESP-IDF v5.0.x at this time.
+
+### Configuring ESP-IDF build environment
+
+For Windows environments please use the [Windows Installer](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html)
+and select `release/v4.4` when prompted for a version. It is only necessary to
+install the basic command line tools, Eclipse (or other IDEs) are optional.
+
+For Linux / Mac environments it is recommended to use `git clone` to setup and
+maintain the ESP-IDF build enviornment:
+```
+git clone https://github.com/espressif/esp-idf.git --depth 1 --branch release/v4.4 esp-idf-v4.4 --recursive
+cd esp-idf-v4.4
+sh install.sh
+```
+
+To use the ESP-IDF build enviornment start a commandline shell and source / run the
+`export.sh`, `export.bat` or `export.ps1` script based on your shell.
+
+### Configuring and Building Esp32OlcbIO
+
+Enter the ESP-IDF build environment and navigate to the Esp32OlcbIO source
+directory. If this is the first time building the source code it is a good idea
+to run `idf.py menuconfig` and configure the default configuration settings for
+the Esp32OlcbIO firmware. In general it is not necessary to modify any
+configuration settings outside of `OpenLCB Configuration` and `WiFi Configuration`.
+
+Once the configuration has been completed run `idf.py build` to compile the
+firmware. If there are no errors you can proceed to programming the firmware.
+
+### Programming the firmware
+
+There are a couple ways to flash the firwmare to the ESP32:
+
+* `idf.py flash` - This leverages the ESP-IDF build environment and should
+automatically detect the appropriate communications port for the ESP32.
+* [Browser based flash utility](https://espressif.github.io/esptool-js/)
+
+The [Browser based flash utility](https://espressif.github.io/esptool-js/)
+only supports using Chrome based browsers, attempting to use Safari will
+result in an error dialog being displayed. If you are using this approach,
+plug in the ESP32 to an available USB port and click the `Connect` button
+which will prompt for the communication port (COM?? on Windows, /dev/ttyACM?
+on Linux). Once connected the console output should display information about
+the connected ESP32 module.
+
+Enter the following `Flash Address` and `File` using the `Add File` button
+as needed:
+
+* 0x1000 - build/bootloader/bootloader.bin
+* 0x8000 - build/partition_table/partition-table.bin
+* 0xe000 - build/ota_data_initial.bin
+* 0x10000 - build/ESP32OlcbIO.bin
+
+Click on `Program` and the binaries will be sent to the ESP32 and it should
+reboot automatically.
+
+### Monitoring the firmware startup
+
+After programming a new firmware it is generally a good idea to monitor the
+startup of the Esp32OlcbIO firmware to confirm that there are no issues
+preventing successful startup.
+
+The easiest way to do this is with `idf.py monitor`.
+
+NOTE: If the ESP32 is *NOT* plugged into the IO PCB it will be necessary to
+add a jumper wire between the 3v3 pin and GPIO 39 (may be labeled as SVN or
+VN) to prevent Factory Reset from being initiated on startup.
 
 ## Updating the firmware
 

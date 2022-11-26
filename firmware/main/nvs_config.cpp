@@ -109,12 +109,20 @@ esp_err_t save_config(node_config_t *config)
     return res;
 }
 
-
 esp_err_t default_config(node_config_t *config)
 {
     LOG(INFO, "[NVS] Initializing default configuration");
     bzero(config, sizeof(node_config_t));
+#if CONFIG_OLCB_NODE_AUTO_ASSIGN
+    uint8_t softap_mac_addr[6];
+    ESP_ERROR_CHECK(esp_read_mac(softap_mac_addr, ESP_MAC_WIFI_SOFTAP));
+    config->node_id = 0x020205000000;
+    config->node_id |= ((uint64_t)softap_mac_addr[3] << 16);
+    config->node_id |= ((uint64_t)softap_mac_addr[4] << 8);
+    config->node_id |= ((uint64_t)softap_mac_addr[5]);
+#else
     config->node_id = CONFIG_OLCB_NODE_ID;
+#endif
     return save_config(config);
 }
 
