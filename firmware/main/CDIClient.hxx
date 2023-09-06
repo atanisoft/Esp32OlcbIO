@@ -135,7 +135,7 @@ private:
     {
       case CDIClientRequest::CMD_READ:
         LOG(VERBOSE
-          , "[CDI:%d] Requesting %zu bytes from %s at offset %zu"
+          , "[CDI:%" PRIu32 "] Requesting %zu bytes from %s at offset %zu"
           , request()->req_id, request()->size
           , uint64_to_string_hex(request()->target_node.id).c_str()
           , request()->offs);
@@ -146,7 +146,7 @@ private:
                                      , request()->offs, request()->size);
       case CDIClientRequest::CMD_WRITE:
         LOG(VERBOSE
-          , "[CDI:%d] Writing %zu bytes to %s at offset %zu"
+          , "[CDI:%" PRIu32 "] Writing %zu bytes to %s at offset %zu"
           , request()->req_id, request()->size
           , uint64_to_string_hex(request()->target_node.id).c_str()
           , request()->offs);
@@ -156,7 +156,7 @@ private:
                                      , openlcb::MemoryConfigDefs::SPACE_CONFIG
                                      , request()->offs, request()->value);
       case CDIClientRequest::CMD_UPDATE_COMPLETE:
-        LOG(VERBOSE, "[CDI:%d] Sending update-complete to %s"
+        LOG(VERBOSE, "[CDI:%" PRIu32 "] Sending update-complete to %s"
           , request()->req_id
           , uint64_to_string_hex(request()->target_node.id).c_str());
         return invoke_subflow_and_wait(client_, STATE(update_complete)
@@ -169,28 +169,28 @@ private:
   StateFlowBase::Action read_complete()
   {
     auto b = get_buffer_deleter(full_allocation_result(client_));
-    LOG(VERBOSE, "[CDI:%d] read bytes request returned with code: %d"
+    LOG(VERBOSE, "[CDI:%" PRIu32 "] read bytes request returned with code: %d"
       , request()->req_id, b->data()->resultCode);
     string response;
     if (b->data()->resultCode)
     {
-      LOG(VERBOSE, "[CDI:%d] non-zero result code, sending error response."
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] non-zero result code, sending error response."
         , request()->req_id);
       response =
         StringPrintf(
-          R"!^!({"res":"error","error":"request failed: %d","id":%d}\m)!^!"
+          R"!^!({"res":"error","error":"request failed: %d","id":%)!^!" PRIu32 "}"
         , b->data()->resultCode, request()->req_id);
     }
     else
     {
-      LOG(VERBOSE, "[CDI:%d] Received %zu bytes from offset %zu"
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] Received %zu bytes from offset %zu"
         , request()->req_id, request()->size, request()->offs);
       if (request()->type == "str")
       {
         remove_nulls_and_FF(b->data()->payload);
         response =
           StringPrintf(
-              R"!^!({"res":"field","tgt":"%s","val":"%s","type":"%s","id":%d})!^!"
+              R"!^!({"res":"field","tgt":"%s","val":"%s","type":"%s","id":%)!^!" PRIu32 "}"
             , request()->target.c_str(), base64_encode(b->data()->payload).c_str()
             , request()->type.c_str(), request()->req_id);
       }
@@ -211,7 +211,7 @@ private:
         }
         response =
           StringPrintf(
-              R"!^!({"res":"field","tgt":"%s","val":"%d","type":"%s","id":%d})!^!"
+              R"!^!({"res":"field","tgt":"%s","val":"%)!^!" PRIu32 R"!^!(","type":"%s","id":%)!^!" PRIu32 "}"
           , request()->target.c_str(), data, request()->type.c_str()
           , request()->req_id);
       }
@@ -221,7 +221,7 @@ private:
         memcpy(&event_id, b->data()->payload.data(), sizeof(uint64_t));
         response =
           StringPrintf(
-              R"!^!({"res":"field","tgt":"%s","val":"%s","type":"%s","id":%d})!^!"
+              R"!^!({"res":"field","tgt":"%s","val":"%s","type":"%s","id":%)!^!" PRIu32 "}"
           , request()->target.c_str()
           , uint64_to_string_hex(be64toh(event_id)).c_str()
           , request()->type.c_str(), request()->req_id);
@@ -235,24 +235,24 @@ private:
   StateFlowBase::Action write_complete()
   {
     auto b = get_buffer_deleter(full_allocation_result(client_));
-    LOG(VERBOSE, "[CDI:%d] write bytes request returned with code: %d"
+    LOG(VERBOSE, "[CDI:%" PRIu32 "] write bytes request returned with code: %d"
       , request()->req_id, b->data()->resultCode);
     string response;
     if (b->data()->resultCode)
     {
-      LOG(VERBOSE, "[CDI:%d] non-zero result code, sending error response."
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] non-zero result code, sending error response."
         , request()->req_id);
       response =
           StringPrintf(
-              R"!^!({"res":"error","error":"request failed: %d","id":%d})!^!"
+              R"!^!({"res":"error","error":"request failed: %d","id":%)!^!" PRIu32 "}"
             , b->data()->resultCode, request()->req_id);
     }
     else
     {
-      LOG(VERBOSE, "[CDI:%d] Write request processed successfully."
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] Write request processed successfully."
         , request()->req_id);
       response =
-        StringPrintf(R"!^!({"res":"saved","tgt":"%s","id":%d})!^!"
+        StringPrintf(R"!^!({"res":"saved","tgt":"%s","id":%)!^!" PRIu32 "}"
                     , request()->target.c_str(), request()->req_id);
     }
     LOG(VERBOSE, "[CDI-WRITE] %s", response.c_str());
@@ -263,24 +263,24 @@ private:
   StateFlowBase::Action update_complete()
   {
     auto b = get_buffer_deleter(full_allocation_result(client_));
-    LOG(VERBOSE, "[CDI:%d] update-complete request returned with code: %d"
+    LOG(VERBOSE, "[CDI:%" PRIu32 "] update-complete request returned with code: %d"
       , request()->req_id, b->data()->resultCode);
     string response;
     if (b->data()->resultCode)
     {
-      LOG(VERBOSE, "[CDI:%d] non-zero result code, sending error response."
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] non-zero result code, sending error response."
         , request()->req_id);
       response =
         StringPrintf(
-            R"!^!({"res":"error","error":"request failed: %d","id":%d}\m)!^!"
+            R"!^!({"res":"error","error":"request failed: %d","id":%)!^!" PRIu32 "}"
           , b->data()->resultCode, request()->req_id);
     }
     else
     {
-      LOG(VERBOSE, "[CDI:%d] update-complete request processed successfully."
+      LOG(VERBOSE, "[CDI:%" PRIu32 "] update-complete request processed successfully."
         , request()->req_id);
       response =
-        StringPrintf(R"!^!({"res":"update-complete","id":%d})!^!"
+        StringPrintf(R"!^!({"res":"update-complete","id":%)!^!" PRIu32 "}"
                    , request()->req_id);
     }
     LOG(VERBOSE, "[CDI-UPDATE-COMPLETE] %s", response.c_str());

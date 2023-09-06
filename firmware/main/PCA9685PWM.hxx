@@ -77,7 +77,7 @@ public:
             {
                 .clk_speed = I2C_BUS_SPEED
             },
-            .clk_flags = I2C_SCLK_DEFAULT
+            .clk_flags = I2C_SCLK_SRC_FLAG_FOR_NOMAL
         };
 
         // ensure the PWM frequency is within normal range.
@@ -398,8 +398,8 @@ private:
             (REGISTERS)(REGISTERS::LED0_ON_L + (channel << 2));
         ESP_LOGV(TAG, "[%02x:%d] Setting PWM to %d:%d", addr_, channel,
                  reg_value.on.value, reg_value.off.value);
-        htole16(reg_value.on.value);
-        htole16(reg_value.off.value);
+        reg_value.on.value = htole16(reg_value.on.value);
+        reg_value.off.value = htole16(reg_value.off.value);
         return register_write_multiple((REGISTERS)output_register, &reg_value,
                                        sizeof(OUTPUT_STATE_REGISTER));
     }

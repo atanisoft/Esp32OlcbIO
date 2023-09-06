@@ -241,7 +241,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                 if (!cJSON_HasObjectItem(root, "val"))
                 {
                     LOG(VERBOSE,
-                        "[WSJSON:%d] Sending CDI READ: offs:%zu size:%zu "
+                        "[WSJSON:%" PRIu32 "] Sending CDI READ: offs:%zu size:%zu "
                         "type:%s tgt:%s spc:%d", WS_REQ_ID, offs, size,
                         param_type.c_str(), target.c_str(), space);
                     b->data()->reset(CDIClientRequest::READ, node_handle,
@@ -301,7 +301,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
                         value.push_back(data & 0xFF);
                     }
                     LOG(VERBOSE,
-                        "[WSJSON:%d] Sending CDI WRITE: offs:%zu value:%s "
+                        "[WSJSON:%" PRIu32 "] Sending CDI WRITE: offs:%zu value:%s "
                         "tgt:%s spc:%d", WS_REQ_ID, offs,
                         raw_value->valuestring, target.c_str(), space);
                     b->data()->reset(CDIClientRequest::WRITE, node_handle,
@@ -316,7 +316,7 @@ WEBSOCKET_STREAM_HANDLER_IMPL(websocket_proc, socket, event, data, len)
         }
         else if (!strcmp(req_type->valuestring, "update-complete"))
         {
-            LOG(VERBOSE, "[WSJSON:%d] Sending UPDATE_COMPLETE to queue",
+            LOG(VERBOSE, "[WSJSON:%" PRIu32 "] Sending UPDATE_COMPLETE to queue",
                 WS_REQ_ID);
             BufferPtr<CDIClientRequest> b(cdi_client->alloc());
             b->data()->reset(CDIClientRequest::UPDATE_COMPLETE,

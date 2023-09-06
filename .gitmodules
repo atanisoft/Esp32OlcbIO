@@ -1,6 +1,0 @@
-[submodule "firmware/components/HttpServer"]
-	path = firmware/components/HttpServer
-	url = https://github.com/atanisoft/HttpServer.git
-[submodule "firmware/components/OpenMRNIDF"]
-	path = firmware/components/OpenMRNIDF
-	url = https://github.com/atanisoft/OpenMRNIDF.git

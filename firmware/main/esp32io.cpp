@@ -156,9 +156,9 @@ void app_main()
 {
     // capture the reason for the CPU reset
     uint8_t reset_reason = Esp32SocInfo::print_soc_info();
-    const esp_app_desc_t *app_data = esp_ota_get_app_description();
+    const esp_app_desc_t *app_data = esp_app_get_description();
     LOG(INFO, "%s uses the OpenMRN library\n"
-              "Copyright (c) 2019-2022, OpenMRN\n"
+              "Copyright (c) 2019-2023, OpenMRN\n"
               "All rights reserved.", app_data->project_name);
 
     // silence all but error messages by default

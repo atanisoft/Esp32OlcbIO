@@ -32,8 +32,9 @@ jobs:
             CONFIG_OLCB_ENABLE_PWM=y
           write-mode: overwrite
       - name: Build
-        uses: espressif/esp-idf-ci-action@branch-release-v4.4
+        uses: espressif/esp-idf-ci-action@v1
         with:
+          esp_idf_version: v5.1.1
           path: firmware
       - name: Prepare Binaries
         run: |

@@ -3,7 +3,6 @@ firmware/dependencies.lock
 firmware/managed_components
 firmware/sdkconfig
 firmware/sdkconfig.old
-firmware/web/*.gz
 pcb*/*.*-bak
 pcb*/*-backups
 pcb*/Outputs/*.g*
