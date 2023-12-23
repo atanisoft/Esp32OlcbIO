@@ -32,20 +32,20 @@ Pressing the User button will generate a pair of events.
 
 ## Building
 
-The ESP32 OpenLCB IO Board depends on ESP-IDF v4.4.x and will not build with
-ESP-IDF v5.0.x at this time.
+The ESP32 OpenLCB IO Board depends on ESP-IDF v5.1.x and will not build with
+earlier versions.
 
 ### Configuring ESP-IDF build environment
 
 For Windows environments please use the [Windows Installer](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/windows-setup.html)
-and select `release/v4.4` when prompted for a version. It is only necessary to
+and select `release/v5.1` when prompted for a version. It is only necessary to
 install the basic command line tools, Eclipse (or other IDEs) are optional.
 
 For Linux / Mac environments it is recommended to use `git clone` to setup and
 maintain the ESP-IDF build enviornment:
 ```
-git clone https://github.com/espressif/esp-idf.git --depth 1 --branch release/v4.4 esp-idf-v4.4 --recursive
-cd esp-idf-v4.4
+git clone https://github.com/espressif/esp-idf.git --depth 1 --branch release/v5.1 esp-idf-v5.1 --recursive
+cd esp-idf-v5.1
 sh install.sh
 ```
 

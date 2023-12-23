@@ -1,5 +1,5 @@
 dependencies:
-  idf: ">=5.0"
+  idf: ">=5.1"
   OpenMRNIDF:
     version: 5.1.0
     git: https://github.com/atanisoft/OpenMRNIDF.git
