@@ -89,6 +89,12 @@ provided as both KiCad files and generated Gerber files.
 
 ![PCB Render](pcb/pcb.png)
 
+**NOTE:** U6 (CAN Transceiver) BOM line item references IFX1050GVIOXUMA1 which is no longer in production, please use one of the following instead:
+
+* TJA1057GT/3J
+* TCAN1051
+* MCP2562
+
 ### PCBWay project
 
 The ESP32 OpenLCB IO PCB has been shared via PCBWay [here](https://www.pcbway.com/project/shareproject/ESP32_OpenLCB__LCC__IO_PCB.html).
