@@ -35,7 +35,7 @@
 #ifndef HARDWARE_HXX_
 #define HARDWARE_HXX_
 
-#include <freertos_drivers/arduino/DummyGPIO.hxx>
+#include <freertos_drivers/common/DummyGPIO.hxx>
 #include <freertos_drivers/esp32/Esp32Gpio.hxx>
 #include <os/Gpio.hxx>
 #include <utils/GpioInitializer.hxx>
