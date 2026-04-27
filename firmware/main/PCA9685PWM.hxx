@@ -34,7 +34,7 @@
 
 #include <driver/i2c.h>
 #include <esp_check.h>
-#include <freertos_drivers/arduino/PWM.hxx>
+#include <freertos_drivers/common/PWM.hxx>
 #include <os/OS.hxx>
 #include <sys/ioctl.h>
 #include <utils/Atomic.hxx>
