@@ -1,8 +1,8 @@
 dependencies:
   idf: ">=5.1"
   OpenMRNIDF:
-    version: 5.1.0
+    version: 5.4.3
     git: https://github.com/atanisoft/OpenMRNIDF.git
   HttpServer:
-    version: 5.1.0
+    version: master
     git: https://github.com/atanisoft/HttpServer.git
