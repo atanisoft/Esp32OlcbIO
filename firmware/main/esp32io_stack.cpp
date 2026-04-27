@@ -302,7 +302,7 @@ void start_openlcb_stack(node_config_t *config, bool reset_events
     wifi_manager.emplace(
         CONFIG_WIFI_STATION_SSID, CONFIG_WIFI_STATION_PASSWORD,
         stack.operator->(), cfg.seg().wifi(), (wifi_mode_t)CONFIG_WIFI_MODE,
-        CONFIG_OLCB_WIFI_MODE, /* uplink / hub mode */
+        (Esp32WiFiManager::ConnectionMode)CONFIG_OLCB_WIFI_MODE, /* uplink / hub mode */
         CONFIG_WIFI_HOSTNAME_PREFIX, CONFIG_SNTP_SERVER, CONFIG_TIMEZONE, false,
         CONFIG_WIFI_SOFTAP_CHANNEL, WIFI_AUTH_OPEN,
         CONFIG_WIFI_SOFTAP_SSID, CONFIG_WIFI_SOFTAP_PASSWORD);
