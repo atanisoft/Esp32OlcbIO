@@ -32,8 +32,9 @@ Pressing the User button will generate a pair of events.
 
 ## Building
 
-The ESP32 OpenLCB IO Board depends on ESP-IDF v5.1.x and will not build with
-earlier versions.
+The ESP32 OpenLCB IO Board depends on at least ESP-IDF v5.2.x and will not build with
+earlier versions. Note that it will not build successfully avove ESP-IDF v5.4.4 due to
+ESP-IDF changes in TWAI and other peripherals.
 
 ### Configuring ESP-IDF build environment
 
